@@ -22,14 +22,11 @@ La base inicial de este aprendizaje proviene del siguiente curso:
 **Playlist: “Java 2D Game Development” de RyiSnow**
 [https://www.youtube.com/watch?v=om59cwR7psI&list=PL_QPQmz5C6WUF-pOQDsbsKbaBZqXj4qSq](https://www.youtube.com/watch?v=om59cwR7psI&list=PL_QPQmz5C6WUF-pOQDsbsKbaBZqXj4qSq)
 
-Este es el primer tutorial que seguiré para construir el motor desde cero, entendiendo cada componente de forma progresiva.
 
 ## Estructura del repositorio
 
-* `src/` — Código fuente organizado por módulos y etapas del motor del juego.
-* `documentacion/` — Archivos de notas o explicaciones complementarias.
+* `src/` — Código fuente organizado por módulos
 * `recursos/` — Sprites, imágenes de prueba u otros elementos gráficos.
-* `experimentos/` — Pruebas pequeñas o código temporal durante el aprendizaje.
 
 ## Notas finales
 
