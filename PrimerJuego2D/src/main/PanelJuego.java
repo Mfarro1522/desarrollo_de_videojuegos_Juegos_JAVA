@@ -2,6 +2,8 @@ package main;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
@@ -15,39 +17,128 @@ import javax.swing.JPanel;
  */
 
 @SuppressWarnings("serial")
-public class PanelJuego extends JPanel implements Runnable{
-	
-	final int OriginalTile = 16; //juego 16x16
+public class PanelJuego extends JPanel implements Runnable {
+
+	final int OriginalTile = 16; // juego 16x16
 	final int scale = 3;
-	
-	final int tamanioTile = OriginalTile*scale; //48 *48
-	//relacion 4*3 clasica 
+
+	final int tamanioTile = OriginalTile * scale; // 48 *48
+	// relacion 4*3 clasica
 	final int maxPantallaColumnas = 16;
 	final int maxPantallaFilas = 12;
-	//tamaño de la panatalla 
-	final int anchoPantalla = tamanioTile*maxPantallaColumnas; //768 px
-	final int altoPantalla = tamanioTile*maxPantallaFilas; //576 px
-	
+	// tamaño de la panatalla
+	final int anchoPantalla = tamanioTile * maxPantallaColumnas; // 768 px
+	final int altoPantalla = tamanioTile * maxPantallaFilas; // 576 px
+
+	// lsitener
+	keyHandler kh = new keyHandler();
 	Thread threadJuego;
-	
+
+	// set dafault player
+	int jugadorX = 100;
+	int jugadorY = 100;
+	int velocidadJugador = 4;
+
+	// FPS
+	int FPS = 60;
+
 	public PanelJuego() {
-		this.setPreferredSize(new Dimension(anchoPantalla,altoPantalla));
+		this.setPreferredSize(new Dimension(anchoPantalla, altoPantalla));
 		this.setBackground(Color.BLACK);
-		//MEJORA EL RENDIMIENTO 
+		// MEJORA EL RENDIMIENTO
 		this.setDoubleBuffered(true);
-		
+		this.addKeyListener(kh);
+		setFocusable(true);
+
 	}
-	
-	public void inciarHiloJuego () {
-		threadJuego = new Thread(this); //le pasamos el panel a este constucor a nuestro hilo 
+
+	public void iniciarHiloJuego() {
+		threadJuego = new Thread(this);
 		threadJuego.start();
 	}
 
-	@Override
-	public void run() {
-		//esta parte es la mas importante 
-		//crearemos el loop 
-		
-	}
+//	@Override //este es un metodo 
+//	public void run() {
+//
+//		double intervaloDibujo = 1000000000 / FPS;
+//		double siguienteTiempoDibujo = System.nanoTime() + intervaloDibujo;
+//
+//		while (threadJuego != null) {
+//
+//			update();
+//			repaint();
+//			try {
+//				double tiempoRestante = siguienteTiempoDibujo - System.nanoTime();
+//				tiempoRestante = tiempoRestante / 1000000;
+//
+//				if (tiempoRestante < 0)
+//					tiempoRestante = 0;
+//
+//				Thread.sleep((long) tiempoRestante);
+//
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//
+//			siguienteTiempoDibujo += intervaloDibujo;
+//		}
+//
+//	}
 	
+	public void run() {
+		double intervaloDibujo = 1000000000 / FPS;
+		double delta = 0;
+		double tiempoFinal = System.nanoTime();
+		double tiempoActual;
+		double temporizador = 0;
+		double contador = 0;
+		
+		
+		while (threadJuego != null) {
+			tiempoActual = System.nanoTime();
+			delta +=(tiempoActual - tiempoFinal)/intervaloDibujo;
+			temporizador += (tiempoActual-tiempoFinal);
+			tiempoFinal = tiempoActual;
+			
+			if(delta>=1) {
+				update();
+				repaint();
+				delta--;
+				contador++;
+			}
+			
+			if(temporizador >= 1000000000 ) {
+				System.out.println("Fps : "+contador);
+				temporizador = 0;
+				contador = 0;
+			}
+			
+			
+		}
+	}
+
+	public void update() {
+		if (kh.arribaPres == true) {
+			jugadorY -= velocidadJugador;
+		}
+		if (kh.abajoPres == true) {
+			jugadorY += velocidadJugador;
+		}
+		if (kh.izqPres == true) {
+			jugadorX -= velocidadJugador;
+		}
+		if (kh.drchPres == true) {
+			jugadorX += velocidadJugador;
+		}
+	}
+
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setColor(Color.white);
+		g2.fillRect(jugadorX, jugadorY, tamanioTile, tamanioTile);
+		g2.dispose();
+	}
+
 }

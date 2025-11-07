@@ -6,6 +6,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
+		
 		JFrame ventana = new JFrame();
 		ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		ventana.setResizable(false);
@@ -18,6 +19,8 @@ public class Main {
 		ventana.setTitle("Primer Juego 2D");
 		ventana.setLocationRelativeTo(null);
 		ventana.setVisible(true);
+		
+		paneljuego.iniciarHiloJuego();
 	}
 
 }
