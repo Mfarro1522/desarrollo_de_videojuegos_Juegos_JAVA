@@ -14,7 +14,8 @@ import javax.swing.JPanel;
  * por eso aplicaremos escalado entero para mantener el estilo pixel art sin distorsion
  */
 
-public class PanelJuego extends JPanel{
+@SuppressWarnings("serial")
+public class PanelJuego extends JPanel implements Runnable{
 	
 	final int OriginalTile = 16; //juego 16x16
 	final int scale = 3;
@@ -27,11 +28,25 @@ public class PanelJuego extends JPanel{
 	final int anchoPantalla = tamanioTile*maxPantallaColumnas; //768 px
 	final int altoPantalla = tamanioTile*maxPantallaFilas; //576 px
 	
+	Thread threadJuego;
+	
 	public PanelJuego() {
 		this.setPreferredSize(new Dimension(anchoPantalla,altoPantalla));
 		this.setBackground(Color.BLACK);
 		//MEJORA EL RENDIMIENTO 
 		this.setDoubleBuffered(true);
+		
+	}
+	
+	public void inciarHiloJuego () {
+		threadJuego = new Thread(this); //le pasamos el panel a este constucor a nuestro hilo 
+		threadJuego.start();
+	}
+
+	@Override
+	public void run() {
+		//esta parte es la mas importante 
+		//crearemos el loop 
 		
 	}
 	
