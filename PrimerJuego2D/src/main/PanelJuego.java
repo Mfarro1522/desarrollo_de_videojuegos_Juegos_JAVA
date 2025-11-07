@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Toolkit;
 
 import javax.swing.JPanel;
 
@@ -65,36 +66,30 @@ public class PanelJuego extends JPanel implements Runnable {
 		double tiempoActual;
 		double temporizador = 0;
 		double contador = 0;
-		
-		
-		int maxUpdates = 5;
-		int updatesRealizados = 0;
+
 		
 		
 		while (threadJuego != null) {
-			updatesRealizados=0;
+
 			tiempoActual = System.nanoTime();
 			delta +=(tiempoActual - tiempoFinal)/intervaloDibujo;
 			temporizador += (tiempoActual-tiempoFinal);
 			tiempoFinal = tiempoActual;
 			
-			while(delta>=1 && updatesRealizados<maxUpdates) {
+			while(delta>=1) {
 				update();
 				repaint();
+				//si estas en linux agrega esta linea
+				Toolkit.getDefaultToolkit().sync();
 				delta--;
 				contador++;
-				updatesRealizados++;
+
 			}
 			
 			if(temporizador >= 1000000000 ) {
 				System.out.println("Fps : "+contador);
 				temporizador = 0;
 				contador = 0;
-			}
-			try {
-				Thread.sleep(2);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 			
 		}
