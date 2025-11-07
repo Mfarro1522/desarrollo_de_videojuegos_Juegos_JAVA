@@ -57,34 +57,7 @@ public class PanelJuego extends JPanel implements Runnable {
 		threadJuego.start();
 	}
 
-//	@Override //este es un metodo 
-//	public void run() {
-//
-//		double intervaloDibujo = 1000000000 / FPS;
-//		double siguienteTiempoDibujo = System.nanoTime() + intervaloDibujo;
-//
-//		while (threadJuego != null) {
-//
-//			update();
-//			repaint();
-//			try {
-//				double tiempoRestante = siguienteTiempoDibujo - System.nanoTime();
-//				tiempoRestante = tiempoRestante / 1000000;
-//
-//				if (tiempoRestante < 0)
-//					tiempoRestante = 0;
-//
-//				Thread.sleep((long) tiempoRestante);
-//
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//
-//			siguienteTiempoDibujo += intervaloDibujo;
-//		}
-//
-//	}
-	
+	//Game loop
 	public void run() {
 		double intervaloDibujo = 1000000000 / FPS;
 		double delta = 0;
@@ -94,17 +67,23 @@ public class PanelJuego extends JPanel implements Runnable {
 		double contador = 0;
 		
 		
+		int maxUpdates = 5;
+		int updatesRealizados = 0;
+		
+		
 		while (threadJuego != null) {
+			updatesRealizados=0;
 			tiempoActual = System.nanoTime();
 			delta +=(tiempoActual - tiempoFinal)/intervaloDibujo;
 			temporizador += (tiempoActual-tiempoFinal);
 			tiempoFinal = tiempoActual;
 			
-			if(delta>=1) {
+			while(delta>=1 && updatesRealizados<maxUpdates) {
 				update();
 				repaint();
 				delta--;
 				contador++;
+				updatesRealizados++;
 			}
 			
 			if(temporizador >= 1000000000 ) {
@@ -112,7 +91,11 @@ public class PanelJuego extends JPanel implements Runnable {
 				temporizador = 0;
 				contador = 0;
 			}
-			
+			try {
+				Thread.sleep(2);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			
 		}
 	}
