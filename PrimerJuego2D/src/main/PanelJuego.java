@@ -8,6 +8,8 @@ import java.awt.Toolkit;
 
 import javax.swing.JPanel;
 
+import entidad.Jugador;
+
 /*
  * el estilo de juego es retro 2d basado en mosaicos tiles
  * todos los elementos npcs personaje objetos etc se construyen con sprites
@@ -23,7 +25,7 @@ public class PanelJuego extends JPanel implements Runnable {
 	final int OriginalTile = 16; // juego 16x16
 	final int scale = 3;
 
-	final int tamanioTile = OriginalTile * scale; // 48 *48
+	public final int tamanioTile = OriginalTile * scale; // 48 *48
 	// relacion 4*3 clasica
 	final int maxPantallaColumnas = 16;
 	final int maxPantallaFilas = 12;
@@ -34,6 +36,9 @@ public class PanelJuego extends JPanel implements Runnable {
 	// lsitener
 	keyHandler kh = new keyHandler();
 	Thread threadJuego;
+	
+	//jugador
+	Jugador jugador = new Jugador(this, kh);
 
 	// set dafault player
 	int jugadorX = 100;
@@ -96,26 +101,14 @@ public class PanelJuego extends JPanel implements Runnable {
 	}
 
 	public void update() {
-		if (kh.arribaPres == true) {
-			jugadorY -= velocidadJugador;
-		}
-		if (kh.abajoPres == true) {
-			jugadorY += velocidadJugador;
-		}
-		if (kh.izqPres == true) {
-			jugadorX -= velocidadJugador;
-		}
-		if (kh.drchPres == true) {
-			jugadorX += velocidadJugador;
-		}
+		jugador.update();
 	}
 
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setColor(Color.white);
-		g2.fillRect(jugadorX, jugadorY, tamanioTile, tamanioTile);
+		jugador.draw(g2);
 		g2.dispose();
 	}
 
