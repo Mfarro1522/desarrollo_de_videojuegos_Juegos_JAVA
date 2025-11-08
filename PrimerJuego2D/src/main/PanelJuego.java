@@ -9,6 +9,7 @@ import java.awt.Toolkit;
 import javax.swing.JPanel;
 
 import entidad.Jugador;
+import tiles.TileManager;
 
 /*
  * el estilo de juego es retro 2d basado en mosaicos tiles
@@ -27,11 +28,11 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	public final int tamanioTile = OriginalTile * scale; // 48 *48
 	// relacion 4*3 clasica
-	final int maxPantallaColumnas = 16;
-	final int maxPantallaFilas = 12;
+	public final int maxPantallaColumnas = 16;
+	public final int maxPantallaFilas = 12;
 	// tamaño de la panatalla
-	final int anchoPantalla = tamanioTile * maxPantallaColumnas; // 768 px
-	final int altoPantalla = tamanioTile * maxPantallaFilas; // 576 px
+	public final int anchoPantalla = tamanioTile * maxPantallaColumnas; // 768 px
+	public final int altoPantalla = tamanioTile * maxPantallaFilas; // 576 px
 
 	// lsitener
 	keyHandler kh = new keyHandler();
@@ -47,6 +48,9 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	// FPS
 	int FPS = 60;
+	
+	//tile - bg
+	TileManager tileManager = new TileManager(this);
 
 	public PanelJuego() {
 		this.setPreferredSize(new Dimension(anchoPantalla, altoPantalla));
@@ -108,6 +112,7 @@ public class PanelJuego extends JPanel implements Runnable {
 		super.paintComponent(g);
 
 		Graphics2D g2 = (Graphics2D) g;
+		tileManager.draw(g2);
 		jugador.draw(g2);
 		g2.dispose();
 	}
