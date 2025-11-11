@@ -18,22 +18,35 @@ public class TileManager {
 	public TileManager(PanelJuego pj) {
 		this.pj = pj;
 		tiles = new Tile[10];
-		mapaPorNumeroTile = new int[pj.maxPantallaColumnas][pj.maxPantallaFilas];
+		mapaPorNumeroTile = new int[pj.maxWorldcol][pj.maxWorldfilas];
 		getImagenTile();
-		cargarMapa("/mapas/mapa01.txt");
+		cargarMapa("/mapas/world01.txt");
 	}
 
 	public void getImagenTile() {
 
 		try {
 			tiles[0] = new Tile();
-			tiles[0].imagen = ImageIO.read(getClass().getResource("/tiles/piso_tierra.png"));
+			tiles[0].imagen = ImageIO.read(getClass().getResource("/tiles/pasto_cosme.png"));
 
 			tiles[1] = new Tile();
 			tiles[1].imagen = ImageIO.read(getClass().getResource("/tiles/pared_adobe.png"));
 
 			tiles[2] = new Tile();
-			tiles[2].imagen = ImageIO.read(getClass().getResource("/tiles/agua_verde.png"));
+			tiles[2].imagen = ImageIO.read(getClass().getResource("/tiles/agua_normal.png"));
+
+			tiles[3] = new Tile();
+			tiles[3].imagen = ImageIO.read(getClass().getResource("/tiles/piso_tierra.png"));
+
+			tiles[4] = new Tile();
+			tiles[4].imagen = ImageIO.read(getClass().getResource("/tiles/arbol.png"));
+
+			tiles[5] = new Tile();
+			tiles[5].imagen = ImageIO.read(getClass().getResource("/tiles/arena.png"));
+
+			tiles[6] = new Tile();
+			tiles[6].imagen = ImageIO.read(getClass().getResource("/tiles/pasto_cosme1.png"));
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -48,11 +61,11 @@ public class TileManager {
 			int col = 0;
 			int fila = 0;
 
-			while (col < pj.maxPantallaColumnas && fila < pj.maxPantallaFilas) {
+			while (col < pj.maxWorldcol && fila < pj.maxWorldfilas) {
 				// con esto leemos una linea de nuestro txt
 				String linea = br.readLine();
 
-				while (col < pj.maxPantallaColumnas) {
+				while (col < pj.maxWorldcol) {
 					String numeros[] = linea.split(" ");
 					// ahora almacenamos estos indices en nustro array que tenemos determinado para
 					// eso
@@ -61,7 +74,7 @@ public class TileManager {
 					mapaPorNumeroTile[col][fila] = num;
 					col++;
 				}
-				if (col == pj.maxPantallaColumnas) {
+				if (col == pj.maxWorldcol) {
 					col = 0;
 					fila++;
 				}
@@ -75,23 +88,30 @@ public class TileManager {
 	}
 
 	public void draw(Graphics2D g2) {
-		int columna = 0;
-		int fila = 0;
-		int x = 0;
-		int y = 0;
+		int worldCol = 0;
+		int worldFila = 0;
 
-		while (columna < pj.maxPantallaColumnas && fila < pj.maxPantallaFilas) {
+		while (worldCol < pj.maxWorldcol && worldFila < pj.maxWorldfilas) {
 
-			int numeroTile = mapaPorNumeroTile[columna][fila];
+			int numeroTile = mapaPorNumeroTile[worldCol][worldFila];
+			// aqui implementaremos la camara
 
-			g2.drawImage(tiles[numeroTile].imagen, x, y, pj.tamanioTile, pj.tamanioTile, null);
-			columna++;
-			x += pj.tamanioTile;
-			if (columna == pj.maxPantallaColumnas) {
-				columna = 0;
-				x = 0;
-				fila++;
-				y += pj.tamanioTile;
+			int worldX = worldCol * pj.tamanioTile;
+			int worldY = worldFila * pj.tamanioTile;
+			int screenX = worldX - pj.jugador.worldx + pj.jugador.screenX;
+			int screenY = worldY - pj.jugador.worldy + pj.jugador.screeny;
+
+			if (worldX +pj.tamanioTile> pj.jugador.worldx - pj.jugador.screenX && worldX - pj.tamanioTile< pj.jugador.worldx + pj.jugador.screenX
+					&& worldY +pj.tamanioTile > pj.jugador.worldy - pj.jugador.screeny
+					&& worldY -pj.tamanioTile< pj.jugador.worldy + pj.jugador.screeny) {
+				g2.drawImage(tiles[numeroTile].imagen, screenX, screenY, pj.tamanioTile, pj.tamanioTile, null);
+				
+			}
+			worldCol++;
+			if (worldCol == pj.maxWorldcol) {
+				worldCol = 0;
+				worldFila++;
+
 			}
 		}
 	}

@@ -34,22 +34,23 @@ public class PanelJuego extends JPanel implements Runnable {
 	public final int anchoPantalla = tamanioTile * maxPantallaColumnas; // 768 px
 	public final int altoPantalla = tamanioTile * maxPantallaFilas; // 576 px
 
+	// ajustede del mundo
+	public final int maxWorldcol = 50;
+	public final int maxWorldfilas = 50;
+	public final int maxWorldAncho = maxWorldcol * tamanioTile;
+	public final int maxWorldAlto = maxWorldfilas * tamanioTile;
+
 	// lsitener
 	keyHandler kh = new keyHandler();
 	Thread threadJuego;
-	
-	//jugador
-	Jugador jugador = new Jugador(this, kh);
 
-	// set dafault player
-	int jugadorX = 100;
-	int jugadorY = 100;
-	int velocidadJugador = 4;
+	// jugador
+	public Jugador jugador = new Jugador(this, kh);
 
 	// FPS
 	int FPS = 60;
-	
-	//tile - bg
+
+	// tile - bg
 	TileManager tileManager = new TileManager(this);
 
 	public PanelJuego() {
@@ -67,7 +68,7 @@ public class PanelJuego extends JPanel implements Runnable {
 		threadJuego.start();
 	}
 
-	//Game loop
+	// Game loop
 	public void run() {
 		double intervaloDibujo = 1000000000 / FPS;
 		double delta = 0;
@@ -76,31 +77,29 @@ public class PanelJuego extends JPanel implements Runnable {
 		double temporizador = 0;
 		double contador = 0;
 
-		
-		
 		while (threadJuego != null) {
 
 			tiempoActual = System.nanoTime();
-			delta +=(tiempoActual - tiempoFinal)/intervaloDibujo;
-			temporizador += (tiempoActual-tiempoFinal);
+			delta += (tiempoActual - tiempoFinal) / intervaloDibujo;
+			temporizador += (tiempoActual - tiempoFinal);
 			tiempoFinal = tiempoActual;
-			
-			while(delta>=1) {
+
+			while (delta >= 1) {
 				update();
 				repaint();
-				//si estas en linux agrega esta linea
+				// si estas en linux agrega esta linea
 				Toolkit.getDefaultToolkit().sync();
 				delta--;
 				contador++;
 
 			}
-			
-			if(temporizador >= 1000000000 ) {
-				System.out.println("Fps : "+contador);
+
+			if (temporizador >= 1000000000) {
+				System.out.println("Fps : " + contador);
 				temporizador = 0;
 				contador = 0;
 			}
-			
+
 		}
 	}
 
