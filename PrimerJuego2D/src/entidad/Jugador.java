@@ -1,6 +1,7 @@
 package entidad;
 
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -11,23 +12,29 @@ public class Jugador extends Entidad {
 
 	PanelJuego pj;
 	keyHandler kh;
-	
+
 	public final int screenX;
 	public final int screeny;
 
 	public Jugador(PanelJuego pj, keyHandler kh) {
 		this.pj = pj;
 		this.kh = kh;
-		
-		screenX = pj.anchoPantalla/2-(pj.tamanioTile/2);
-		screeny =pj.altoPantalla/2-(pj.tamanioTile/2);
-		
+
+		screenX = pj.anchoPantalla / 2 - (pj.tamanioTile / 2);
+		screeny = pj.altoPantalla / 2 - (pj.tamanioTile / 2);
+
+		AreaSolida = new Rectangle();
+		AreaSolida.x = 8;
+		AreaSolida.y = 16;
+		AreaSolida.height = 32;
+		AreaSolida.width = 32;
+
 		setValorePorDefecto();
 	}
 
 	public void setValorePorDefecto() {
-		worldx = pj.tamanioTile*23;
-		worldy = pj.tamanioTile*21;
+		worldx = pj.tamanioTile * 23;
+		worldy = pj.tamanioTile * 21;
 		vel = 4;
 		direccion = "abajo";
 		getImagenDelJugador();
@@ -55,6 +62,7 @@ public class Jugador extends Entidad {
 
 		if (kh.arribaPres == true || kh.abajoPres == true || kh.izqPres == true || kh.drchPres == true) {
 
+			/* aca hay un bug al hacerlo asi se puede saltar la colision presionando dos teclas
 			if (kh.arribaPres == true) {
 				direccion = "arriba";
 				worldy -= vel;
@@ -70,6 +78,37 @@ public class Jugador extends Entidad {
 			if (kh.drchPres == true) {
 				direccion = "derecha";
 				worldx += vel;
+			}*/
+			
+			//forma optima
+			if (kh.arribaPres == true) {
+				direccion = "arriba";
+				worldy -= vel;
+			}
+			else if (kh.abajoPres == true) {
+				direccion = "abajo";
+				worldy += vel;
+			}
+			else if (kh.izqPres == true) {
+				direccion = "izquierda";
+				worldx -= vel;
+			}
+			else if (kh.drchPres == true) {
+				direccion = "derecha";
+				worldx += vel;
+			}
+			// deteccion de coliciones
+			hayColision = false;
+			pj.dColisiones.chektile(this);
+
+			// una vez si se detecta colision, revertimos el movimiento
+			if (hayColision == true) {
+				switch (direccion) {
+				case "arriba" : worldy += vel;break;
+				case "abajo" : worldy -= vel;break;
+				case "izquierda" : worldx += vel;break;
+				case "derecha" : worldx -= vel;break;
+				}
 			}
 
 			contadorSpites++;

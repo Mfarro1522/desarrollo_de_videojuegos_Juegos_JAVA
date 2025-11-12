@@ -49,9 +49,10 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	// FPS
 	int FPS = 60;
-
+	
 	// tile - bg
 	TileManager tileManager = new TileManager(this);
+	public detectorColisiones dColisiones = new detectorColisiones(this);
 
 	public PanelJuego() {
 		this.setPreferredSize(new Dimension(anchoPantalla, altoPantalla));

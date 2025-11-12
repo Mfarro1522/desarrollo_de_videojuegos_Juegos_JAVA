@@ -12,8 +12,8 @@ import main.PanelJuego;
 public class TileManager {
 
 	PanelJuego pj;
-	Tile[] tiles;
-	int mapaPorNumeroTile[][];
+	public Tile[] tiles;
+	public int mapaPorNumeroTile[][];
 
 	public TileManager(PanelJuego pj) {
 		this.pj = pj;
@@ -31,21 +31,22 @@ public class TileManager {
 
 			tiles[1] = new Tile();
 			tiles[1].imagen = ImageIO.read(getClass().getResource("/tiles/pared_adobe.png"));
+			tiles[1].colision = true;
 
 			tiles[2] = new Tile();
 			tiles[2].imagen = ImageIO.read(getClass().getResource("/tiles/agua_normal.png"));
-
+			tiles[2].colision = true;
+			
 			tiles[3] = new Tile();
 			tiles[3].imagen = ImageIO.read(getClass().getResource("/tiles/piso_tierra.png"));
 
 			tiles[4] = new Tile();
 			tiles[4].imagen = ImageIO.read(getClass().getResource("/tiles/arbol.png"));
-
+			tiles[4].colision = true;
+			
 			tiles[5] = new Tile();
 			tiles[5].imagen = ImageIO.read(getClass().getResource("/tiles/arena.png"));
 
-			tiles[6] = new Tile();
-			tiles[6].imagen = ImageIO.read(getClass().getResource("/tiles/pasto_cosme1.png"));
 
 		} catch (IOException e) {
 			e.printStackTrace();
