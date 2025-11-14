@@ -15,5 +15,6 @@ public class Entidad {
 	public int numeroSpites = 1;
 	
 	public Rectangle AreaSolida;
+	//public Rectangle verHitbox ;
 	public boolean hayColision = false;
 }

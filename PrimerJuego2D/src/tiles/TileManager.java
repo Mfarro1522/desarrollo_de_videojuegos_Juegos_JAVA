@@ -17,38 +17,56 @@ public class TileManager {
 
 	public TileManager(PanelJuego pj) {
 		this.pj = pj;
-		tiles = new Tile[10];
 		mapaPorNumeroTile = new int[pj.maxWorldcol][pj.maxWorldfilas];
-		getImagenTile();
-		cargarMapa("/mapas/world01.txt");
+		getImagenTile("/tiles/rutaTiles.txt");
+		cargarMapa("/mapas/world01_1.txt");
 	}
 
-	public void getImagenTile() {
+	public void getImagenTile(String rutaTiles) {
 
 		try {
-			tiles[0] = new Tile();
-			tiles[0].imagen = ImageIO.read(getClass().getResource("/tiles/pasto_cosme.png"));
-
-			tiles[1] = new Tile();
-			tiles[1].imagen = ImageIO.read(getClass().getResource("/tiles/pared_adobe.png"));
-			tiles[1].colision = true;
-
-			tiles[2] = new Tile();
-			tiles[2].imagen = ImageIO.read(getClass().getResource("/tiles/agua_normal.png"));
-			tiles[2].colision = true;
+			InputStream is = getClass().getResourceAsStream(rutaTiles);
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
 			
-			tiles[3] = new Tile();
-			tiles[3].imagen = ImageIO.read(getClass().getResource("/tiles/piso_tierra.png"));
-
-			tiles[4] = new Tile();
-			tiles[4].imagen = ImageIO.read(getClass().getResource("/tiles/arbol.png"));
-			tiles[4].colision = true;
+			// para no usar array list
+			int numTiles = 0;
+			String linea;
+			while ((linea = br.readLine()) != null) {
+				if (!linea.trim().isEmpty()) {
+					numTiles++;
+				}
+			}
+			br.close();
+			tiles = new Tile[numTiles];
 			
-			tiles[5] = new Tile();
-			tiles[5].imagen = ImageIO.read(getClass().getResource("/tiles/arena.png"));
-
+			// se tiene que iniciar de nuevo despues del close
+			is = getClass().getResourceAsStream(rutaTiles);
+			br = new BufferedReader(new InputStreamReader(is));
+			
+			int indice = 0;
+			while ((linea = br.readLine()) != null) {
+				if (!linea.trim().isEmpty()) {
+					String[] parametros = linea.split(";");
+					
+					if (parametros.length >= 2) {
+						tiles[indice] = new Tile();
+						tiles[indice].imagen = ImageIO.read(getClass().getResource(parametros[0]));
+						
+						if (parametros[1].trim().equals("1")) {
+							tiles[indice].colision = true;
+						}
+						
+						indice++;
+					}
+				}
+			}
+			br.close();
 
 		} catch (IOException e) {
+			System.err.println("Error al leer rutaTiles: " + rutaTiles);
+			e.printStackTrace();
+		} catch (Exception e) {
+			System.err.println("Error general en getImagenTile:");
 			e.printStackTrace();
 		}
 
@@ -87,7 +105,7 @@ public class TileManager {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void draw(Graphics2D g2) {
 		int worldCol = 0;
 		int worldFila = 0;

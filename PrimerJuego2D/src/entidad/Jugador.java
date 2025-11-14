@@ -1,5 +1,6 @@
 package entidad;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -24,10 +25,17 @@ public class Jugador extends Entidad {
 		screeny = pj.altoPantalla / 2 - (pj.tamanioTile / 2);
 
 		AreaSolida = new Rectangle();
-		AreaSolida.x = 8;
-		AreaSolida.y = 16;
-		AreaSolida.height = 32;
-		AreaSolida.width = 32;
+		AreaSolida.height = (int)Math.round(pj.tamanioTile*0.6);
+		AreaSolida.width = (int)Math.round(pj.tamanioTile*0.5);
+		AreaSolida.x = (pj.tamanioTile-AreaSolida.width)/2;
+		AreaSolida.y = (pj.tamanioTile-AreaSolida.height)/2;
+		
+		/*
+		verHitbox = new Rectangle();
+		verHitbox.x = AreaSolida.x;
+		verHitbox.y = AreaSolida.y;
+		verHitbox.height = AreaSolida.height;
+		verHitbox.width = AreaSolida.width;*/
 
 		setValorePorDefecto();
 	}
@@ -189,7 +197,10 @@ public class Jugador extends Entidad {
 		}
 
 		g2.drawImage(imagen, screenX, screeny, pj.tamanioTile, pj.tamanioTile, null);
-
+		g2.setColor(Color.red);
+		/*verHitbox.x = screenX + AreaSolida.x;
+		verHitbox.y = screeny + AreaSolida.y;
+		g2.fill(this.verHitbox);*/
 	}
 
 }

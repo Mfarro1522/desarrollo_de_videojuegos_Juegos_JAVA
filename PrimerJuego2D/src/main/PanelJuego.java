@@ -23,16 +23,16 @@ import tiles.TileManager;
 @SuppressWarnings("serial")
 public class PanelJuego extends JPanel implements Runnable {
 
-	final int OriginalTile = 16; // juego 16x16
-	final int scale = 3;
+	final int OriginalTile = 32; // cambie el juego de 16x16 a 32x32
+	final int scale = 2;
 
-	public final int tamanioTile = OriginalTile * scale; // 48 *48
+	public final int tamanioTile = OriginalTile * scale; // 64x64
 	// relacion 4*3 clasica
 	public final int maxPantallaColumnas = 16;
 	public final int maxPantallaFilas = 12;
 	// tamaño de la panatalla
-	public final int anchoPantalla = tamanioTile * maxPantallaColumnas; // 768 px
-	public final int altoPantalla = tamanioTile * maxPantallaFilas; // 576 px
+	public final int anchoPantalla = tamanioTile * maxPantallaColumnas; 
+	public final int altoPantalla = tamanioTile * maxPantallaFilas; 
 
 	// ajustede del mundo
 	public final int maxWorldcol = 50;
