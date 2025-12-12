@@ -9,6 +9,7 @@ import java.awt.Toolkit;
 import javax.swing.JPanel;
 
 import entidad.Jugador;
+import objetos.superObjeto;
 import tiles.TileManager;
 
 /*
@@ -50,6 +51,14 @@ public class PanelJuego extends JPanel implements Runnable {
 	// FPS
 	int FPS = 60;
 	
+	//Objetos
+	public superObjeto [] objs = new superObjeto [10];
+	AssetSetter aSetter = new AssetSetter(this);
+	
+	//metodo setear las cnf bases de juego
+	public void setupJuego () {
+		 aSetter.setObjetct();
+	}
 	// tile - bg
 	TileManager tileManager = new TileManager(this);
 	public detectorColisiones dColisiones = new detectorColisiones(this);
@@ -112,7 +121,15 @@ public class PanelJuego extends JPanel implements Runnable {
 		super.paintComponent(g);
 
 		Graphics2D g2 = (Graphics2D) g;
+		//tiles
 		tileManager.draw(g2);
+		//objetos
+		for (int i = 0; i < objs.length; i++) {
+			if(objs[i] != null) {
+				objs[i].draw(g2, this);
+			}
+		}
+		//juagador
 		jugador.draw(g2);
 		g2.dispose();
 	}
