@@ -1,6 +1,5 @@
 package entidad;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -17,6 +16,16 @@ public class Jugador extends Entidad {
 	public final int screenX;
 	public final int screeny;
 
+	public int numeroLlaves = 0; // Contador de llaves recolectadas
+	
+
+	/**
+	 * Constructor de la clase Jugador. Inicializa la posición en pantalla y el área
+	 * sólida (hitbox).
+	 * 
+	 * @param pj - Referencia al PanelJuego principal.
+	 * @param kh - Referencia al manejador de teclas.
+	 */
 	public Jugador(PanelJuego pj, keyHandler kh) {
 		this.pj = pj;
 		this.kh = kh;
@@ -25,21 +34,21 @@ public class Jugador extends Entidad {
 		screeny = pj.altoPantalla / 2 - (pj.tamanioTile / 2);
 
 		AreaSolida = new Rectangle();
-		AreaSolida.height = (int)Math.round(pj.tamanioTile*0.6);
-		AreaSolida.width = (int)Math.round(pj.tamanioTile*0.5);
-		AreaSolida.x = (pj.tamanioTile-AreaSolida.width)/2;
-		AreaSolida.y = (pj.tamanioTile-AreaSolida.height)/2;
-		
-		/*
-		verHitbox = new Rectangle();
-		verHitbox.x = AreaSolida.x;
-		verHitbox.y = AreaSolida.y;
-		verHitbox.height = AreaSolida.height;
-		verHitbox.width = AreaSolida.width;*/
+		AreaSolida.height = (int) Math.round(pj.tamanioTile * 0.6);
+		AreaSolida.width = (int) Math.round(pj.tamanioTile * 0.5);
+		AreaSolida.x = (pj.tamanioTile - AreaSolida.width) / 2;
+		AreaSolida.y = (pj.tamanioTile - AreaSolida.height) / 2;
+
+		AreaSolidaDefaultX = AreaSolida.x;
+		AreaSolidaDefaultY = AreaSolida.y;
 
 		setValorePorDefecto();
 	}
 
+	/**
+	 * Establece los valores iniciales del jugador. Posición en el mundo, velocidad
+	 * y dirección.
+	 */
 	public void setValorePorDefecto() {
 		worldx = pj.tamanioTile * 23;
 		worldy = pj.tamanioTile * 21;
@@ -48,6 +57,9 @@ public class Jugador extends Entidad {
 		getImagenDelJugador();
 	}
 
+	/**
+	 * Carga las imágenes de los sprites del jugador desde los recursos.
+	 */
 	public void getImagenDelJugador() {
 
 		try {
@@ -66,56 +78,51 @@ public class Jugador extends Entidad {
 		}
 	}
 
+	/**
+	 * Actualiza la lógica del jugador. Procesa la entrada del usuario, mueve al
+	 * jugador y verifica colisiones.
+	 */
 	public void update() {
 
 		if (kh.arribaPres == true || kh.abajoPres == true || kh.izqPres == true || kh.drchPres == true) {
 
-			/* aca hay un bug al hacerlo asi se puede saltar la colision presionando dos teclas
 			if (kh.arribaPres == true) {
 				direccion = "arriba";
 				worldy -= vel;
-			}
-			if (kh.abajoPres == true) {
+			} else if (kh.abajoPres == true) {
 				direccion = "abajo";
 				worldy += vel;
-			}
-			if (kh.izqPres == true) {
+			} else if (kh.izqPres == true) {
 				direccion = "izquierda";
 				worldx -= vel;
-			}
-			if (kh.drchPres == true) {
-				direccion = "derecha";
-				worldx += vel;
-			}*/
-			
-			//forma optima
-			if (kh.arribaPres == true) {
-				direccion = "arriba";
-				worldy -= vel;
-			}
-			else if (kh.abajoPres == true) {
-				direccion = "abajo";
-				worldy += vel;
-			}
-			else if (kh.izqPres == true) {
-				direccion = "izquierda";
-				worldx -= vel;
-			}
-			else if (kh.drchPres == true) {
+			} else if (kh.drchPres == true) {
 				direccion = "derecha";
 				worldx += vel;
 			}
-			// deteccion de coliciones
+
+			// Detección de colisiones
 			hayColision = false;
 			pj.dColisiones.chektile(this);
 
-			// una vez si se detecta colision, revertimos el movimiento
+			int objIndex = pj.dColisiones.checkObjeto(this, true);
+			recogerObjeto(objIndex);
+
+			// Si detecta colisión, revertimos el movimiento
 			if (hayColision == true) {
+				//System.out.println("hay colision");
 				switch (direccion) {
-				case "arriba" : worldy += vel;break;
-				case "abajo" : worldy -= vel;break;
-				case "izquierda" : worldx += vel;break;
-				case "derecha" : worldx -= vel;break;
+				case "arriba":
+					worldy += vel;
+					break;
+				case "abajo":
+					worldy -= vel;
+					break;
+				case "izquierda":
+					worldx += vel;
+					break;
+				case "derecha":
+					worldx -= vel;
+					break;
 				}
 			}
 
@@ -135,11 +142,13 @@ public class Jugador extends Entidad {
 
 	}
 
+	/**
+	 * Dibuja al jugador en la pantalla.
+	 * 
+	 * @param g2 - Contexto gráfico 2D.
+	 */
 	public void draw(Graphics2D g2) {
 
-//		g2.setColor(Color.white);
-//		g2.fillRect(x, y, pj.tamanioTile, pj.tamanioTile);
-//
 		BufferedImage imagen = null;
 
 		switch (direccion) {
@@ -197,10 +206,40 @@ public class Jugador extends Entidad {
 		}
 
 		g2.drawImage(imagen, screenX, screeny, pj.tamanioTile, pj.tamanioTile, null);
-		g2.setColor(Color.red);
-		/*verHitbox.x = screenX + AreaSolida.x;
-		verHitbox.y = screeny + AreaSolida.y;
-		g2.fill(this.verHitbox);*/
+	}
+
+	// metodos del juego
+
+	/**
+	 * Recoge un objeto del mundo y ejecuta la acción correspondiente
+	 * 
+	 * @param index - índice del objeto en el array pj.obj[]
+	 */
+	public void recogerObjeto(int index) {
+		if (index != 999) { // 999 = sin colisión
+			String nombreObjeto = pj.objs[index].nombre;
+			switch (nombreObjeto) {
+			case "llave":
+				numeroLlaves++;
+				pj.objs[index] = null; // Eliminar objeto del mundo
+				System.out.println("Llaves: " + numeroLlaves);
+				break;
+			case "puerta":
+				if (numeroLlaves > 0) {
+					pj.objs[index] = null; // Eliminar puerta
+					numeroLlaves--; // Consumir una llave
+					System.out.println("¡Puerta abierta! Llaves restantes: " + numeroLlaves);
+				} else {
+					System.out.println("Necesitas una llave para abrir esta puerta");
+				}
+				break;
+			case "cofre":
+				// Placeholder: puedes añadir lógica propia
+				pj.objs[index] = null;
+				System.out.println("¡Cofre abierto!");
+				break;
+			}
+		}
 	}
 
 }

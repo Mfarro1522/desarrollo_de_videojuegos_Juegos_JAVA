@@ -12,15 +12,11 @@ import entidad.Jugador;
 import objetos.superObjeto;
 import tiles.TileManager;
 
-/*
- * el estilo de juego es retro 2d basado en mosaicos tiles
- * todos los elementos npcs personaje objetos etc se construyen con sprites
- * de tamaño fijo tipicamente 16x16 o 32x32 pixeles
- * como los sistemas retro por ejemplo snes usaban resoluciones bajas como 256x224
- * los graficos se veian bien a escala 11 pero en pantallas modernas eso es muy pequeño
- * por eso aplicaremos escalado entero para mantener el estilo pixel art sin distorsion
+/**
+ * Panel principal del juego que maneja el bucle de juego, la renderización y la
+ * lógica.
+ * Implementa un sistema de tiles retro escalados (original 32x32, escalado x2).
  */
-
 @SuppressWarnings("serial")
 public class PanelJuego extends JPanel implements Runnable {
 
@@ -32,8 +28,8 @@ public class PanelJuego extends JPanel implements Runnable {
 	public final int maxPantallaColumnas = 16;
 	public final int maxPantallaFilas = 12;
 	// tamaño de la panatalla
-	public final int anchoPantalla = tamanioTile * maxPantallaColumnas; 
-	public final int altoPantalla = tamanioTile * maxPantallaFilas; 
+	public final int anchoPantalla = tamanioTile * maxPantallaColumnas;
+	public final int altoPantalla = tamanioTile * maxPantallaFilas;
 
 	// ajustede del mundo
 	public final int maxWorldcol = 50;
@@ -50,16 +46,17 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	// FPS
 	int FPS = 60;
-	
-	//Objetos
-	public superObjeto [] objs = new superObjeto [10];
+
+	public superObjeto[] objs = new superObjeto[10];
 	AssetSetter aSetter = new AssetSetter(this);
-	
-	//metodo setear las cnf bases de juego
-	public void setupJuego () {
-		 aSetter.setObjetct();
+
+	/**
+	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
+	 */
+	public void setupJuego() {
+		aSetter.setObjetct();
 	}
-	// tile - bg
+
 	TileManager tileManager = new TileManager(this);
 	public detectorColisiones dColisiones = new detectorColisiones(this);
 
@@ -78,7 +75,10 @@ public class PanelJuego extends JPanel implements Runnable {
 		threadJuego.start();
 	}
 
-	// Game loop
+	/**
+	 * Bucle principal del juego (Game Loop).
+	 * Controla la actualización de lógica y el repintado a 60 FPS.
+	 */
 	public void run() {
 		double intervaloDibujo = 1000000000 / FPS;
 		double delta = 0;
@@ -105,7 +105,7 @@ public class PanelJuego extends JPanel implements Runnable {
 			}
 
 			if (temporizador >= 1000000000) {
-				System.out.println("Fps : " + contador);
+				//System.out.println("Fps : " + contador);
 				temporizador = 0;
 				contador = 0;
 			}
@@ -117,19 +117,22 @@ public class PanelJuego extends JPanel implements Runnable {
 		jugador.update();
 	}
 
+	/**
+	 * Dibuja todos los componentes del juego (Tiles, Objetos, Jugador) en el panel.
+	 */
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 
 		Graphics2D g2 = (Graphics2D) g;
-		//tiles
+		// tiles
 		tileManager.draw(g2);
-		//objetos
+		// objetos
 		for (int i = 0; i < objs.length; i++) {
-			if(objs[i] != null) {
+			if (objs[i] != null) {
 				objs[i].draw(g2, this);
 			}
 		}
-		//juagador
+		// juagador
 		jugador.draw(g2);
 		g2.dispose();
 	}

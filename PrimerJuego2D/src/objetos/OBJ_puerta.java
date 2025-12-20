@@ -13,6 +13,7 @@ public class OBJ_puerta extends superObjeto {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        colision = true;
     }
 
 }

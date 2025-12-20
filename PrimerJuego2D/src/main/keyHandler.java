@@ -3,16 +3,22 @@ package main;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
+/**
+ * Manejador de eventos de teclado.
+ * Controla el estado de las teclas (W, A, S, D) para el movimiento.
+ */
 public class keyHandler implements KeyListener {
-	
-	public boolean arribaPres , abajoPres , izqPres , drchPres;
-	
+
+	public boolean arribaPres, abajoPres, izqPres, drchPres;
+
 	@Override
 	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-
 	}
 
+	/**
+	 * Se ejecuta cuando una tecla es presionada.
+	 * Marca la bandera correspondiente a true.
+	 */
 	@Override
 	public void keyPressed(KeyEvent e) {
 		int keycode = e.getKeyCode();
@@ -32,6 +38,10 @@ public class keyHandler implements KeyListener {
 
 	}
 
+	/**
+	 * Se ejecuta cuando una tecla es liberada.
+	 * Marca la bandera correspondiente a false.
+	 */
 	@Override
 	public void keyReleased(KeyEvent e) {
 		int keycode = e.getKeyCode();

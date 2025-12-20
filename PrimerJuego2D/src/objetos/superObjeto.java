@@ -1,6 +1,7 @@
 package objetos;
 
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 import main.PanelJuego;
@@ -11,6 +12,11 @@ public class superObjeto {
 	public String nombre;
 	public boolean colision;
 	public int worldX , worldY;
+	
+	//hitbox por defecto del tamaño del tile
+	public Rectangle AreaSolida = new Rectangle(0, 0, 48, 48); 
+	public int AreaSolidaDefaultX = 0;
+	public int AreaSolidaDefaultY = 0;
 	
 	public void draw(Graphics2D g2 , PanelJuego pj) {
 
