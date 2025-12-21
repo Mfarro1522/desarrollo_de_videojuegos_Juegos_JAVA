@@ -6,6 +6,8 @@ Repositorio donde registro mi proceso de aprendizaje, prácticas y ejercicios so
 
 Este repositorio está pensado para organizar y documentar mi aprendizaje en la creación de videojuegos en Java. Aquí guardaré código, notas y explicaciones relacionadas: manejo de pantallas, tiles, renderizado, lógica del juego y otros fundamentos importantes.
 
+![Preview del Juego](preview/Videocaptura%20de%20pantalla_20251221_010449.gif)
+
 Aunque este material está orientado a mi uso personal, incluyo las referencias de los tutoriales y recursos que sigo para que cualquier persona pueda consultarlos directamente.
 
 Además, todas las explicaciones detalladas y el avance paso por paso estarán organizados en mi Notion:
