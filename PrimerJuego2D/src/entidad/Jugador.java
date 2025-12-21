@@ -1,10 +1,13 @@
 package entidad;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
+
 import main.PanelJuego;
 import main.keyHandler;
 
@@ -17,7 +20,6 @@ public class Jugador extends Entidad {
 	public final int screeny;
 
 	public int numeroLlaves = 0; // Contador de llaves recolectadas
-	
 
 	/**
 	 * Constructor de la clase Jugador. Inicializa la posición en pantalla y el área
@@ -34,10 +36,10 @@ public class Jugador extends Entidad {
 		screeny = pj.altoPantalla / 2 - (pj.tamanioTile / 2);
 
 		AreaSolida = new Rectangle();
-		AreaSolida.height = (int) Math.round(pj.tamanioTile * 0.6);
-		AreaSolida.width = (int) Math.round(pj.tamanioTile * 0.5);
+		AreaSolida.height = (int) Math.round(pj.tamanioTile * 0.3);
+		AreaSolida.width = (int) Math.round(pj.tamanioTile * 0.25);
 		AreaSolida.x = (pj.tamanioTile - AreaSolida.width) / 2;
-		AreaSolida.y = (pj.tamanioTile - AreaSolida.height) / 2;
+		AreaSolida.y = (pj.tamanioTile - AreaSolida.height);
 
 		AreaSolidaDefaultX = AreaSolida.x;
 		AreaSolidaDefaultY = AreaSolida.y;
@@ -109,20 +111,20 @@ public class Jugador extends Entidad {
 
 			// Si detecta colisión, revertimos el movimiento
 			if (hayColision == true) {
-				//System.out.println("hay colision");
+				// System.out.println("hay colision");
 				switch (direccion) {
-				case "arriba":
-					worldy += vel;
-					break;
-				case "abajo":
-					worldy -= vel;
-					break;
-				case "izquierda":
-					worldx += vel;
-					break;
-				case "derecha":
-					worldx -= vel;
-					break;
+					case "arriba":
+						worldy += vel;
+						break;
+					case "abajo":
+						worldy -= vel;
+						break;
+					case "izquierda":
+						worldx += vel;
+						break;
+					case "derecha":
+						worldx -= vel;
+						break;
 				}
 			}
 
@@ -152,60 +154,61 @@ public class Jugador extends Entidad {
 		BufferedImage imagen = null;
 
 		switch (direccion) {
-		case "arriba":
-			if (numeroSpites == 1) {
-				imagen = arriba1;
-			}
-			if (numeroSpites == 2) {
-				imagen = arriba2;
-			}
-			if (numeroSpites == 3) {
-				imagen = arriba2;
-			}
+			case "arriba":
+				if (numeroSpites == 1) {
+					imagen = arriba1;
+				}
+				if (numeroSpites == 2) {
+					imagen = arriba2;
+				}
+				if (numeroSpites == 3) {
+					imagen = arriba2;
+				}
 
-			break;
-		case "abajo":
-			if (numeroSpites == 1) {
-				imagen = abajo1;
-			}
-			if (numeroSpites == 2) {
-				imagen = abajo2;
-			}
-			if (numeroSpites == 3) {
-				imagen = abajo2;
-			}
+				break;
+			case "abajo":
+				if (numeroSpites == 1) {
+					imagen = abajo1;
+				}
+				if (numeroSpites == 2) {
+					imagen = abajo2;
+				}
+				if (numeroSpites == 3) {
+					imagen = abajo2;
+				}
 
-			break;
-		case "izquierda":
-			if (numeroSpites == 1) {
-				imagen = izquierda1;
-			}
-			if (numeroSpites == 2) {
-				imagen = izquierda3;
-			}
-			if (numeroSpites == 3) {
-				imagen = izquierda2;
-			}
+				break;
+			case "izquierda":
+				if (numeroSpites == 1) {
+					imagen = izquierda1;
+				}
+				if (numeroSpites == 2) {
+					imagen = izquierda3;
+				}
+				if (numeroSpites == 3) {
+					imagen = izquierda2;
+				}
 
-			break;
-		case "derecha":
-			if (numeroSpites == 1) {
-				imagen = derecha1;
-			}
-			if (numeroSpites == 2) {
-				imagen = derecha3;
-			}
-			if (numeroSpites == 3) {
-				imagen = derecha2;
-			}
+				break;
+			case "derecha":
+				if (numeroSpites == 1) {
+					imagen = derecha1;
+				}
+				if (numeroSpites == 2) {
+					imagen = derecha3;
+				}
+				if (numeroSpites == 3) {
+					imagen = derecha2;
+				}
 
-			break;
+				break;
 
-		default:
-			break;
+			default:
+				break;
 		}
 
 		g2.drawImage(imagen, screenX, screeny, pj.tamanioTile, pj.tamanioTile, null);
+		//verHitbox(g2);
 	}
 
 	// metodos del juego
@@ -219,27 +222,49 @@ public class Jugador extends Entidad {
 		if (index != 999) { // 999 = sin colisión
 			String nombreObjeto = pj.objs[index].nombre;
 			switch (nombreObjeto) {
-			case "llave":
-				numeroLlaves++;
-				pj.objs[index] = null; // Eliminar objeto del mundo
-				System.out.println("Llaves: " + numeroLlaves);
-				break;
-			case "puerta":
-				if (numeroLlaves > 0) {
-					pj.objs[index] = null; // Eliminar puerta
-					numeroLlaves--; // Consumir una llave
-					System.out.println("¡Puerta abierta! Llaves restantes: " + numeroLlaves);
-				} else {
-					System.out.println("Necesitas una llave para abrir esta puerta");
-				}
-				break;
-			case "cofre":
-				// Placeholder: puedes añadir lógica propia
-				pj.objs[index] = null;
-				System.out.println("¡Cofre abierto!");
-				break;
+				case "llave":
+					pj.playSE(1);
+					numeroLlaves++;
+					pj.objs[index] = null; // Eliminar objeto del mundo
+					System.out.println("Llaves: " + numeroLlaves);
+					break;
+				case "puerta":
+					
+					if (numeroLlaves > 0) {
+						pj.playSE(3);
+						pj.objs[index] = null; // Eliminar puerta
+						numeroLlaves--; // Consumir una llave
+						System.out.println("¡Puerta abierta! Llaves restantes: " + numeroLlaves);
+					} else {
+						System.out.println("Necesitas una llave para abrir esta puerta");
+					}
+					break;
+				case "cofre":
+					pj.playSE(4);
+					pj.objs[index] = null;
+					System.out.println("¡Cofre abierto!");
+					break;
+				case "botas":
+					pj.playSE(2);
+					vel+=4;
+					pj.objs[index] = null;
+					System.out.println("¡Botas de velocidad! Velocidad actual: "+ vel);
+					
+					break;
+					
 			}
 		}
+	}
+
+	/**
+	 * Dibuja el área sólida (hitbox) del jugador como un rectángulo rojo.
+	 * Usa los valores directamente del AreaSolida.
+	 * 
+	 * @param g2 - Contexto gráfico 2D.
+	 */
+	public void verHitbox(Graphics2D g2) {
+		g2.setColor(Color.RED);
+		g2.drawRect(screenX + AreaSolida.x, screeny + AreaSolida.y, AreaSolida.width, AreaSolida.height);
 	}
 
 }

@@ -1,5 +1,6 @@
 package objetos;
 
+import java.awt.Rectangle;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;

@@ -47,14 +47,19 @@ public class PanelJuego extends JPanel implements Runnable {
 	// FPS
 	int FPS = 60;
 
-	public superObjeto[] objs = new superObjeto[10];
+	public superObjeto[] objs = new superObjeto[15];
 	AssetSetter aSetter = new AssetSetter(this);
+	
+	// Sistema de sonido
+	Sound musica = new Sound();
+	Sound efectoSonido = new Sound();
 
 	/**
 	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
 	 */
 	public void setupJuego() {
 		aSetter.setObjetct();
+		reproducirMusicaFondo(0);
 	}
 
 	TileManager tileManager = new TileManager(this);
@@ -136,5 +141,29 @@ public class PanelJuego extends JPanel implements Runnable {
 		jugador.draw(g2);
 		g2.dispose();
 	}
-
+	
+	/**
+	* Reproduce música de fondo en bucle.
+	* @param i - Índice del archivo de música en Sound.soundURL[]
+	*/
+	public void reproducirMusicaFondo (int i) {
+		musica.setFile(i);
+		musica.play();
+		musica.loop();
+	}
+	/**
+	 * detener musica
+	 */
+	public void stopMusic() {
+		 musica.stop();
+		}
+	
+	/**
+	* Reproduce un efecto de sonido puntual.
+	* @param i - Índice del efecto de sonido en Sound.soundURL[]
+	*/
+	public void playSE(int i) {
+	 efectoSonido.setFile(i);
+	 efectoSonido.play();
+	}
 }

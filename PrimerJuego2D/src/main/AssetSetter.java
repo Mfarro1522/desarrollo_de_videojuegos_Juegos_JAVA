@@ -2,6 +2,7 @@ package main;
 
 import objetos.OBJ_llave;
 import objetos.OBJ_puerta;
+import objetos.OBJ_botas;
 import objetos.OBJ_cofre;
 
 /**
@@ -47,18 +48,11 @@ public class AssetSetter {
 		pj.objs[6].worldX = 10 * pj.tamanioTile;
 		pj.objs[6].worldY = 7 * pj.tamanioTile;
 		
-		pj.objs[7] = new OBJ_llave();
-		pj.objs[7].worldX = 22 * pj.tamanioTile;
-		pj.objs[7].worldY = 21 * pj.tamanioTile;
-		
-		pj.objs[8] = new OBJ_llave();
-		pj.objs[8].worldX = 21* pj.tamanioTile;
-		pj.objs[8].worldY = 21* pj.tamanioTile;
-		
-		pj.objs[9] = new OBJ_llave();
-		pj.objs[9].worldX = 20 * pj.tamanioTile;
-		pj.objs[9].worldY = 21 * pj.tamanioTile;
-		
+		pj.objs[7] = new OBJ_botas();
+		pj.objs[7].worldX = 37 * pj.tamanioTile;
+		pj.objs[7].worldY = 42 * pj.tamanioTile;
+
+
 	}
 
 }
