@@ -53,6 +53,9 @@ public class PanelJuego extends JPanel implements Runnable {
 	// Sistema de sonido
 	Sound musica = new Sound();
 	Sound efectoSonido = new Sound();
+	
+	// Interfaz de Usuario (HUD)
+	public UI ui = new UI(this);
 
 	/**
 	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
@@ -139,6 +142,10 @@ public class PanelJuego extends JPanel implements Runnable {
 		}
 		// juagador
 		jugador.draw(g2);
+		
+		// 4. UI (HUD) - ¡SIEMPRE AL FINAL!
+		 ui.draw(g2);
+		 
 		g2.dispose();
 	}
 	
