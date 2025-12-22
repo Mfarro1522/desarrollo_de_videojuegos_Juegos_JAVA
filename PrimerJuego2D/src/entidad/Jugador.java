@@ -113,18 +113,18 @@ public class Jugador extends Entidad {
 			if (hayColision == true) {
 				// System.out.println("hay colision");
 				switch (direccion) {
-					case "arriba":
-						worldy += vel;
-						break;
-					case "abajo":
-						worldy -= vel;
-						break;
-					case "izquierda":
-						worldx += vel;
-						break;
-					case "derecha":
-						worldx -= vel;
-						break;
+				case "arriba":
+					worldy += vel;
+					break;
+				case "abajo":
+					worldy -= vel;
+					break;
+				case "izquierda":
+					worldx += vel;
+					break;
+				case "derecha":
+					worldx -= vel;
+					break;
 				}
 			}
 
@@ -154,61 +154,61 @@ public class Jugador extends Entidad {
 		BufferedImage imagen = null;
 
 		switch (direccion) {
-			case "arriba":
-				if (numeroSpites == 1) {
-					imagen = arriba1;
-				}
-				if (numeroSpites == 2) {
-					imagen = arriba2;
-				}
-				if (numeroSpites == 3) {
-					imagen = arriba2;
-				}
+		case "arriba":
+			if (numeroSpites == 1) {
+				imagen = arriba1;
+			}
+			if (numeroSpites == 2) {
+				imagen = arriba2;
+			}
+			if (numeroSpites == 3) {
+				imagen = arriba2;
+			}
 
-				break;
-			case "abajo":
-				if (numeroSpites == 1) {
-					imagen = abajo1;
-				}
-				if (numeroSpites == 2) {
-					imagen = abajo2;
-				}
-				if (numeroSpites == 3) {
-					imagen = abajo2;
-				}
+			break;
+		case "abajo":
+			if (numeroSpites == 1) {
+				imagen = abajo1;
+			}
+			if (numeroSpites == 2) {
+				imagen = abajo2;
+			}
+			if (numeroSpites == 3) {
+				imagen = abajo2;
+			}
 
-				break;
-			case "izquierda":
-				if (numeroSpites == 1) {
-					imagen = izquierda1;
-				}
-				if (numeroSpites == 2) {
-					imagen = izquierda3;
-				}
-				if (numeroSpites == 3) {
-					imagen = izquierda2;
-				}
+			break;
+		case "izquierda":
+			if (numeroSpites == 1) {
+				imagen = izquierda1;
+			}
+			if (numeroSpites == 2) {
+				imagen = izquierda3;
+			}
+			if (numeroSpites == 3) {
+				imagen = izquierda2;
+			}
 
-				break;
-			case "derecha":
-				if (numeroSpites == 1) {
-					imagen = derecha1;
-				}
-				if (numeroSpites == 2) {
-					imagen = derecha3;
-				}
-				if (numeroSpites == 3) {
-					imagen = derecha2;
-				}
+			break;
+		case "derecha":
+			if (numeroSpites == 1) {
+				imagen = derecha1;
+			}
+			if (numeroSpites == 2) {
+				imagen = derecha3;
+			}
+			if (numeroSpites == 3) {
+				imagen = derecha2;
+			}
 
-				break;
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 
 		g2.drawImage(imagen, screenX, screeny, pj.tamanioTile, pj.tamanioTile, null);
-		//verHitbox(g2);
+		// verHitbox(g2);
 	}
 
 	// metodos del juego
@@ -222,43 +222,44 @@ public class Jugador extends Entidad {
 		if (index != 999) { // 999 = sin colisión
 			String nombreObjeto = pj.objs[index].nombre;
 			switch (nombreObjeto) {
-				case "llave":
-					pj.playSE(1);
-					numeroLlaves++;
-					pj.objs[index] = null; // Eliminar objeto del mundo
-					System.out.println("Llaves: " + numeroLlaves);
-					break;
-				case "puerta":
-					
-					if (numeroLlaves > 0) {
-						pj.playSE(3);
-						pj.objs[index] = null; // Eliminar puerta
-						numeroLlaves--; // Consumir una llave
-						System.out.println("¡Puerta abierta! Llaves restantes: " + numeroLlaves);
-					} else {
-						System.out.println("Necesitas una llave para abrir esta puerta");
-					}
-					break;
-				case "cofre":
-					pj.playSE(4);
-					pj.objs[index] = null;
-					System.out.println("¡Cofre abierto!");
-					break;
-				case "botas":
-					pj.playSE(2);
-					vel+=4;
-					pj.objs[index] = null;
-					System.out.println("¡Botas de velocidad! Velocidad actual: "+ vel);
-					
-					break;
-					
+			case "llave":
+				pj.playSE(1);
+				numeroLlaves++;
+				pj.objs[index] = null; // Eliminar objeto del mundo
+				pj.ui.mostrarMensaje("encontraste 1 llave");
+				break;
+			case "puerta":
+
+				if (numeroLlaves > 0) {
+					pj.playSE(3);
+					pj.objs[index] = null; // Eliminar puerta
+					numeroLlaves--; // Consumir una llave
+					pj.ui.mostrarMensaje("Llaves restantes: " + numeroLlaves);
+				} else {
+					System.out.println("oe busca las llaves ps");
+				}
+				break;
+			case "cofre":
+				pj.playSE(4);
+				pj.objs[index] = null;
+				pj.ui.juegoTerminado = true;
+				pj.stopMusic();
+				break;
+			case "botas":
+				pj.playSE(2);
+				vel += 4;
+				pj.objs[index] = null;
+				pj.ui.mostrarMensaje("¡Velocidad aumentada loquito!");
+
+				break;
+
 			}
 		}
 	}
 
 	/**
-	 * Dibuja el área sólida (hitbox) del jugador como un rectángulo rojo.
-	 * Usa los valores directamente del AreaSolida.
+	 * Dibuja el área sólida (hitbox) del jugador como un rectángulo rojo. Usa los
+	 * valores directamente del AreaSolida.
 	 * 
 	 * @param g2 - Contexto gráfico 2D.
 	 */
