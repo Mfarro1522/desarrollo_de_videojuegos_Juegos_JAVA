@@ -6,8 +6,6 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
-
 import main.PanelJuego;
 import main.keyHandler;
 
@@ -39,7 +37,7 @@ public class Jugador extends Entidad {
 		AreaSolida.height = (int) Math.round(pj.tamanioTile * 0.3);
 		AreaSolida.width = (int) Math.round(pj.tamanioTile * 0.25);
 		AreaSolida.x = (pj.tamanioTile - AreaSolida.width) / 2;
-		AreaSolida.y = (pj.tamanioTile - AreaSolida.height);
+		AreaSolida.y = (pj.tamanioTile - AreaSolida.height -4);
 
 		AreaSolidaDefaultX = AreaSolida.x;
 		AreaSolidaDefaultY = AreaSolida.y;
@@ -85,6 +83,8 @@ public class Jugador extends Entidad {
 	 * jugador y verifica colisiones.
 	 */
 	public void update() {
+		
+		int contadorReposo = 0; 
 
 		if (kh.arribaPres == true || kh.abajoPres == true || kh.izqPres == true || kh.drchPres == true) {
 
@@ -129,7 +129,7 @@ public class Jugador extends Entidad {
 			}
 
 			contadorSpites++;
-			if (contadorSpites > 10) {
+			if (contadorSpites > 10d) {
 				if (numeroSpites == 1) {
 					numeroSpites = 2;
 				} else if (numeroSpites == 2) {
@@ -138,6 +138,14 @@ public class Jugador extends Entidad {
 					numeroSpites = 1;
 				}
 				contadorSpites = 0;
+				
+			} else { //nueva logica agregada para un reposo mas sueve no que se detenga en seco
+				//en si es mas para evitar glitches
+				 contadorReposo++;
+				if (contadorReposo == 20) { 
+				 numeroSpites = 1;  
+				 contadorReposo = 0; 
+				}
 			}
 
 		}
@@ -208,7 +216,7 @@ public class Jugador extends Entidad {
 		}
 
 		g2.drawImage(imagen, screenX, screeny, pj.tamanioTile, pj.tamanioTile, null);
-		// verHitbox(g2);
+		verHitbox(g2);
 	}
 
 	// metodos del juego
@@ -249,7 +257,7 @@ public class Jugador extends Entidad {
 				pj.playSE(2);
 				vel += 4;
 				pj.objs[index] = null;
-				pj.ui.mostrarMensaje("¡Velocidad aumentada loquito!");
+				pj.ui.mostrarMensaje("¡Velocidad aumentada loquito !");
 
 				break;
 

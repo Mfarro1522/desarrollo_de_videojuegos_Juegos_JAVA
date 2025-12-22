@@ -113,7 +113,6 @@ public class PanelJuego extends JPanel implements Runnable {
 			}
 
 			if (temporizador >= 1000000000) {
-				//System.out.println("Fps : " + contador);
 				temporizador = 0;
 				contador = 0;
 			}
