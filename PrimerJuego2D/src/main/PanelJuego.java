@@ -20,7 +20,8 @@ import tiles.TileManager;
  */
 @SuppressWarnings("serial")
 public class PanelJuego extends JPanel implements Runnable {
-
+	int prueba ;
+	int prueba2;
 	final int OriginalTile = 32; // cambie el juego de 16x16 a 32x32
 	final int scale = 2;
 
@@ -172,6 +173,7 @@ public class PanelJuego extends JPanel implements Runnable {
 	}
 	
 	/**
+
 	* Reproduce música de fondo en bucle.
 	* @param i - Índice del archivo de música en Sound.soundURL[]
 	*/
