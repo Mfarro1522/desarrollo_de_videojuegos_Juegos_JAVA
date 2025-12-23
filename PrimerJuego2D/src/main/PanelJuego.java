@@ -172,6 +172,7 @@ public class PanelJuego extends JPanel implements Runnable {
 	}
 	
 	/**
+
 	* Reproduce música de fondo en bucle.
 	* @param i - Índice del archivo de música en Sound.soundURL[]
 	*/
