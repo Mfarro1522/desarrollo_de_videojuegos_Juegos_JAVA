@@ -2,6 +2,7 @@ package main;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
@@ -56,6 +57,12 @@ public class PanelJuego extends JPanel implements Runnable {
 	
 	// Interfaz de Usuario (HUD)
 	public UI ui = new UI(this);
+	
+	
+	// Sistema de medición de rendimiento
+	private boolean chkTiempoDibujado = true; //debug
+	private long iniciDibujo;
+	private long TiempoDibujo;
 
 	/**
 	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
@@ -129,7 +136,9 @@ public class PanelJuego extends JPanel implements Runnable {
 	 */
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-
+		
+		iniciDibujo = System.nanoTime();
+		
 		Graphics2D g2 = (Graphics2D) g;
 		// tiles
 		tileManager.draw(g2);
@@ -144,6 +153,20 @@ public class PanelJuego extends JPanel implements Runnable {
 		
 		// 4. UI (HUD) - ¡SIEMPRE AL FINAL!
 		 ui.draw(g2);
+		 
+		 TiempoDibujo = System.nanoTime() - iniciDibujo;
+		 
+		 if(chkTiempoDibujado) {
+			 /*Font arial_20 = new Font("Arial", Font.PLAIN, 20);
+			 g2.setFont(arial_20);
+			 g2.setColor(Color.WHITE);
+			 g2.drawString("Tiempo Dibujado : "+TiempoDibujo + ".ns ", 10 , 400);
+			 g2.drawString("Tiempo Dibujado : " + (TiempoDibujo/ 1000000.0) + "ms", 10, 440);*/
+			 System.out.println("Tiempo Dibujado : "+TiempoDibujo + ".ns ");
+			 System.out.println("Tiempo Dibujado : " + (TiempoDibujo/ 1000000.0) + "ms");
+		 }
+		 
+		 
 		 
 		g2.dispose();
 	}

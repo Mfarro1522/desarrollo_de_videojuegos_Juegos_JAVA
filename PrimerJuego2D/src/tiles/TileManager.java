@@ -1,19 +1,36 @@
 package tiles;
 
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.Buffer;
 
 import javax.imageio.ImageIO;
 import main.PanelJuego;
+import main.UtilityTool;
 
 public class TileManager {
 
 	PanelJuego pj;
 	public Tile[] tiles;
 	public int mapaPorNumeroTile[][];
+	private UtilityTool miTool = new UtilityTool();
+
+	private void setup(int indice, String ruta, boolean colision) {
+		try {
+			// cargar imagen
+			BufferedImage imagen_original = ImageIO.read(getClass().getResource(ruta));
+			// escalarla
+			tiles[indice].imagen = miTool.escalarImagen(imagen_original, pj.tamanioTile, pj.tamanioTile);
+			tiles[indice].colision = colision;
+		} catch (IOException e) {
+			System.err.println("Error al cargar imagen: " + ruta);
+			e.printStackTrace();
+		}
+	}
 
 	public TileManager(PanelJuego pj) {
 		this.pj = pj;
@@ -27,7 +44,7 @@ public class TileManager {
 		try {
 			InputStream is = getClass().getResourceAsStream(rutaTiles);
 			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			
+
 			// para no usar array list
 			int numTiles = 0;
 			String linea;
@@ -38,24 +55,22 @@ public class TileManager {
 			}
 			br.close();
 			tiles = new Tile[numTiles];
-			
+
 			// se tiene que iniciar de nuevo despues del close
 			is = getClass().getResourceAsStream(rutaTiles);
 			br = new BufferedReader(new InputStreamReader(is));
-			
+
 			int indice = 0;
 			while ((linea = br.readLine()) != null) {
 				if (!linea.trim().isEmpty()) {
 					String[] parametros = linea.split(";");
-					
+
 					if (parametros.length >= 2) {
 						tiles[indice] = new Tile();
 						tiles[indice].imagen = ImageIO.read(getClass().getResource(parametros[0]));
-						
-						if (parametros[1].trim().equals("1")) {
-							tiles[indice].colision = true;
-						}
-						
+
+						boolean tieneColision = parametros[1].trim().equals("1");
+						setup(indice, parametros[0], tieneColision);
 						indice++;
 					}
 				}
@@ -105,7 +120,7 @@ public class TileManager {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void draw(Graphics2D g2) {
 		int worldCol = 0;
 		int worldFila = 0;
@@ -120,11 +135,12 @@ public class TileManager {
 			int screenX = worldX - pj.jugador.worldx + pj.jugador.screenX;
 			int screenY = worldY - pj.jugador.worldy + pj.jugador.screeny;
 
-			if (worldX +pj.tamanioTile> pj.jugador.worldx - pj.jugador.screenX && worldX - pj.tamanioTile< pj.jugador.worldx + pj.jugador.screenX
-					&& worldY +pj.tamanioTile > pj.jugador.worldy - pj.jugador.screeny
-					&& worldY -pj.tamanioTile< pj.jugador.worldy + pj.jugador.screeny) {
-				g2.drawImage(tiles[numeroTile].imagen, screenX, screenY, pj.tamanioTile, pj.tamanioTile, null);
-				
+			if (worldX + pj.tamanioTile > pj.jugador.worldx - pj.jugador.screenX
+					&& worldX - pj.tamanioTile < pj.jugador.worldx + pj.jugador.screenX
+					&& worldY + pj.tamanioTile > pj.jugador.worldy - pj.jugador.screeny
+					&& worldY - pj.tamanioTile < pj.jugador.worldy + pj.jugador.screeny) {
+				g2.drawImage(tiles[numeroTile].imagen, screenX, screenY, null);
+
 			}
 			worldCol++;
 			if (worldCol == pj.maxWorldcol) {
