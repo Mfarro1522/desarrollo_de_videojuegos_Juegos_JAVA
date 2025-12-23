@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 import main.PanelJuego;
+import main.UtilityTool;
 
 public class superObjeto {
 	
@@ -12,6 +13,7 @@ public class superObjeto {
 	public String nombre;
 	public boolean colision;
 	public int worldX , worldY;
+	protected UtilityTool miTool = new UtilityTool();
 	
 	//hitbox por defecto del tamaño del tile
 	public Rectangle AreaSolida = new Rectangle(0, 0, 48, 48); 
@@ -26,7 +28,7 @@ public class superObjeto {
 			if (worldX +pj.tamanioTile> pj.jugador.worldx - pj.jugador.screenX && worldX - pj.tamanioTile< pj.jugador.worldx + pj.jugador.screenX
 					&& worldY +pj.tamanioTile > pj.jugador.worldy - pj.jugador.screeny
 					&& worldY -pj.tamanioTile< pj.jugador.worldy + pj.jugador.screeny) {
-				g2.drawImage(imagen, screenX, screenY, pj.tamanioTile, pj.tamanioTile, null);
+				g2.drawImage(imagen, screenX, screenY, null);
 				
 			}
 			

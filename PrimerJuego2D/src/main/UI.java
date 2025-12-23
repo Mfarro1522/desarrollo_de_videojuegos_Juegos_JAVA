@@ -39,7 +39,7 @@ public class UI {
 		arial_40 = new Font("Arial", Font.PLAIN, 40);
 		arial_80B = new Font("Arial", Font.BOLD, 80);
 		// Cargar imagen de llave para mostrar en el HUD
-		OBJ_llave llave = new OBJ_llave();
+		OBJ_llave llave = new OBJ_llave(pj.tamanioTile);
 		imagenLlave = llave.imagen;
 	}
 
@@ -78,40 +78,18 @@ public class UI {
 
 		// Dibujar número de llaves con borde negro
 		g2.setColor(Color.BLACK);
-		for (int dx = -3; dx <= 3; dx++) {
-			for (int dy = -3; dy <= 3; dy++) {
-				if (dx != 0 || dy != 0) {
-					g2.drawString(" x " + pj.jugador.numeroLlaves, 77 + dx, 65 + dy);
-				}
-			}
-		}
 		g2.setColor(Color.WHITE);
 		g2.drawString(" x " + pj.jugador.numeroLlaves, 77, 65);
 
 		// === TIEMPO DE JUEGO ===
 		tiempoJuego += (double) 1 / 60; // Incrementar cada frame
-		g2.setColor(Color.BLACK);
-		for (int dx = -3; dx <= 3; dx++) {
-			for (int dy = -3; dy <= 3; dy++) {
-				if (dx != 0 || dy != 0) {
-					g2.drawString("Tiempo: " + formatoDecimal.format(tiempoJuego), pj.tamanioTile * 11+dx, 65+dy);
-				}
-			}
-		}
+	
 		g2.setColor(Color.WHITE);
 		g2.drawString("Tiempo: " + formatoDecimal.format(tiempoJuego), pj.tamanioTile * 11, 65);
 
 		// === MENSAJES TEMPORALES ===
 		if (mensajeActivo == true) {
 			g2.setFont(g2.getFont().deriveFont(30F));
-			g2.setColor(Color.BLACK);
-			for (int dx = -2; dx <= 2; dx++) {
-				for (int dy = -2; dy <= 2; dy++) {
-					if (dx != 0 || dy != 0) {
-						g2.drawString(mensaje, pj.tamanioTile / 2+dx, pj.tamanioTile * 5+dy);
-					}
-				}
-			}
 			g2.setColor(Color.WHITE);
 			g2.drawString(mensaje, pj.tamanioTile / 2, pj.tamanioTile * 5);
 			contadorMensaje++;
@@ -121,6 +99,7 @@ public class UI {
 				mensajeActivo = false;
 			}
 		}
+		
 	}
 
 	/**
@@ -158,14 +137,6 @@ public class UI {
 		longitudTexto = (int) g2.getFontMetrics().getStringBounds(texto, g2).getWidth();
 		x = (pj.anchoPantalla / 2) - (longitudTexto / 2);
 		y = pj.altoPantalla / 2 + (pj.tamanioTile * 2);
-		g2.setColor(Color.BLACK);
-		for (int dx = -2; dx <= 2; dx++) {
-			for (int dy = -2; dy <= 2; dy++) {
-				if (dx != 0 || dy != 0) {
-					g2.drawString(texto, x+dx, y+dy);
-				}
-			}
-		}
 		g2.setColor(Color.WHITE);
 		g2.drawString(texto, x, y);
 		
