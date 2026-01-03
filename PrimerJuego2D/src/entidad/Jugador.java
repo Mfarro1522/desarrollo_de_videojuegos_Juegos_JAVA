@@ -59,8 +59,8 @@ public class Jugador extends Entidad {
 	 * y dirección.
 	 */
 	public void setValorePorDefecto() {
-		worldx = pj.tamanioTile * 23;
-		worldy = pj.tamanioTile * 21;
+		worldx = pj.tamanioTile * 24;
+		worldy = pj.tamanioTile * 20;
 		vel = 4;
 		direccion = "abajo";
 		getImagenDelJugador();
@@ -247,47 +247,12 @@ public class Jugador extends Entidad {
 	// metodos del juego
 
 	/**
-	 * Recoge un objeto del mundo y ejecuta la acción correspondiente
-	 * 
+	* Maneja la interacción con objetos del mundo.
 	 * @param index - índice del objeto en el array pj.obj[]
 	 */
 	public void recogerObjeto(int index) {
-		if (index != 999) { // 999 = sin colisión
-			String nombreObjeto = pj.objs[index].nombre;
-			switch (nombreObjeto) {
-			case "llave":
-				pj.playSE(1);
-				numeroLlaves++;
-				pj.objs[index] = null; // Eliminar objeto del mundo
-				pj.ui.mostrarMensaje("encontraste 1 llave");
-				break;
-			case "puerta":
-
-				if (numeroLlaves > 0) {
-					pj.playSE(3);
-					pj.objs[index] = null; // Eliminar puerta
-					numeroLlaves--; // Consumir una llave
-					pj.ui.mostrarMensaje("Llaves restantes: " + numeroLlaves);
-				} else {
-					System.out.println("oe busca las llaves ps");
-				}
-				break;
-			case "cofre":
-				pj.playSE(4);
-				pj.objs[index] = null;
-				pj.ui.juegoTerminado = true;
-				pj.stopMusic();
-				break;
-			case "botas":
-				pj.playSE(2);
-				vel += 4;
-				pj.objs[index] = null;
-				pj.ui.mostrarMensaje("¡Velocidad aumentada loquito !");
-
-				break;
-
-			}
-		}
+		// Por ahora vacío - se implementará el nuevo sistema de
+		//objetos del Action RPG
 	}
 
 }
