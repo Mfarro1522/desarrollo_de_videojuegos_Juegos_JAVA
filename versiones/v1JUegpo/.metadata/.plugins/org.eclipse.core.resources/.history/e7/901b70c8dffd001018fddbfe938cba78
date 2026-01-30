@@ -1,0 +1,12 @@
+package appGraficos2D01;
+
+public class appGraficos2D01 {
+
+	public static void main(String[] args) {
+	
+		JFrameGrafico2D01 frameGrafico2D01 = new JFrameGrafico2D01();
+		
+
+	}
+
+}
