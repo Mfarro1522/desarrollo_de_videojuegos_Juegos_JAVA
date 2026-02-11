@@ -1,4 +1,0 @@
-INDEX VERSION 1.134+/home/mauricio/Descargas/v1JUegpo/.metadata/.plugins/org.eclipse.jdt.core
-1865797976.index
-3168456050.index
-4014748847.index

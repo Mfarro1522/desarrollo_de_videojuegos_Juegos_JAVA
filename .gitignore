@@ -1,0 +1,46 @@
+# ============================================
+# .gitignore para proyecto Java colaborativo
+# Eclipse + NetBeans + IntelliJ
+# ============================================
+
+# ------ Compilación Java ------
+*.class
+*.jar
+*.war
+*.ear
+
+# ------ Carpetas de salida (build/compilación) ------
+bin/
+out/
+build/
+dist/
+target/
+
+# ------ Eclipse ------
+.project
+.classpath
+.settings/
+.metadata/
+
+# ------ NetBeans ------
+nbproject/private/
+nbbuild/
+nbdist/
+nb-configuration.xml
+
+# ------ IntelliJ IDEA (por si acaso) ------
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ------ Sistema operativo ------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# ------ Logs y temporales ------
+*.log
+hs_err_pid*
