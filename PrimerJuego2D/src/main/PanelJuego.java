@@ -34,8 +34,8 @@ public class PanelJuego extends JPanel implements Runnable {
 	public final int altoPantalla = tamanioTile * maxPantallaFilas;
 
 	// ajustede del mundo
-	public final int maxWorldcol = 50;
-	public final int maxWorldfilas = 50;
+	public final int maxWorldcol = 100;
+	public final int maxWorldfilas = 100;
 	public final int maxWorldAncho = maxWorldcol * tamanioTile;
 	public final int maxWorldAlto = maxWorldfilas * tamanioTile;
 
