@@ -26,6 +26,14 @@ public class Jugador extends Entidad {
 	private UtilityTool miTool = new UtilityTool();
 
 	public int numeroLlaves = 0; // Contador de llaves recolectadas
+	
+	// Sistema de power-ups
+	public PowerUpManager powerUps = new PowerUpManager();
+	
+	// Sistema de ataque automático
+	private int contadorAtaque = 0;
+	private int intervaloAtaque = 30; // Dispara cada 30 frames (0.5 segundos a 60 FPS)
+	private int velocidadBase = 4;
 
 	/**
 	 * Constructor de la clase Jugador. Inicializa la posición en pantalla y el área
@@ -59,10 +67,20 @@ public class Jugador extends Entidad {
 	 * y dirección.
 	 */
 	public void setValorePorDefecto() {
-		worldx = pj.tamanioTile * 24;
-		worldy = pj.tamanioTile * 20;
-		vel = 4;
+		// Posicionar al jugador en el CENTRO del mapa
+		worldx = pj.tamanioTile * (pj.maxWorldcol / 2);
+		worldy = pj.tamanioTile * (pj.maxWorldfilas / 2);
+		vel = velocidadBase;
 		direccion = "abajo";
+		
+		// ===== Estadísticas del jugador =====
+		vidaMaxima = 25;
+		vidaActual = vidaMaxima;
+		ataque = 10;
+		defensa = 5;
+		estaVivo = true;
+		estado = EstadoEntidad.IDLE;
+		
 		getImagenDelJugador();
 	}
 
@@ -93,7 +111,14 @@ public class Jugador extends Entidad {
 	 */
 	
 	public void update() {
+		// Actualizar invulnerabilidad
+		actualizarInvulnerabilidad();
 		
+		// No actualizar si está muerto
+		if (!estaVivo) {
+			estado = EstadoEntidad.MURIENDO;
+			return;
+		}
 		
 		if(hayMovimiento == false ) {
 			if (kh.arribaPres == true) {
@@ -167,7 +192,59 @@ public class Jugador extends Entidad {
 			}
 		}
 		
+		// Actualizar estado del jugador
+		if (hayMovimiento) {
+			estado = EstadoEntidad.MOVIENDO;
+		} else {
+			estado = EstadoEntidad.IDLE;
+		}
 		
+		// Actualizar power-ups
+		powerUps.actualizar();
+		
+		// Aplicar multiplicador de velocidad
+		vel = (int)(velocidadBase * powerUps.multiplicadorVelocidad);
+		
+		// Sistema de ataque automático
+		contadorAtaque++;
+		if (contadorAtaque >= intervaloAtaque) {
+			dispararProyectil();
+			contadorAtaque = 0;
+		}
+	}
+	
+	/**
+	 * Dispara un proyectil en la dirección actual del jugador
+	 */
+	private void dispararProyectil() {
+		// Buscar espacio vacío en el array de proyectiles 
+		for (int i = 0; i < pj.proyectiles.length; i++) {
+			if (pj.proyectiles[i] == null) {
+				int dano = (int)(ataque * powerUps.multiplicadorAtaque);
+				int proyectilX = worldx + pj.tamanioTile / 2 - 8;
+				int proyectilY = worldy + pj.tamanioTile / 2 - 8;
+				
+				pj.proyectiles[i] = new Proyectil(pj, proyectilX, proyectilY, direccion, dano);
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * Sobrescribe recibirDanio para registrar estadísticas y aplicar invencibilidad
+	 */
+	@Override
+	public void recibirDanio(int cantidad) {
+		// Verificar invencibilidad por power-up
+		if (powerUps.invencibilidadActiva) {
+			return;
+		}
+		
+		// Registrar estadística
+		pj.stats.registrarAtaqueRecibido(cantidad);
+		
+		// Llamar al método padre
+		super.recibirDanio(cantidad);
 	}
 	
 
@@ -237,6 +314,12 @@ public class Jugador extends Entidad {
 
 		g2.drawImage(imagen, screenX, screeny,  null);
 		
+		// Efecto de daño (parpadeo)
+		if (contadorInvulnerabilidad > 0 && contadorInvulnerabilidad % 10 < 5) {
+			g2.setColor(new Color(255, 0, 0, 100));
+			g2.fillRect(screenX, screeny, pj.tamanioTile, pj.tamanioTile);
+		}
+		
 		//hitbox
 		if(debug) {
 			g2.setColor(Color.RED);
@@ -251,8 +334,35 @@ public class Jugador extends Entidad {
 	 * @param index - índice del objeto en el array pj.obj[]
 	 */
 	public void recogerObjeto(int index) {
-		// Por ahora vacío - se implementará el nuevo sistema de
-		//objetos del Action RPG
+		if (index != 999) {
+			// Verificar si es un cofre power-up
+			if (pj.objs[index] instanceof objetos.OBJ_CofrePowerUp) {
+				objetos.OBJ_CofrePowerUp cofre = (objetos.OBJ_CofrePowerUp) pj.objs[index];
+				
+				// Aplicar power-up
+				switch (cofre.tipoPowerUp) {
+					case INVENCIBILIDAD:
+						powerUps.activarInvencibilidad(10);
+						pj.agregarNotificacion("🛡 Invencibilidad activada!", Color.CYAN, 3);
+						break;
+					case VELOCIDAD:
+						powerUps.aumentarVelocidad(50, 15);
+						pj.agregarNotificacion("⚡ Velocidad aumentada!", Color.YELLOW, 3);
+						break;
+					case ATAQUE:
+						powerUps.aumentarAtaque(30, 20);
+						pj.agregarNotificacion("💪 Ataque aumentado!", Color.RED, 3);
+						break;
+					case CURACION:
+						vidaActual = Math.min(vidaActual + 30, vidaMaxima);
+						pj.agregarNotificacion("❤ +30 de vida!", Color.GREEN, 3);
+						break;
+				}
+				
+				pj.stats.registrarCofreRecogido();
+				pj.objs[index] = null; // Eliminar cofre del mapa
+			}
+		}
 	}
 
 }

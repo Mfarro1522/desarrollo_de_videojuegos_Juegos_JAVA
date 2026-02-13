@@ -30,6 +30,7 @@ public class keyHandler implements KeyListener {
 		int keycode = e.getKeyCode();
 
 		if (pj.gameState == pj.playState) {
+			// WASD
 			if (keycode == KeyEvent.VK_W) {
 				arribaPres = true;
 			}
@@ -42,6 +43,20 @@ public class keyHandler implements KeyListener {
 			if (keycode == KeyEvent.VK_D) {
 				drchPres = true;
 			}
+			
+			// Flechas (agregado)
+			if (keycode == KeyEvent.VK_UP) {
+				arribaPres = true;
+			}
+			if (keycode == KeyEvent.VK_DOWN) {
+				abajoPres = true;
+			}
+			if (keycode == KeyEvent.VK_LEFT) {
+				izqPres = true;
+			}
+			if (keycode == KeyEvent.VK_RIGHT) {
+				drchPres = true;
+			}
 
 			// tecla de pausa
 			if (keycode == KeyEvent.VK_P) {
@@ -51,6 +66,12 @@ public class keyHandler implements KeyListener {
 			// tecla de pausa en este caso como esta detenido quita la pausa
 			if (keycode == KeyEvent.VK_P) {
 				pj.gameState = pj.playState;
+			}
+			
+		} else if (pj.gameState == pj.gameOverState) {
+			// tecla para reiniciar el juego
+			if (keycode == KeyEvent.VK_R) {
+				pj.reiniciarJuego();
 			}
 		}
 
@@ -64,6 +85,7 @@ public class keyHandler implements KeyListener {
 	public void keyReleased(KeyEvent e) {
 		int keycode = e.getKeyCode();
 
+		// WASD
 		if (keycode == KeyEvent.VK_W) {
 			arribaPres = false;
 		}
@@ -74,6 +96,20 @@ public class keyHandler implements KeyListener {
 			izqPres = false;
 		}
 		if (keycode == KeyEvent.VK_D) {
+			drchPres = false;
+		}
+		
+		// Flechas (agregado)
+		if (keycode == KeyEvent.VK_UP) {
+			arribaPres = false;
+		}
+		if (keycode == KeyEvent.VK_DOWN) {
+			abajoPres = false;
+		}
+		if (keycode == KeyEvent.VK_LEFT) {
+			izqPres = false;
+		}
+		if (keycode == KeyEvent.VK_RIGHT) {
 			drchPres = false;
 		}
 

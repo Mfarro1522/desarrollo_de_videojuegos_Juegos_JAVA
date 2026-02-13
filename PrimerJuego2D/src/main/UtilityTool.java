@@ -5,6 +5,7 @@ package main;
 interpolación NEAREST_NEIGHBOR para mantener la nitidez del los pixel art.
 */
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -37,5 +38,20 @@ public class UtilityTool {
 		return imagenScalada;
 	}
 	
+	/**
+	 * Crea una imagen de color sólido (útil para placeholders)
+	 * @param ancho - Ancho de la imagen
+	 * @param alto - Alto de la imagen
+	 * @param color - Color de relleno
+	 * @return BufferedImage con el color especificado
+	 */
+	public BufferedImage crearImagenColor(int ancho, int alto, Color color) {
+		BufferedImage imagen = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = imagen.createGraphics();
+		g2.setColor(color);
+		g2.fillRect(0, 0, ancho, alto);
+		g2.dispose();
+		return imagen;
+	}
 
 }
