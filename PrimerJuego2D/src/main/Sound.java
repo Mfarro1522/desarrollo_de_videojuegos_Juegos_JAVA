@@ -21,7 +21,7 @@ public class Sound {
 	public Sound() {
 
 		// Índice 0: Música de fondo
-		soundURL[0] = getClass().getResource("/sound/BlueBoyAdventure.wav");
+		soundURL[0] = getClass().getResource("/sound/Doom.wav");
 		// Índice 1: Efecto de recoger llave
 		soundURL[1] = getClass().getResource("/sound/coin.wav");
 		// Índice 2: Efecto de recoger power-up (botas)
@@ -48,24 +48,25 @@ public class Sound {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
-	* Inicia la reproducción del clip cargado.
-	*/
-	
-	public void play () {
+	 * Inicia la reproducción del clip cargado.
+	 */
+
+	public void play() {
 		clip.start();
 	}
-	
+
 	/**
-	* Reproduce el clip en bucle infinito (para música de fondo).
-	*/
+	 * Reproduce el clip en bucle infinito (para música de fondo).
+	 */
 	public void loop() {
 		clip.loop(Clip.LOOP_CONTINUOUSLY);
 	}
+
 	/**
-	* Detiene la reproducción del clip.
-	*/
+	 * Detiene la reproducción del clip.
+	 */
 	public void stop() {
 		clip.stop();
 	}

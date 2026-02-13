@@ -89,7 +89,7 @@ public class Jugador extends Entidad {
 	public void getImagenDelJugador() {
 
 		try {
-			rutaCarpeta = "/jugador/";
+			rutaCarpeta = "/jugador/Mago/";
 
 			arriba1 = miTool.escalarImagen(
 					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "arriba_0001.png")), pj.tamanioTile,
