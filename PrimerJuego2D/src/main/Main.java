@@ -24,7 +24,7 @@ public class Main {
 
 		ventana.pack(); // empaquetamos para verlo
 
-		ventana.setTitle("Primer Juego 2D");
+		ventana.setTitle("Arena Survivors");
 		ventana.setLocationRelativeTo(null);
 		ventana.setVisible(true);
 

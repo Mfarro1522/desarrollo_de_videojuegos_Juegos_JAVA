@@ -2,7 +2,6 @@ package main;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
@@ -82,7 +81,10 @@ public class PanelJuego extends JPanel implements Runnable {
 	public final int playState = 1; // Jugando
 	public final int pauseState = 2; // Pausado
 	public final int dialogoState = 3; // En diálogo (futuro)
-	public final int gameOverState = 4; // Game Over (nuevo)
+	public final int gameOverState = 4; // Game Over
+	public final int menuState = 5; // Menú principal
+	public final int seleccionState = 6; // Selección de personaje
+	public final int creditosState = 7; // Créditos
 	// Estado actual del juego
 	public int gameState;
 
@@ -95,16 +97,8 @@ public class PanelJuego extends JPanel implements Runnable {
 	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
 	 */
 	public void setupJuego() {
-		aSetter.setObjetct();
-		aSetter.setNPCs();
-		reproducirMusicaFondo(0);
-
-		// Iniciar estadísticas
-		stats.setPanelJuego(this);
-		stats.iniciar();
-
-		// iniciar estado de juego
-		gameState = playState;
+		// Iniciar en el menú principal
+		gameState = menuState;
 	}
 
 	TileManager tileManager = new TileManager(this);
@@ -169,72 +163,67 @@ public class PanelJuego extends JPanel implements Runnable {
 	private final int intervaloVerificacionCercanos = 180; // Cada 3 segundos
 
 	public void update() {
-		if (gameState == playState) {
-			// Estado : jugando
-			jugador.update();
+		// Solo actualizar lógica de juego en playState
+		if (gameState != playState) {
+			return;
+		}
 
-			// Actualizar estadísticas
-			stats.actualizar();
+		// Estado : jugando
+		jugador.update();
 
-			// Actualizar notificaciones
-			for (int i = notificaciones.size() - 1; i >= 0; i--) {
-				notificaciones.get(i).actualizar();
-				if (!notificaciones.get(i).estaActiva()) {
-					notificaciones.remove(i);
-				}
+		// Actualizar estadísticas
+		stats.actualizar();
+
+		// Actualizar notificaciones
+		for (int i = notificaciones.size() - 1; i >= 0; i--) {
+			notificaciones.get(i).actualizar();
+			if (!notificaciones.get(i).estaActiva()) {
+				notificaciones.remove(i);
 			}
+		}
 
-			// Actualizar NPCs
-			for (int i = 0; i < npcs.length; i++) {
-				if (npcs[i] != null) {
-					if (npcs[i].estaVivo) {
-						// NPC vivo: actualizar normalmente
-						npcs[i].update();
-					} else {
-						// NPC muriendo: actualizar animación de muerte
-						npcs[i].update();
-
-						// Eliminar solo después de completar la animación de muerte
-						if (npcs[i].frameMuerte >= 3) {
-							npcs[i] = null;
-							contadorNPCs--;
-						}
+		// Actualizar NPCs
+		for (int i = 0; i < npcs.length; i++) {
+			if (npcs[i] != null) {
+				if (npcs[i].estaVivo) {
+					npcs[i].update();
+				} else {
+					npcs[i].update();
+					if (npcs[i].frameMuerte >= 3) {
+						npcs[i] = null;
+						contadorNPCs--;
 					}
 				}
 			}
+		}
 
-			// Sistema de respawn continuo de enemigos
-			contadorRespawn++;
-			if (contadorRespawn >= intervaloRespawn) {
-				aSetter.respawnearEnemigos();
-				contadorRespawn = 0;
+		// Sistema de respawn continuo de enemigos
+		contadorRespawn++;
+		if (contadorRespawn >= intervaloRespawn) {
+			aSetter.respawnearEnemigos();
+			contadorRespawn = 0;
+		}
+
+		// Verificar enemigos cercanos y spawnear si no hay
+		contadorVerificacionCercanos++;
+		if (contadorVerificacionCercanos >= intervaloVerificacionCercanos) {
+			aSetter.verificarYSpawnearCercanos();
+			contadorVerificacionCercanos = 0;
+		}
+
+		// Actualizar proyectiles
+		for (int i = 0; i < proyectiles.length; i++) {
+			if (proyectiles[i] != null && proyectiles[i].activo) {
+				proyectiles[i].update();
+			} else if (proyectiles[i] != null && !proyectiles[i].activo) {
+				proyectiles[i] = null;
 			}
+		}
 
-			// Verificar enemigos cercanos y spawnear si no hay
-			contadorVerificacionCercanos++;
-			if (contadorVerificacionCercanos >= intervaloVerificacionCercanos) {
-				aSetter.verificarYSpawnearCercanos();
-				contadorVerificacionCercanos = 0;
-			}
-
-			// Actualizar proyectiles
-			for (int i = 0; i < proyectiles.length; i++) {
-				if (proyectiles[i] != null && proyectiles[i].activo) {
-					proyectiles[i].update();
-				} else if (proyectiles[i] != null && !proyectiles[i].activo) {
-					proyectiles[i] = null;
-				}
-			}
-
-			// Verificar muerte del jugador
-			if (!jugador.estaVivo) {
-				stats.finalizarJuego();
-				gameState = gameOverState;
-			}
-		} else {
-			// Estado: en pausa o game over
-			// aqui ira lo demas
-
+		// Verificar muerte del jugador
+		if (!jugador.estaVivo) {
+			stats.finalizarJuego();
+			gameState = gameOverState;
 		}
 	}
 
@@ -247,29 +236,32 @@ public class PanelJuego extends JPanel implements Runnable {
 		iniciDibujo = System.nanoTime();
 
 		Graphics2D g2 = (Graphics2D) g;
-		// tiles
-		tileManager.draw(g2);
-		// objetos
-		for (int i = 0; i < objs.length; i++) {
-			if (objs[i] != null) {
-				objs[i].draw(g2, this);
+
+		// Solo dibujar mundo del juego en estados de juego
+		if (gameState == playState || gameState == pauseState || gameState == gameOverState) {
+			// tiles
+			tileManager.draw(g2);
+			// objetos
+			for (int i = 0; i < objs.length; i++) {
+				if (objs[i] != null) {
+					objs[i].draw(g2, this);
+				}
 			}
-		}
-		// NPCs
-		for (int i = 0; i < npcs.length; i++) {
-			if (npcs[i] != null) {
-				// Dibujar NPC si está vivo O si está muriendo (para mostrar animación)
-				npcs[i].draw(g2);
+			// NPCs
+			for (int i = 0; i < npcs.length; i++) {
+				if (npcs[i] != null) {
+					npcs[i].draw(g2);
+				}
 			}
-		}
-		// Proyectiles
-		for (int i = 0; i < proyectiles.length; i++) {
-			if (proyectiles[i] != null && proyectiles[i].activo) {
-				proyectiles[i].draw(g2);
+			// Proyectiles
+			for (int i = 0; i < proyectiles.length; i++) {
+				if (proyectiles[i] != null && proyectiles[i].activo) {
+					proyectiles[i].draw(g2);
+				}
 			}
+			// jugador
+			jugador.draw(g2);
 		}
-		// juagador
-		jugador.draw(g2);
 
 		// 4. UI (HUD) - ¡SIEMPRE AL FINAL!
 		ui.draw(g2);
@@ -323,8 +315,21 @@ public class PanelJuego extends JPanel implements Runnable {
 	 * Reinicia el juego a su estado inicial
 	 */
 	public void reiniciarJuego() {
+		// Volver al menú principal
+		gameState = menuState;
+	}
+
+	/**
+	 * Inicia el juego con el personaje seleccionado.
+	 * Configura al jugador, coloca objetos/NPCs y arranca la música.
+	 * 
+	 * @param tipoPersonaje - "Sideral", "Mago" o "Doom"
+	 */
+	public void iniciarJuego(String tipoPersonaje) {
+		// Configurar personaje
+		jugador.configurarPersonaje(tipoPersonaje);
+
 		// Reiniciar jugador
-		jugador.setValorePorDefecto();
 		jugador.powerUps = new PowerUpManager();
 
 		// Limpiar NPCs
@@ -346,11 +351,15 @@ public class PanelJuego extends JPanel implements Runnable {
 		stats.setPanelJuego(this);
 		stats.iniciar();
 
-		// Reiniciar objetos y NPCs
+		// Colocar objetos y NPCs
 		aSetter.setObjetct();
 		aSetter.setNPCs();
 
-		// Volver al juego
+		// TODO: Agregar música diferente para el menú
+		stopMusic(); // Detener música anterior (si hay)
+		reproducirMusicaFondo(0); // Doom.wav para el juego
+
+		// Iniciar juego
 		gameState = playState;
 	}
 

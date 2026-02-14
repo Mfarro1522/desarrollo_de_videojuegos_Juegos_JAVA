@@ -32,15 +32,17 @@ public class Jugador extends Entidad {
 
 	// Sistema de ataque automático
 	private int contadorAtaque = 0;
-	private int intervaloAtaque = 30; // Dispara cada 30 frames (0.5 segundos a 60 FPS)
+	private int intervaloAtaque = 30; // Dispara cada 30 frames (0.5 seg a 60 FPS)
 	private int velocidadBase = 4;
 
+	// ===== Sistema de personaje =====
+	public String tipoPersonaje = "Doom"; // "Sideral", "Mago", "Doom"
+	private boolean esMelee = false; // true = Doom (sin proyectiles, daño al contacto)
+	private boolean tieneSpritesAtaque = true;
+	private boolean tieneSpritesmuerte = true;
+
 	/**
-	 * Constructor de la clase Jugador. Inicializa la posición en pantalla y el área
-	 * sólida (hitbox).
-	 * 
-	 * @param pj - Referencia al PanelJuego principal.
-	 * @param kh - Referencia al manejador de teclas.
+	 * Constructor de la clase Jugador.
 	 */
 	public Jugador(PanelJuego pj, keyHandler kh) {
 		this.pj = pj;
@@ -62,17 +64,74 @@ public class Jugador extends Entidad {
 	}
 
 	/**
-	 * Establece los valores iniciales del jugador. Posición en el mundo, velocidad
-	 * y dirección.
+	 * Configura el personaje seleccionado y carga sus recursos.
+	 *
+	 * @param tipo - "Sideral", "Mago" o "Doom"
+	 */
+	public void configurarPersonaje(String tipo) {
+		this.tipoPersonaje = tipo;
+
+		switch (tipo) {
+			case "Sideral":
+				rutaCarpeta = "/jugador/Sideral/";
+				vidaMaxima = 20;
+				ataque = 15;
+				defensa = 3;
+				velocidadBase = 5;
+				esMelee = false;
+				tieneSpritesAtaque = false; // Usa placeholders rojos
+				tieneSpritesmuerte = false; // Usa placeholders rojos
+				break;
+			case "Mago":
+				rutaCarpeta = "/jugador/Mago/";
+				vidaMaxima = 15;
+				ataque = 20;
+				defensa = 2;
+				velocidadBase = 4;
+				esMelee = false;
+				tieneSpritesAtaque = true;
+				tieneSpritesmuerte = true;
+				break;
+			case "Doom":
+			default:
+				rutaCarpeta = "/jugador/Doom/";
+				vidaMaxima = 30;
+				ataque = 12;
+				defensa = 8;
+				velocidadBase = 3;
+				esMelee = true; // Daño cuerpo a cuerpo
+				tieneSpritesAtaque = true;
+				tieneSpritesmuerte = true;
+				break;
+		}
+
+		// Resetear estado
+		vidaActual = vidaMaxima;
+		vel = velocidadBase;
+		estaVivo = true;
+		estado = EstadoEntidad.IDLE;
+		direccion = "abajo";
+		frameMuerte = 0;
+		contadorMuerte = 0;
+		contadorAnimAtaque = 0;
+
+		// Posicionar en el centro del mapa
+		worldx = pj.tamanioTile * (pj.maxWorldcol / 2);
+		worldy = pj.tamanioTile * (pj.maxWorldfilas / 2);
+
+		// Cargar sprites
+		getImagenDelJugador();
+	}
+
+	/**
+	 * Establece valores por defecto (se llama desde constructor).
 	 */
 	public void setValorePorDefecto() {
-		// Posicionar al jugador en el CENTRO del mapa
 		worldx = pj.tamanioTile * (pj.maxWorldcol / 2);
 		worldy = pj.tamanioTile * (pj.maxWorldfilas / 2);
 		vel = velocidadBase;
 		direccion = "abajo";
 
-		// ===== Estadísticas del jugador =====
 		vidaMaxima = 25;
 		vidaActual = vidaMaxima;
 		ataque = 10;
@@ -87,10 +146,13 @@ public class Jugador extends Entidad {
 	 * Carga las imágenes de los sprites del jugador desde los recursos.
 	 */
 	public void getImagenDelJugador() {
-
 		try {
-			rutaCarpeta = "/jugador/Mago/";
+			// Si no se ha configurado personaje aún, usar Doom por defecto
+			if (rutaCarpeta == null || rutaCarpeta.isEmpty()) {
+				rutaCarpeta = "/jugador/Doom/";
+			}
 
+			// ===== Sprites de movimiento (siempre disponibles) =====
 			arriba1 = miTool.escalarImagen(
 					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "arriba_0001.png")), pj.tamanioTile,
 					pj.tamanioTile);
@@ -114,39 +176,54 @@ public class Jugador extends Entidad {
 					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izquierda_0002.png")), pj.tamanioTile,
 					pj.tamanioTile);
 
-			// ===== Sprites de ataque por dirección =====
-			ataqueArriba = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueArriba_0001.png")), pj.tamanioTile,
-					pj.tamanioTile);
-			ataqueAbajo = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0002.png")), pj.tamanioTile,
-					pj.tamanioTile);
-			ataqueDer = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")), pj.tamanioTile,
-					pj.tamanioTile);
-			ataqueIzq = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")), pj.tamanioTile,
-					pj.tamanioTile);
+			// ===== Sprites de ataque (si existen) =====
+			if (tieneSpritesAtaque) {
+				ataqueArriba = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueArriba_0001.png")),
+						pj.tamanioTile, pj.tamanioTile);
+				ataqueAbajo = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0002.png")),
+						pj.tamanioTile, pj.tamanioTile);
+				ataqueDer = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")),
+						pj.tamanioTile, pj.tamanioTile);
+				ataqueIzq = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")),
+						pj.tamanioTile, pj.tamanioTile);
+			} else {
+				// Placeholders: se dibujarán como cuadros rojos en draw()
+				ataqueArriba = null;
+				ataqueAbajo = null;
+				ataqueDer = null;
+				ataqueIzq = null;
+			}
 
-			// ===== Sprites de muerte =====
-			muerte1 = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0001.png")), pj.tamanioTile,
-					pj.tamanioTile);
-			muerte2 = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0002.png")), pj.tamanioTile,
-					pj.tamanioTile);
-			muerte3 = miTool.escalarImagen(
-					ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0003.png")), pj.tamanioTile,
-					pj.tamanioTile);
+			// ===== Sprites de muerte (si existen) =====
+			if (tieneSpritesmuerte) {
+				muerte1 = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0001.png")),
+						pj.tamanioTile, pj.tamanioTile);
+				muerte2 = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0002.png")),
+						pj.tamanioTile, pj.tamanioTile);
+				muerte3 = miTool.escalarImagen(
+						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0003.png")),
+						pj.tamanioTile, pj.tamanioTile);
+			} else {
+				// Placeholders: se dibujarán como cuadros rojos en draw()
+				muerte1 = null;
+				muerte2 = null;
+				muerte3 = null;
+			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	/**
-	 * Actualiza la lógica del jugador. Procesa la entrada del usuario, mueve al
-	 * jugador y verifica colisiones.
-	 */
+	// ===================================================================
+	// UPDATE
+	// ===================================================================
 
 	public void update() {
 		// Actualizar invulnerabilidad
@@ -170,11 +247,18 @@ public class Jugador extends Entidad {
 		if (contadorAnimAtaque > 0) {
 			contadorAnimAtaque--;
 			estado = EstadoEntidad.ATACANDO;
+
+			// Doom: hacer daño melee mientras ataca
+			if (esMelee) {
+				atacarMelee();
+			}
+
 			if (contadorAnimAtaque == 0) {
 				estado = EstadoEntidad.IDLE;
 			}
 		}
 
+		// ===== Movimiento =====
 		if (hayMovimiento == false) {
 			if (kh.arribaPres == true) {
 				direccion = "arriba";
@@ -192,7 +276,6 @@ public class Jugador extends Entidad {
 		}
 
 		if (hayMovimiento == true) {
-
 			// Detección de colisiones
 			hayColision = false;
 			pj.dColisiones.chektile(this);
@@ -237,8 +320,7 @@ public class Jugador extends Entidad {
 				contadorSpites = 0;
 			}
 
-		} else { // nueva logica agregada para un reposo mas sueve no que se detenga en seco
-			// en si es mas para evitar glitches
+		} else {
 			contadorReposo++;
 			if (contadorReposo == 20) {
 				numeroSpites = 1;
@@ -246,7 +328,7 @@ public class Jugador extends Entidad {
 			}
 		}
 
-		// Actualizar estado del jugador (solo si no está atacando)
+		// Actualizar estado (solo si no está atacando)
 		if (estado != EstadoEntidad.ATACANDO) {
 			if (hayMovimiento) {
 				estado = EstadoEntidad.MOVIENDO;
@@ -264,20 +346,35 @@ public class Jugador extends Entidad {
 		// Sistema de ataque automático
 		contadorAtaque++;
 		if (contadorAtaque >= intervaloAtaque) {
-			dispararProyectil();
+			ejecutarAtaque();
 			contadorAtaque = 0;
 		}
 	}
 
+	// ===================================================================
+	// ATAQUE
+	// ===================================================================
+
 	/**
-	 * Dispara un proyectil en la dirección actual del jugador
+	 * Ejecuta el ataque según el tipo de personaje.
+	 * Doom: activa animación melee (daño por contacto).
+	 * Mago/Sideral: dispara proyectil.
 	 */
-	private void dispararProyectil() {
+	private void ejecutarAtaque() {
 		// Activar animación de ataque
 		contadorAnimAtaque = duracionAnimAtaque;
 		estado = EstadoEntidad.ATACANDO;
 
-		// Buscar espacio vacío en el array de proyectiles
+		// Solo disparar proyectil si NO es melee
+		if (!esMelee) {
+			dispararProyectil();
+		}
+	}
+
+	/**
+	 * Dispara un proyectil en la dirección actual del jugador.
+	 */
+	private void dispararProyectil() {
 		for (int i = 0; i < pj.proyectiles.length; i++) {
 			if (pj.proyectiles[i] == null) {
 				int dano = (int) (ataque * powerUps.multiplicadorAtaque);
@@ -291,110 +388,94 @@ public class Jugador extends Entidad {
 	}
 
 	/**
-	 * Sobrescribe recibirDanio para registrar estadísticas y aplicar invencibilidad
+	 * Ataque melee (Doom): verifica colisión directa con NPCs y aplica daño.
+	 * Solo funciona mientras el jugador está en estado ATACANDO.
 	 */
+	private void atacarMelee() {
+		Rectangle areaJugador = new Rectangle(
+				worldx + AreaSolida.x,
+				worldy + AreaSolida.y,
+				AreaSolida.width,
+				AreaSolida.height);
+
+		int dano = (int) (ataque * powerUps.multiplicadorAtaque);
+
+		for (int i = 0; i < pj.npcs.length; i++) {
+			if (pj.npcs[i] != null && pj.npcs[i].estaVivo) {
+				Rectangle areaNPC = new Rectangle(
+						pj.npcs[i].worldx + pj.npcs[i].AreaSolida.x,
+						pj.npcs[i].worldy + pj.npcs[i].AreaSolida.y,
+						pj.npcs[i].AreaSolida.width,
+						pj.npcs[i].AreaSolida.height);
+
+				if (areaJugador.intersects(areaNPC)) {
+					pj.npcs[i].recibirDanio(dano);
+
+					// Si el NPC murió, dar experiencia
+					if (!pj.npcs[i].estaVivo) {
+						pj.stats.registrarEnemigoEliminado();
+						pj.stats.ganarExperiencia(pj.npcs[i].experienciaAOtorgar);
+					}
+				}
+			}
+		}
+	}
+
+	// ===================================================================
+	// DAÑO
+	// ===================================================================
+
 	@Override
 	public void recibirDanio(int cantidad) {
-		// Verificar invencibilidad por power-up
 		if (powerUps.invencibilidadActiva) {
 			return;
 		}
-
-		// Registrar estadística
 		pj.stats.registrarAtaqueRecibido(cantidad);
-
-		// Llamar al método padre
 		super.recibirDanio(cantidad);
 	}
 
-	/**
-	 * Dibuja al jugador en la pantalla.
-	 * 
-	 * @param g2 - Contexto gráfico 2D.
-	 */
-	public void draw(Graphics2D g2) {
+	// ===================================================================
+	// DRAW
+	// ===================================================================
 
+	public void draw(Graphics2D g2) {
 		BufferedImage imagen = null;
 
 		// ===== Animación de muerte =====
 		if (estado == EstadoEntidad.MURIENDO) {
-			if (frameMuerte == 0) {
-				imagen = muerte1;
-			} else if (frameMuerte == 1) {
-				imagen = muerte2;
+			if (tieneSpritesmuerte && muerte1 != null) {
+				if (frameMuerte == 0) {
+					imagen = muerte1;
+				} else if (frameMuerte == 1) {
+					imagen = muerte2;
+				} else {
+					imagen = muerte3;
+				}
+				g2.drawImage(imagen, screenX, screeny, null);
 			} else {
-				imagen = muerte3;
+				// Placeholder: cuadro rojo para Sideral
+				g2.setColor(Color.RED);
+				g2.fillRect(screenX, screeny, pj.tamanioTile, pj.tamanioTile);
+				g2.setColor(Color.WHITE);
+				g2.drawString("X", screenX + pj.tamanioTile / 2 - 4, screeny + pj.tamanioTile / 2 + 4);
 			}
-			g2.drawImage(imagen, screenX, screeny, null);
-			return; // No dibujar nada más si está muerto
+			return;
 		}
 
 		// ===== Animación de ataque =====
 		if (estado == EstadoEntidad.ATACANDO) {
-			switch (direccion) {
-				case "arriba":
-					imagen = ataqueArriba;
-					break;
-				case "abajo":
-					imagen = ataqueAbajo;
-					break;
-				case "izquierda":
-					imagen = ataqueIzq;
-					break;
-				case "derecha":
-					imagen = ataqueDer;
-					break;
+			imagen = obtenerSpriteAtaque();
+			if (imagen == null) {
+				// Placeholder: cuadro rojo para Sideral
+				g2.setColor(new Color(255, 50, 50, 180));
+				g2.fillRect(screenX, screeny, pj.tamanioTile, pj.tamanioTile);
+				g2.setColor(Color.WHITE);
+				g2.drawString("⚔", screenX + pj.tamanioTile / 2 - 6, screeny + pj.tamanioTile / 2 + 6);
+				return;
 			}
 		} else {
 			// ===== Sprites normales de movimiento =====
-			switch (direccion) {
-				case "arriba":
-					if (numeroSpites == 1) {
-						imagen = arriba1;
-					}
-					if (numeroSpites == 2) {
-						imagen = arriba2;
-					}
-					if (numeroSpites == 3) {
-						imagen = arriba2;
-					}
-					break;
-				case "abajo":
-					if (numeroSpites == 1) {
-						imagen = abajo1;
-					}
-					if (numeroSpites == 2) {
-						imagen = abajo2;
-					}
-					if (numeroSpites == 3) {
-						imagen = abajo2;
-					}
-					break;
-				case "izquierda":
-					if (numeroSpites == 1) {
-						imagen = izquierda1;
-					}
-					if (numeroSpites == 2) {
-						imagen = izquierda2;
-					}
-					if (numeroSpites == 3) {
-						imagen = izquierda2;
-					}
-					break;
-				case "derecha":
-					if (numeroSpites == 1) {
-						imagen = derecha1;
-					}
-					if (numeroSpites == 2) {
-						imagen = derecha2;
-					}
-					if (numeroSpites == 3) {
-						imagen = derecha2;
-					}
-					break;
-				default:
-					break;
-			}
+			imagen = obtenerSpriteMovimiento();
 		}
 
 		g2.drawImage(imagen, screenX, screeny, null);
@@ -405,27 +486,63 @@ public class Jugador extends Entidad {
 			g2.fillRect(screenX, screeny, pj.tamanioTile, pj.tamanioTile);
 		}
 
-		// hitbox
+		// Hitbox debug
 		if (debug) {
 			g2.setColor(Color.RED);
 			g2.drawRect(screenX + AreaSolida.x, screeny + AreaSolida.y, AreaSolida.width, AreaSolida.height);
 		}
 	}
 
-	// metodos del juego
+	/**
+	 * Retorna el sprite de ataque según la dirección actual.
+	 */
+	private BufferedImage obtenerSpriteAtaque() {
+		switch (direccion) {
+			case "arriba":
+				return ataqueArriba;
+			case "abajo":
+				return ataqueAbajo;
+			case "izquierda":
+				return ataqueIzq;
+			case "derecha":
+				return ataqueDer;
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Retorna el sprite de movimiento según la dirección y frame actual.
+	 */
+	private BufferedImage obtenerSpriteMovimiento() {
+		switch (direccion) {
+			case "arriba":
+				return (numeroSpites == 1) ? arriba1 : arriba2;
+			case "abajo":
+				return (numeroSpites == 1) ? abajo1 : abajo2;
+			case "izquierda":
+				return (numeroSpites == 1) ? izquierda1 : izquierda2;
+			case "derecha":
+				return (numeroSpites == 1) ? derecha1 : derecha2;
+			default:
+				return abajo1;
+		}
+	}
+
+	// ===================================================================
+	// OBJETOS
+	// ===================================================================
 
 	/**
 	 * Maneja la interacción con objetos del mundo.
-	 * 
+	 *
 	 * @param index - índice del objeto en el array pj.obj[]
 	 */
 	public void recogerObjeto(int index) {
 		if (index != 999) {
-			// Verificar si es un cofre power-up
 			if (pj.objs[index] instanceof objetos.OBJ_CofrePowerUp) {
 				objetos.OBJ_CofrePowerUp cofre = (objetos.OBJ_CofrePowerUp) pj.objs[index];
 
-				// Aplicar power-up
 				switch (cofre.tipoPowerUp) {
 					case INVENCIBILIDAD:
 						powerUps.activarInvencibilidad(10);
@@ -446,9 +563,8 @@ public class Jugador extends Entidad {
 				}
 
 				pj.stats.registrarCofreRecogido();
-				pj.objs[index] = null; // Eliminar cofre del mapa
+				pj.objs[index] = null;
 			}
 		}
 	}
-
 }
