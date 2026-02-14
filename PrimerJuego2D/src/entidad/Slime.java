@@ -33,7 +33,7 @@ public class Slime extends NPC {
 
     private void cargarSprites() {
         try {
-            rutaCarpeta = "/Slime/";
+            rutaCarpeta = "/Npc/Slime/";
 
             // Cargar sprites de movimiento (2 frames por dirección)
             BufferedImage tempArriba1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Arriba01.png"));
