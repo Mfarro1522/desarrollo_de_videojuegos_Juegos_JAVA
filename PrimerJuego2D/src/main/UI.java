@@ -38,6 +38,20 @@ public class UI {
 
 	// Sprites de preview para selección de personaje
 	private BufferedImage[] spritesPreview = new BufferedImage[3];
+	
+	// Imagen de fondo del menú principal
+	// TODO: Agregar imagen de fondo del menú
+	// 1. Colocar la imagen en: res/menu/fondo_menu.png (dimensiones recomendadas: 1024x768)
+	// 2. Descomentar la línea en el método cargarImagenFondoMenu()
+	// 3. La imagen se dibujará automáticamente ajustada a la pantalla
+	private BufferedImage imagenFondoMenu = null;
+	
+	// Imagen para la pantalla de Ayuda
+	// TODO: Agregar imagen de ayuda
+	// 1. Colocar la imagen en: res/menu/ayuda.png (dimensiones recomendadas: 1024x768)
+	// 2. Descomentar la línea en el método cargarImagenAyuda()
+	// 3. La imagen mostrará controles, mecánicas y tips del juego
+	private BufferedImage imagenAyuda = null;
 
 	// Datos de personajes
 	private final String[] NOMBRES_PERSONAJES = { "Sideral", "Mago", "Doom" };
@@ -73,6 +87,41 @@ public class UI {
 
 		// Cargar sprites de preview
 		cargarSpritesPreview();
+		
+		// Cargar imagen de fondo del menú
+		cargarImagenFondoMenu();
+		
+		// Cargar imagen de ayuda
+		cargarImagenAyuda();
+	}
+	
+	/**
+	 * Carga la imagen de fondo del menú principal.
+	 */
+	private void cargarImagenFondoMenu() {
+		try {
+			// TODO: Descomentar cuando agregues la imagen en res/menu/fondo_menu.png
+			// imagenFondoMenu = ImageIO.read(getClass().getResourceAsStream("/menu/fondo_menu.png"));
+			// UtilityTool tool = new UtilityTool();
+			// imagenFondoMenu = tool.escalarImagen(imagenFondoMenu, pj.anchoPantalla, pj.altoPantalla);
+		} catch (Exception e) {
+			imagenFondoMenu = null;
+			// Si no se encuentra la imagen, se usará el fondo por defecto
+		}
+	}
+	
+	/**
+	 * Carga la imagen de la pantalla de Ayuda.
+	 */
+	private void cargarImagenAyuda() {
+		try {
+			// TODO: Descomentar cuando agregues la imagen en res/menu/ayuda.png
+			// imagenAyuda = ImageIO.read(getClass().getResourceAsStream("/menu/ayuda.png"));
+			// UtilityTool tool = new UtilityTool();
+			// imagenAyuda = tool.escalarImagen(imagenAyuda, pj.anchoPantalla, pj.altoPantalla);
+		} catch (Exception e) {
+			imagenAyuda = null;
+		}
 	}
 
 	/**
@@ -104,6 +153,10 @@ public class UI {
 			dibujarMenu();
 		} else if (pj.gameState == pj.seleccionState) {
 			dibujarSeleccionPersonaje();
+		} else if (pj.gameState == pj.ayudaState) {
+			dibujarAyuda();
+		} else if (pj.gameState == pj.logrosState) {
+			dibujarLogros();
 		} else if (pj.gameState == pj.creditosState) {
 			dibujarCreditos();
 		} else if (pj.gameState == pj.playState) {
@@ -124,17 +177,23 @@ public class UI {
 		int ancho = pj.anchoPantalla;
 		int alto = pj.altoPantalla;
 
-		// Fondo
-		g2.setColor(COLOR_FONDO);
-		g2.fillRect(0, 0, ancho, alto);
+		// Fondo - Imagen o color sólido
+		if (imagenFondoMenu != null) {
+			// Dibujar imagen de fondo
+			g2.drawImage(imagenFondoMenu, 0, 0, null);
+		} else {
+			// Fondo por defecto
+			g2.setColor(COLOR_FONDO);
+			g2.fillRect(0, 0, ancho, alto);
 
-		// Líneas decorativas de fondo
-		g2.setColor(new Color(40, 20, 60));
-		for (int i = 0; i < ancho; i += 40) {
-			g2.drawLine(i, 0, i, alto);
-		}
-		for (int i = 0; i < alto; i += 40) {
-			g2.drawLine(0, i, ancho, i);
+			// Líneas decorativas de fondo
+			g2.setColor(new Color(40, 20, 60));
+			for (int i = 0; i < ancho; i += 40) {
+				g2.drawLine(i, 0, i, alto);
+			}
+			for (int i = 0; i < alto; i += 40) {
+				g2.drawLine(0, i, ancho, i);
+			}
 		}
 
 		// Título
@@ -161,7 +220,7 @@ public class UI {
 		int yInicio = 220;
 		int espaciado = 70;
 
-		String[] opciones = { "COMENZAR", "COLECCIÓN", "LOGROS", "CRÉDITOS" };
+		String[] opciones = { "COMENZAR", "AYUDA", "LOGROS", "CRÉDITOS" };
 		int menuOpcion = pj.kh.menuOpcion;
 
 		for (int i = 0; i < opciones.length; i++) {
@@ -200,8 +259,8 @@ public class UI {
 			}
 		}
 
-		// Placeholders para Colección y Logros
-		if (menuOpcion == 1 || menuOpcion == 2) {
+		// Placeholder solo para Ayuda (Logros ya está implementado)
+		if (menuOpcion == 1) {
 			g2.setFont(fuentePequena);
 			g2.setColor(new Color(255, 255, 100, 180));
 			g2.drawString("(Próximamente)", obtenerXCentrado("(Próximamente)"),
@@ -372,6 +431,198 @@ public class UI {
 		// Borde
 		g2.setColor(new Color(80, 80, 100));
 		g2.drawRect(barraX, y - 11, barraAncho, barraAlto);
+	}
+
+	// ===================================================================
+	// AYUDA
+	// ===================================================================
+
+	private void dibujarAyuda() {
+		int ancho = pj.anchoPantalla;
+		int alto = pj.altoPantalla;
+
+		// Fondo - Imagen o color sólido
+		if (imagenAyuda != null) {
+			// Dibujar imagen de ayuda
+			g2.drawImage(imagenAyuda, 0, 0, null);
+		} else {
+			// Fondo por defecto
+			g2.setColor(COLOR_FONDO);
+			g2.fillRect(0, 0, ancho, alto);
+
+			// Título
+			g2.setFont(new Font("Arial", Font.BOLD, 48));
+			g2.setColor(COLOR_TITULO);
+			String titulo = "AYUDA";
+			g2.drawString(titulo, obtenerXCentrado(titulo), 80);
+
+			// Panel
+			int panelAncho = 800;
+			int panelAlto = 500;
+			int panelX = ancho / 2 - panelAncho / 2;
+			int panelY = 130;
+			g2.setColor(COLOR_PANEL);
+			g2.fillRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
+			g2.setColor(COLOR_BORDE);
+			g2.drawRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
+
+			// Contenido
+			int x = panelX + 40;
+			int y = panelY + 50;
+			int espaciado = 35;
+
+			g2.setFont(new Font("Arial", Font.BOLD, 24));
+			g2.setColor(COLOR_SUBTITULO);
+			g2.drawString("CONTROLES", x, y);
+			y += espaciado + 10;
+
+			g2.setFont(fuenteStats);
+			g2.setColor(COLOR_TEXTO);
+			g2.drawString("• WASD o Flechas: Mover personaje", x + 20, y);
+			y += espaciado;
+			g2.drawString("• P: Pausar juego", x + 20, y);
+			y += espaciado;
+			g2.drawString("• ESC: Volver al menú / Cerrar pantalla", x + 20, y);
+			y += espaciado + 15;
+
+			g2.setFont(new Font("Arial", Font.BOLD, 24));
+			g2.setColor(COLOR_SUBTITULO);
+			g2.drawString("MECÁNICAS", x, y);
+			y += espaciado + 10;
+
+			g2.setFont(fuenteStats);
+			g2.setColor(COLOR_TEXTO);
+			g2.drawString("• Sobrevive el mayor tiempo posible", x + 20, y);
+			y += espaciado;
+			g2.drawString("• Elimina enemigos para ganar experiencia", x + 20, y);
+			y += espaciado;
+			g2.drawString("• Recoge cofres para obtener power-ups", x + 20, y);
+			y += espaciado;
+			g2.drawString("• Los enemigos aparecen continuamente", x + 20, y);
+			y += espaciado + 15;
+
+			g2.setFont(new Font("Arial", Font.BOLD, 24));
+			g2.setColor(COLOR_SUBTITULO);
+			g2.drawString("POWER-UPS", x, y);
+			y += espaciado + 10;
+
+			g2.setFont(fuenteStats);
+			g2.setColor(new Color(100, 255, 255));
+			g2.drawString("🛡 Invencibilidad: Inmune al daño temporalmente", x + 20, y);
+			y += espaciado;
+			g2.setColor(Color.YELLOW);
+			g2.drawString("⚡ Velocidad: Movimiento más rápido", x + 20, y);
+			y += espaciado;
+			g2.setColor(new Color(255, 100, 100));
+			g2.drawString("💪 Ataque: Mayor daño a enemigos", x + 20, y);
+		}
+
+		// Instrucciones
+		g2.setFont(fuentePequena);
+		g2.setColor(new Color(150, 150, 170));
+		String instrucciones = "Presiona ESC o ENTER para volver";
+		g2.drawString(instrucciones, obtenerXCentrado(instrucciones), alto - 30);
+	}
+
+	// ===================================================================
+	// LOGROS
+	// ===================================================================
+
+	private void dibujarLogros() {
+		int ancho = pj.anchoPantalla;
+		int alto = pj.altoPantalla;
+
+		// Fondo
+		g2.setColor(COLOR_FONDO);
+		g2.fillRect(0, 0, ancho, alto);
+
+		// Título
+		g2.setFont(new Font("Arial", Font.BOLD, 48));
+		g2.setColor(COLOR_TITULO);
+		String titulo = "LOGROS Y ESTADÍSTICAS";
+		g2.drawString(titulo, obtenerXCentrado(titulo), 80);
+
+		// Panel principal
+		int panelAncho = 850;
+		int panelAlto = 520;
+		int panelX = ancho / 2 - panelAncho / 2;
+		int panelY = 120;
+		g2.setColor(COLOR_PANEL);
+		g2.fillRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
+		g2.setColor(COLOR_BORDE);
+		g2.drawRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
+
+		// Contenido
+		int x = panelX + 60;
+		int y = panelY + 60;
+		int espaciado = 50;
+
+		// Récord de tiempo
+		g2.setFont(new Font("Arial", Font.BOLD, 28));
+		g2.setColor(COLOR_HIGHLIGHT);
+		g2.drawString("🏆 RÉCORD DE TIEMPO", x, y);
+		y += 35;
+
+		g2.setFont(new Font("Arial", Font.BOLD, 48));
+		g2.setColor(new Color(255, 215, 0));
+		String tiempoRecord = pj.stats.formatearTiempo(GameStats.recordTiempoSobrevivido);
+		g2.drawString(tiempoRecord, obtenerXCentrado(tiempoRecord), y);
+		y += espaciado + 20;
+
+		// Línea divisoria
+		g2.setColor(COLOR_BORDE);
+		g2.drawLine(panelX + 40, y - 10, panelX + panelAncho - 40, y - 10);
+		y += 10;
+
+		// Estadísticas adicionales
+		g2.setFont(new Font("Arial", Font.BOLD, 24));
+		g2.setColor(COLOR_SUBTITULO);
+		g2.drawString("ESTADÍSTICAS ACUMULADAS", x, y);
+		y += 40;
+
+		// Crear estadísticas acumuladas (podrían ser estáticas en GameStats)
+		g2.setFont(new Font("Arial", Font.BOLD, 20));
+		g2.setColor(COLOR_TEXTO);
+		
+		// Enemigos totales eliminados
+		g2.setColor(new Color(255, 100, 100));
+		g2.drawString("⚔ Enemigos Eliminados Totales:", x, y);
+		g2.setColor(Color.WHITE);
+		g2.drawString(String.valueOf(GameStats.enemigosTotalesEliminados), x + 450, y);
+		y += espaciado - 5;
+
+		// Cofres totales recogidos
+		g2.setColor(new Color(255, 215, 0));
+		g2.drawString("📦 Cofres Recogidos Totales:", x, y);
+		g2.setColor(Color.WHITE);
+		g2.drawString(String.valueOf(GameStats.cofresTotalesRecogidos), x + 450, y);
+		y += espaciado - 5;
+
+		// Partidas jugadas
+		g2.setColor(new Color(100, 200, 255));
+		g2.drawString("🎮 Partidas Jugadas:", x, y);
+		g2.setColor(Color.WHITE);
+		g2.drawString(String.valueOf(GameStats.partidasJugadas), x + 450, y);
+		y += espaciado - 5;
+
+		// Nivel máximo alcanzado
+		g2.setColor(new Color(180, 100, 255));
+		g2.drawString("⭐ Nivel Máximo Alcanzado:", x, y);
+		g2.setColor(Color.WHITE);
+		g2.drawString(String.valueOf(GameStats.nivelMaximoAlcanzado), x + 450, y);
+		y += espaciado - 5;
+
+		// Daño total recibido
+		g2.setColor(new Color(255, 150, 50));
+		g2.drawString("💔 Daño Total Recibido:", x, y);
+		g2.setColor(Color.WHITE);
+		g2.drawString(String.valueOf(GameStats.danioTotalRecibidoAcumulado), x + 450, y);
+
+		// Instrucciones
+		g2.setFont(fuentePequena);
+		g2.setColor(new Color(150, 150, 170));
+		String instrucciones = "Presiona ESC o ENTER para volver";
+		g2.drawString(instrucciones, obtenerXCentrado(instrucciones), alto - 30);
 	}
 
 	// ===================================================================

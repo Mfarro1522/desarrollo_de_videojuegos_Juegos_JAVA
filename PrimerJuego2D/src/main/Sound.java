@@ -20,7 +20,7 @@ public class Sound {
 	 */
 	public Sound() {
 
-		// Índice 0: Música de fondo
+		// Índice 0: Música de fondo (batalla)
 		soundURL[0] = getClass().getResource("/sound/Doom.wav");
 		// Índice 1: Efecto de recoger llave
 		soundURL[1] = getClass().getResource("/sound/coin.wav");
@@ -30,6 +30,22 @@ public class Sound {
 		soundURL[3] = getClass().getResource("/sound/unlock.wav");
 		// Índice 4: Efecto de abrir cofre
 		soundURL[4] = getClass().getResource("/sound/fanfare.wav");
+		
+		// TODO: Agregar nuevos archivos de audio
+		// Índice 5: Música del menú principal
+		// 1. Colocar archivo en: res/sound/menu_music.wav
+		// 2. Descomentar la siguiente línea:
+		// soundURL[5] = getClass().getResource("/sound/menu_music.wav");
+		
+		// Índice 6: Música de batalla alternativa (más intensa)
+		// 1. Colocar archivo en: res/sound/battle_music.wav
+		// 2. Descomentar la siguiente línea:
+		// soundURL[6] = getClass().getResource("/sound/battle_music.wav");
+		
+		// Índice 7: Efecto de sonido al atacar
+		// 1. Colocar archivo en: res/sound/attack.wav (sonido corto, como "swoosh" o impacto)
+		// 2. Descomentar la siguiente línea:
+		// soundURL[7] = getClass().getResource("/sound/attack.wav");
 
 	}
 

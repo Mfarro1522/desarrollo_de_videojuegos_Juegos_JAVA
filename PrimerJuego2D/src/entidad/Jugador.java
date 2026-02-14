@@ -74,7 +74,7 @@ public class Jugador extends Entidad {
 		switch (tipo) {
 			case "Sideral":
 				rutaCarpeta = "/jugador/Sideral/";
-				vidaMaxima = 20;
+				vidaMaxima = 10;
 				ataque = 15;
 				defensa = 3;
 				velocidadBase = 5;
@@ -95,7 +95,7 @@ public class Jugador extends Entidad {
 			case "Doom":
 			default:
 				rutaCarpeta = "/jugador/Doom/";
-				vidaMaxima = 30;
+				vidaMaxima = 10;
 				ataque = 12;
 				defensa = 8;
 				velocidadBase = 3;
@@ -382,6 +382,10 @@ public class Jugador extends Entidad {
 				int proyectilY = worldy + pj.tamanioTile / 2 - 8;
 
 				pj.proyectiles[i] = new Proyectil(pj, proyectilX, proyectilY, direccion, dano);
+				
+				// TODO: Descomentar cuando agregues el archivo res/sound/attack.wav
+				// pj.playSE(7); // Efecto de sonido al atacar
+				
 				break;
 			}
 		}
@@ -399,6 +403,7 @@ public class Jugador extends Entidad {
 				AreaSolida.height);
 
 		int dano = (int) (ataque * powerUps.multiplicadorAtaque);
+		boolean ataqueConectado = false; // Flag para reproducir sonido solo una vez
 
 		for (int i = 0; i < pj.npcs.length; i++) {
 			if (pj.npcs[i] != null && pj.npcs[i].estaVivo) {
@@ -410,6 +415,7 @@ public class Jugador extends Entidad {
 
 				if (areaJugador.intersects(areaNPC)) {
 					pj.npcs[i].recibirDanio(dano);
+					ataqueConectado = true;
 
 					// Si el NPC murió, dar experiencia
 					if (!pj.npcs[i].estaVivo) {
@@ -418,6 +424,11 @@ public class Jugador extends Entidad {
 					}
 				}
 			}
+		}
+		
+		// TODO: Descomentar cuando agregues el archivo res/sound/attack.wav
+		if (ataqueConectado) {
+			// pj.playSE(7); // Efecto de sonido al atacar (melee)
 		}
 	}
 

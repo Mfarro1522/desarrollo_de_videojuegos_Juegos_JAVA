@@ -28,8 +28,13 @@ public class GameStats {
 	// Referencia al panel de juego para las notificaciones
 	private PanelJuego pj;
 	
-	// Récords
-	public static long recordTiempoSobrevivido = 0; // Estático para persistir entre juegos
+	// Récords y estadísticas acumuladas (estáticas para persistir entre juegos)
+	public static long recordTiempoSobrevivido = 0;
+	public static int enemigosTotalesEliminados = 0;
+	public static int cofresTotalesRecogidos = 0;
+	public static int partidasJugadas = 0;
+	public static int nivelMaximoAlcanzado = 1;
+	public static int danioTotalRecibidoAcumulado = 0;
 	public boolean nuevoRecord = false;
 	
 	public void setPanelJuego(PanelJuego pj) {
@@ -38,6 +43,7 @@ public class GameStats {
 	
 	public void iniciar() {
 		tiempoInicio = System.currentTimeMillis();
+		partidasJugadas++; // Incrementar contador de partidas
 	}
     
     public void actualizar() {
@@ -49,14 +55,17 @@ public class GameStats {
     public void registrarAtaqueRecibido(int dano) {
         ataquesRecibidos++;
         danioTotalRecibido += dano;
+        danioTotalRecibidoAcumulado += dano; // Acumular globalmente
     }
     
     public void registrarEnemigoEliminado() {
         enemigosDerrotados++;
+        enemigosTotalesEliminados++; // Acumular globalmente
     }
     
     public void registrarCofreRecogido() {
         cofresRecogidos++;
+        cofresTotalesRecogidos++; // Acumular globalmente
     }
     
     public void ganarExperiencia(int exp) {
@@ -82,6 +91,10 @@ public class GameStats {
         if (tiempoSobrevivido > recordTiempoSobrevivido) {
             recordTiempoSobrevivido = tiempoSobrevivido;
             nuevoRecord = true;
+        }
+        // Actualizar nivel máximo alcanzado
+        if (nivel > nivelMaximoAlcanzado) {
+            nivelMaximoAlcanzado = nivel;
         }
     }
     

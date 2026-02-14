@@ -15,7 +15,7 @@ public class keyHandler implements KeyListener {
 	public boolean arribaPres, abajoPres, izqPres, drchPres;
 
 	// Navegación de menú
-	public int menuOpcion = 0; // 0=Comenzar, 1=Colección, 2=Logros, 3=Créditos
+	public int menuOpcion = 0; // 0=Comenzar, 1=Ayuda, 2=Logros, 3=Créditos
 	public int seleccionPersonaje = 0; // 0=Sideral, 1=Mago, 2=Doom
 	public boolean enterPresionado = false; // Flag de confirmación
 
@@ -44,6 +44,14 @@ public class keyHandler implements KeyListener {
 			// ===== SELECCIÓN DE PERSONAJE =====
 		} else if (pj.gameState == pj.seleccionState) {
 			manejarInputSeleccion(keycode);
+
+			// ===== AYUDA =====
+		} else if (pj.gameState == pj.ayudaState) {
+			manejarInputAyuda(keycode);
+
+			// ===== LOGROS =====
+		} else if (pj.gameState == pj.logrosState) {
+			manejarInputLogros(keycode);
 
 			// ===== CRÉDITOS =====
 		} else if (pj.gameState == pj.creditosState) {
@@ -90,11 +98,11 @@ public class keyHandler implements KeyListener {
 					pj.gameState = pj.seleccionState;
 					seleccionPersonaje = 0;
 					break;
-				case 1: // Colección (placeholder)
-					// TODO: Implementar pantalla de colección
+				case 1: // Ayuda
+					pj.gameState = pj.ayudaState;
 					break;
-				case 2: // Logros (placeholder)
-					// TODO: Implementar pantalla de logros
+				case 2: // Logros
+					pj.gameState = pj.logrosState;
 					break;
 				case 3: // Créditos
 					pj.gameState = pj.creditosState;
@@ -132,6 +140,20 @@ public class keyHandler implements KeyListener {
 
 	// ===== Input de créditos =====
 	private void manejarInputCreditos(int keycode) {
+		if (keycode == KeyEvent.VK_ESCAPE || keycode == KeyEvent.VK_ENTER) {
+			pj.gameState = pj.menuState;
+		}
+	}
+
+	// ===== Input de ayuda =====
+	private void manejarInputAyuda(int keycode) {
+		if (keycode == KeyEvent.VK_ESCAPE || keycode == KeyEvent.VK_ENTER) {
+			pj.gameState = pj.menuState;
+		}
+	}
+
+	// ===== Input de logros =====
+	private void manejarInputLogros(int keycode) {
 		if (keycode == KeyEvent.VK_ESCAPE || keycode == KeyEvent.VK_ENTER) {
 			pj.gameState = pj.menuState;
 		}

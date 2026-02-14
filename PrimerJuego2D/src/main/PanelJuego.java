@@ -85,6 +85,8 @@ public class PanelJuego extends JPanel implements Runnable {
 	public final int menuState = 5; // Menú principal
 	public final int seleccionState = 6; // Selección de personaje
 	public final int creditosState = 7; // Créditos
+	public final int ayudaState = 8; // Ayuda
+	public final int logrosState = 9; // Logros
 	// Estado actual del juego
 	public int gameState;
 
@@ -99,6 +101,10 @@ public class PanelJuego extends JPanel implements Runnable {
 	public void setupJuego() {
 		// Iniciar en el menú principal
 		gameState = menuState;
+		
+		// Reproducir música del menú
+		// TODO: Descomentar cuando agregues res/sound/menu_music.wav
+		// reproducirMusicaFondo(5); // Música del menú
 	}
 
 	TileManager tileManager = new TileManager(this);
@@ -161,6 +167,11 @@ public class PanelJuego extends JPanel implements Runnable {
 	private final int intervaloRespawn = 60; // Cada 1 segundo (60 FPS)
 	private int contadorVerificacionCercanos = 0;
 	private final int intervaloVerificacionCercanos = 180; // Cada 3 segundos
+	
+	// Sistema de delay para Game Over (para apreciar animación de muerte)
+	private boolean jugadorMuerto = false;
+	private int contadorGameOver = 0;
+	private final int delayGameOver = 180; // 3 segundos (180 frames a 60 FPS)
 
 	public void update() {
 		// Solo actualizar lógica de juego en playState
@@ -220,10 +231,20 @@ public class PanelJuego extends JPanel implements Runnable {
 			}
 		}
 
-		// Verificar muerte del jugador
-		if (!jugador.estaVivo) {
+		// Verificar muerte del jugador (con delay para apreciar animación de muerte)
+		if (!jugador.estaVivo && !jugadorMuerto) {
+			// Primer frame de muerte: finalizar estadísticas y marcar como muerto
 			stats.finalizarJuego();
-			gameState = gameOverState;
+			jugadorMuerto = true;
+			contadorGameOver = 0;
+		}
+		
+		// Contar frames después de la muerte antes de mostrar Game Over
+		if (jugadorMuerto) {
+			contadorGameOver++;
+			if (contadorGameOver >= delayGameOver) {
+				gameState = gameOverState;
+			}
 		}
 	}
 
@@ -317,6 +338,11 @@ public class PanelJuego extends JPanel implements Runnable {
 	public void reiniciarJuego() {
 		// Volver al menú principal
 		gameState = menuState;
+		
+		// Detener música de batalla y reproducir música del menú
+		stopMusic();
+		// TODO: Descomentar cuando agregues res/sound/menu_music.wav
+		// reproducirMusicaFondo(5); // Música del menú
 	}
 
 	/**
@@ -331,6 +357,11 @@ public class PanelJuego extends JPanel implements Runnable {
 
 		// Reiniciar jugador
 		jugador.powerUps = new PowerUpManager();
+
+		// Limpiar objetos (SOLUCIONA BUG: cofres no reaparecían al cambiar personaje)
+		for (int i = 0; i < objs.length; i++) {
+			objs[i] = null;
+		}
 
 		// Limpiar NPCs
 		for (int i = 0; i < npcs.length; i++) {
@@ -350,14 +381,20 @@ public class PanelJuego extends JPanel implements Runnable {
 		stats = new GameStats();
 		stats.setPanelJuego(this);
 		stats.iniciar();
+		
+		// Resetear flag de muerte
+		jugadorMuerto = false;
+		contadorGameOver = 0;
 
 		// Colocar objetos y NPCs
 		aSetter.setObjetct();
 		aSetter.setNPCs();
 
-		// TODO: Agregar música diferente para el menú
+		// Sistema de música
 		stopMusic(); // Detener música anterior (si hay)
-		reproducirMusicaFondo(0); // Doom.wav para el juego
+		// TODO: Descomentar cuando agregues res/sound/battle_music.wav para usar música de batalla alternativa
+		// reproducirMusicaFondo(6); // Música de batalla
+		reproducirMusicaFondo(0); // Doom.wav para el juego (por ahora)
 
 		// Iniciar juego
 		gameState = playState;
