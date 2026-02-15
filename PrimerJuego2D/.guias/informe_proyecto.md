@@ -97,3 +97,55 @@ La clase de enemigo instanciado depende del **Nivel del Jugador** (`pj.stats.niv
 *   Nivel 5-9: Slimes y Orcos.
 *   Nivel 15+: Todos (incluyendo `Ghoul`).
 Esto se gestiona mediante probabilidades simples (`Math.random()`) en `crearEnemigoAleatorio()`.
+
+### D. Optimizaciones de Rendimiento
+
+#### 1. Object Pooling
+*   **1,000 NPCs pre-instanciados** al inicio (250 por tipo: `Bat`, `Slime`, `Orco`, `Ghoul`).
+*   Ciclo de vida `activar(x,y)` / `desactivar()` — cero `new` durante el gameplay.
+*   Cada tipo de NPC implementa `resetearEstado()` para reutilización limpia.
+
+#### 2. Spatial Hashing + Logic Culling
+*   `SpatialHashGrid.java` — Consultas O(1) de NPCs cercanos en lugar de O(N²).
+*   Utilizado por `Proyectil` y `Jugador.atacarMelee()` para detección de colisiones.
+*   **Logic Culling**: NPCs a > 20 tiles actualizan solo cada 10º frame.
+
+#### 3. Frustum Culling
+*   `PanelJuego.paintComponent()` — NPCs y proyectiles fuera del viewport se saltan (sin llamada a `draw()`).
+
+#### 4. Renderizado de Tiles por Rango Visible
+*   `TileManager.draw()` — Calcula el rango visible de 16×12 tiles y solo dibuja esos (192 tiles en lugar de 10,000).
+
+#### Optimizaciones Adicionales
+*   Cachés estáticos de sprites en `Bat`, `Slime`, `Orco`, `Ghoul` — imágenes cargadas una vez, compartidas entre instancias.
+*   Rectángulos pre-asignados en verificaciones de colisión de NPCs — cero presión GC por frame.
+*   Cálculos de distancia al cuadrado en todo el código (sin `Math.sqrt()`).
+*   Bounds checking en `detectorColisiones` para prevenir `ArrayIndexOutOfBounds`.
+
+
+## 4. Refactorización y Optimizaciones Implementadas
+
+### Estructura Nueva (12 paquetes, 35 archivos)
+
+Se realizó una refactorización completa del proyecto para mejorar mantenibilidad, rendimiento y escalabilidad.
+
+#### Problemas Resueltos
+
+| Problema | Solución |
+|----------|----------|
+| God Object `PanelJuego` (458 líneas) | Dividido en `PanelJuego` (140 líneas) + `MundoJuego` (220 líneas) |
+| UI monolítica (792 líneas) | Dividida en 9 clases: `InterfazUsuario` + `HUD` + 7 pantallas |
+| Input duplicado (`keyHandler` + `MouseHandler`) | Unificado en `GestorEntrada` |
+| Constantes dispersas | Centralizadas en `Configuracion` (estáticas) |
+| Dependencia circular (entidades → `PanelJuego`) | Entidades referencian `MundoJuego` (dirección única) |
+| Naming conventions violadas | Clases renombradas (PascalCase) con paquetes en español |
+| Capas sin definir | 12 paquetes con responsabilidades claras |
+
+#### Optimizaciones Preservadas
+
+*   **Object Pool**: 1000 NPCs pre-asignados (cero `new` en gameplay).
+*   **Spatial Hash Grid**: Colisiones O(N).
+*   **Frustum Culling + Logical Culling**: Renderizado optimizado.
+*   **Pre-allocated rectangles**: Cero generación de basura (GC).
+*   **Sprite cache estático**: Por tipo de NPC.
+*   **Mapa procedural**: 100×100 tiles.
