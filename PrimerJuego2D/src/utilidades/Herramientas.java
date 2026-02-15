@@ -14,7 +14,8 @@ import java.awt.image.BufferedImage;
 public class Herramientas {
 
     /**
-     * Escala una imagen a un tamaño específico manteniendo la nitidez del pixel art.
+     * Escala una imagen a un tamaño específico manteniendo la nitidez del pixel
+     * art.
      */
     public BufferedImage escalarImagen(BufferedImage original, int ancho, int alto) {
         BufferedImage imagenScalada = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
@@ -46,5 +47,29 @@ public class Herramientas {
         tx.translate(-original.getWidth(), 0);
         AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
         return op.filter(original, null);
+    }
+
+    /**
+     * Aplica un tinte de color a la imagen, respetando la transparencia.
+     * Útil para efectos de daño o estados alterados.
+     */
+    public BufferedImage tintImage(BufferedImage original, Color color) {
+        BufferedImage tintedImage = new BufferedImage(original.getWidth(), original.getHeight(),
+                BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = tintedImage.createGraphics();
+
+        // 1. Dibujar la imagen original
+        g2.drawImage(original, 0, 0, null);
+
+        // 2. Configurar el composite para dibujar SOLO sobre los pixeles opacos
+        // (SRC_ATOP)
+        g2.setComposite(java.awt.AlphaComposite.SrcAtop);
+
+        // 3. Dibujar un rectángulo del color deseado sobre toda la imagen
+        g2.setColor(color);
+        g2.fillRect(0, 0, original.getWidth(), original.getHeight());
+
+        g2.dispose();
+        return tintedImage;
     }
 }

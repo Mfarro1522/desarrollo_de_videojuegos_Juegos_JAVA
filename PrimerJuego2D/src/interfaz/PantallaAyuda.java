@@ -1,8 +1,10 @@
 package interfaz;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 import configuracion.Configuracion;
 import mundo.MundoJuego;
@@ -14,71 +16,54 @@ public class PantallaAyuda {
 
     MundoJuego mundo;
 
+    private BufferedImage imagenAyuda;
+    private final int ANCHO_IMAGEN = 800;
+    private final int ALTO_IMAGEN = 600;
+
     public PantallaAyuda(MundoJuego mundo) {
         this.mundo = mundo;
+        cargarImagen();
+    }
+
+    private void cargarImagen() {
+        try {
+            imagenAyuda = ImageIO.read(getClass().getResourceAsStream("/bg/panelAyuda.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error cargando imagen de ayuda: /bg/panelAyuda.png");
+        }
     }
 
     public void dibujar(Graphics2D g2) {
         int ancho = Configuracion.ANCHO_PANTALLA;
         int alto = Configuracion.ALTO_PANTALLA;
 
-        // Título
-        g2.setFont(new Font("Arial", Font.BOLD, 48));
-        g2.setColor(InterfazUsuario.COLOR_TITULO);
-        String titulo = "AYUDA";
-        g2.drawString(titulo, InterfazUsuario.obtenerXCentrado(g2, titulo), 80);
+        // Fondo oscuro semitransparente para resaltar el panel (opcional, como overlay)
+        g2.setColor(new Color(0, 0, 0, 50));
+        g2.fillRect(0, 0, ancho, alto);
 
-        // Panel
-        int panelAncho = 800, panelAlto = 600;
-        int panelX = ancho / 2 - panelAncho / 2, panelY = 100;
-        g2.setColor(InterfazUsuario.COLOR_PANEL);
-        g2.fillRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
+        // Calcular posición centrada
+        // Calcular posición (Y fijo en 100 como el original)
+        int x = ancho / 2 - ANCHO_IMAGEN / 2;
+        int y = 100;
+
+        // Dibujar imagen
+        if (imagenAyuda != null) {
+            g2.drawImage(imagenAyuda, x, y, ANCHO_IMAGEN, ALTO_IMAGEN, null);
+        } else {
+            // Fallback
+            g2.setColor(Color.RED);
+            g2.drawString("Error cargando imagen", x + 20, y + 40);
+        }
+
+        // Borde morado (Estilo consistente)
         g2.setColor(InterfazUsuario.COLOR_BORDE);
-        g2.drawRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
+        g2.drawRoundRect(x, y, ANCHO_IMAGEN, ALTO_IMAGEN, 20, 20);
 
-        int x = panelX + 40, y = panelY + 50;
-        int espaciado = 35;
-
-        g2.setFont(new Font("Arial", Font.BOLD, 24));
-        g2.setColor(InterfazUsuario.COLOR_SUBTITULO);
-        g2.drawString("CONTROLES", x, y);
-        y += espaciado + 10;
-
-        g2.setFont(InterfazUsuario.FUENTE_STATS);
-        g2.setColor(InterfazUsuario.COLOR_TEXTO);
-        g2.drawString("• WASD o Flechas: Mover personaje", x + 20, y); y += espaciado;
-        g2.drawString("• P: Pausar juego", x + 20, y); y += espaciado;
-        g2.drawString("• ESC: Volver al menú / Cerrar pantalla", x + 20, y); y += espaciado + 15;
-
-        g2.setFont(new Font("Arial", Font.BOLD, 24));
-        g2.setColor(InterfazUsuario.COLOR_SUBTITULO);
-        g2.drawString("MECÁNICAS", x, y);
-        y += espaciado + 10;
-
-        g2.setFont(InterfazUsuario.FUENTE_STATS);
-        g2.setColor(InterfazUsuario.COLOR_TEXTO);
-        g2.drawString("• Sobrevive el mayor tiempo posible", x + 20, y); y += espaciado;
-        g2.drawString("• Elimina enemigos para ganar experiencia", x + 20, y); y += espaciado;
-        g2.drawString("• Recoge cofres para obtener power-ups", x + 20, y); y += espaciado;
-        g2.drawString("• Los enemigos aparecen continuamente", x + 20, y); y += espaciado + 15;
-
-        g2.setFont(new Font("Arial", Font.BOLD, 24));
-        g2.setColor(InterfazUsuario.COLOR_SUBTITULO);
-        g2.drawString("POWER-UPS", x, y);
-        y += espaciado + 10;
-
-        g2.setFont(InterfazUsuario.FUENTE_STATS);
-        g2.setColor(new Color(100, 255, 255));
-        g2.drawString("🛡 Invencibilidad: Inmune al daño temporalmente", x + 20, y); y += espaciado;
-        g2.setColor(Color.YELLOW);
-        g2.drawString("⚡ Velocidad: Movimiento más rápido", x + 20, y); y += espaciado;
-        g2.setColor(new Color(255, 100, 100));
-        g2.drawString("💪 Ataque: Mayor daño a enemigos", x + 20, y);
-
-        // Instrucciones
+        // Instrucciones de salida
         g2.setFont(InterfazUsuario.FUENTE_PEQUENA);
-        g2.setColor(new Color(150, 150, 170));
+        g2.setColor(Color.WHITE);
         String instr = "Presiona ESC o ENTER para volver";
-        g2.drawString(instr, InterfazUsuario.obtenerXCentrado(g2, instr), alto - 30);
+        g2.drawString(instr, InterfazUsuario.obtenerXCentrado(g2, instr), y + ALTO_IMAGEN + 40);
     }
 }

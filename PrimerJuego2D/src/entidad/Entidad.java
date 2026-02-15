@@ -5,7 +5,8 @@ import java.awt.image.BufferedImage;
 
 /**
  * Clase base para todas las entidades del juego (Jugador, NPCs, Objetos).
- * Contiene atributos comunes como posición, velocidad, sprites y área de colisión.
+ * Contiene atributos comunes como posición, velocidad, sprites y área de
+ * colisión.
  */
 public class Entidad {
 
@@ -33,7 +34,8 @@ public class Entidad {
     public int duracionInvulnerabilidad = 60;
 
     public void recibirDanio(int cantidad) {
-        if (contadorInvulnerabilidad > 0) return;
+        if (contadorInvulnerabilidad > 0)
+            return;
         int danioReal = Math.max(1, cantidad - defensa);
         vidaActual -= danioReal;
         contadorInvulnerabilidad = duracionInvulnerabilidad;
@@ -80,4 +82,5 @@ public class Entidad {
     public int AreaSolidaDefaultY;
 
     public boolean hayColision = false;
+    public boolean vuela = false;
 }

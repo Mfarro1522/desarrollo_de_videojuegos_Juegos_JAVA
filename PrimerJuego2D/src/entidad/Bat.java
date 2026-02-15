@@ -43,10 +43,12 @@ public class Bat extends NPC {
         direccion = "izquierda";
         radioDeteccion = 8 * Configuracion.TAMANO_TILE;
         experienciaAOtorgar = 15;
+        vuela = true;
     }
 
     private synchronized void cargarSpritesEstaticos() {
-        if (spritesLoaded) return;
+        if (spritesLoaded)
+            return;
         Herramientas tool = new Herramientas();
         int tile = Configuracion.TAMANO_TILE;
         try {
@@ -82,13 +84,25 @@ public class Bat extends NPC {
     }
 
     private void asignarSprites() {
-        izq1 = s_izq1; izq2 = s_izq2; izq3 = s_izq3; izq4 = s_izq4;
-        der1 = s_der1; der2 = s_der2; der3 = s_der3; der4 = s_der4;
-        izquierda1 = s_izq1; izquierda2 = s_izq2;
-        derecha1 = s_der1; derecha2 = s_der2;
-        arriba1 = s_der1; arriba2 = s_der2;
-        abajo1 = s_der1; abajo2 = s_der2;
-        muerte1 = s_muerte1; muerte2 = s_muerte2; muerte3 = s_muerte3;
+        izq1 = s_izq1;
+        izq2 = s_izq2;
+        izq3 = s_izq3;
+        izq4 = s_izq4;
+        der1 = s_der1;
+        der2 = s_der2;
+        der3 = s_der3;
+        der4 = s_der4;
+        izquierda1 = s_izq1;
+        izquierda2 = s_izq2;
+        derecha1 = s_der1;
+        derecha2 = s_der2;
+        arriba1 = s_der1;
+        arriba2 = s_der2;
+        abajo1 = s_der1;
+        abajo2 = s_der2;
+        muerte1 = s_muerte1;
+        muerte2 = s_muerte2;
+        muerte3 = s_muerte3;
     }
 
     @Override
@@ -112,7 +126,8 @@ public class Bat extends NPC {
         contadorAnim++;
         if (contadorAnim > velocidadAnim) {
             frameActual++;
-            if (frameActual > 4) frameActual = 1;
+            if (frameActual > 4)
+                frameActual = 1;
             contadorAnim = 0;
         }
     }
@@ -121,29 +136,47 @@ public class Bat extends NPC {
     protected BufferedImage obtenerSprite() {
         boolean usarIzquierda;
         switch (direccion) {
-            case "izquierda": usarIzquierda = true; break;
-            case "derecha":   usarIzquierda = false; break;
-            default:          usarIzquierda = ultimaDireccionHorizontal.equals("izquierda"); break;
+            case "izquierda":
+                usarIzquierda = true;
+                break;
+            case "derecha":
+                usarIzquierda = false;
+                break;
+            default:
+                usarIzquierda = ultimaDireccionHorizontal.equals("izquierda");
+                break;
         }
 
         if (usarIzquierda) {
             switch (frameActual) {
-                case 1: return izq1;
-                case 2: return izq2;
-                case 3: return izq3;
-                case 4: return izq4;
-                default: return izq1;
+                case 1:
+                    return izq1;
+                case 2:
+                    return izq2;
+                case 3:
+                    return izq3;
+                case 4:
+                    return izq4;
+                default:
+                    return izq1;
             }
         } else {
             switch (frameActual) {
-                case 1: return der1;
-                case 2: return der2;
-                case 3: return der3;
-                case 4: return der4;
-                default: return der1;
+                case 1:
+                    return der1;
+                case 2:
+                    return der2;
+                case 3:
+                    return der3;
+                case 4:
+                    return der4;
+                default:
+                    return der1;
             }
         }
     }
 
-    public static void resetearCache() { spritesLoaded = false; }
+    public static void resetearCache() {
+        spritesLoaded = false;
+    }
 }

@@ -72,21 +72,34 @@ public class Jugador extends Entidad {
         switch (tipo) {
             case "Sideral":
                 rutaCarpeta = "/jugador/Sideral/";
-                vidaMaxima = 150; ataque = 15; defensa = 15;
-                velocidadBase = 3; esMelee = false;
-                tieneSpritesAtaque = true; tieneSpritesmuerte = true;
+                vidaMaxima = 20;
+                ataque = 15;
+                defensa = 15;
+                velocidadBase = 3;
+                esMelee = false;
+                tieneSpritesAtaque = true;
+                tieneSpritesmuerte = true;
                 break;
             case "Mago":
                 rutaCarpeta = "/jugador/Mago/";
-                vidaMaxima = 50; ataque = 20; defensa = 2;
-                velocidadBase = 7; esMelee = false;
-                tieneSpritesAtaque = true; tieneSpritesmuerte = true;
+                vidaMaxima = 50;
+                ataque = 20;
+                defensa = 2;
+                velocidadBase = 7;
+                esMelee = false;
+                tieneSpritesAtaque = true;
+                tieneSpritesmuerte = true;
                 break;
-            case "Doom": default:
+            case "Doom":
+            default:
                 rutaCarpeta = "/jugador/Doom/";
-                vidaMaxima = 75; ataque = 35; defensa = 10;
-                velocidadBase = 5; esMelee = true;
-                tieneSpritesAtaque = true; tieneSpritesmuerte = true;
+                vidaMaxima = 75;
+                ataque = 35;
+                defensa = 10;
+                velocidadBase = 5;
+                esMelee = true;
+                tieneSpritesAtaque = true;
+                tieneSpritesmuerte = true;
                 break;
         }
 
@@ -128,37 +141,67 @@ public class Jugador extends Entidad {
                 rutaCarpeta = "/jugador/Doom/";
             }
 
-            arriba1 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "arriba_0001.png")), tile, tile);
-            arriba2 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "arriba_0002.png")), tile, tile);
-            abajo1 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "abajo_0001.png")), tile, tile);
-            abajo2 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "abajo_0002.png")), tile, tile);
-            derecha1 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "derecha_0001.png")), tile, tile);
-            derecha2 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "derecha_0002.png")), tile, tile);
-            izquierda1 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izquierda_0001.png")), tile, tile);
-            izquierda2 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izquierda_0002.png")), tile, tile);
+            arriba1 = miTool.escalarImagen(
+                    ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "arriba_0001.png")), tile, tile);
+            arriba2 = miTool.escalarImagen(
+                    ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "arriba_0002.png")), tile, tile);
+            abajo1 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "abajo_0001.png")),
+                    tile, tile);
+            abajo2 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "abajo_0002.png")),
+                    tile, tile);
+            derecha1 = miTool.escalarImagen(
+                    ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "derecha_0001.png")), tile, tile);
+            derecha2 = miTool.escalarImagen(
+                    ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "derecha_0002.png")), tile, tile);
+            izquierda1 = miTool.escalarImagen(
+                    ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izquierda_0001.png")), tile, tile);
+            izquierda2 = miTool.escalarImagen(
+                    ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izquierda_0002.png")), tile, tile);
 
             if (tieneSpritesAtaque) {
                 if (tipoPersonaje.equals("Sideral")) {
                     ataqueArriba = arriba1;
-                    ataqueAbajo = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0001.png")), tile, tile);
-                    ataqueDer = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")), tile, tile);
-                    ataqueIzq = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")), tile, tile);
+                    ataqueAbajo = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0001.png")), tile,
+                            tile);
+                    ataqueDer = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")), tile,
+                            tile);
+                    ataqueIzq = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")), tile,
+                            tile);
                 } else {
-                    ataqueArriba = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueArriba_0001.png")), tile, tile);
-                    ataqueAbajo = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0002.png")), tile, tile);
-                    ataqueDer = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")), tile, tile);
-                    ataqueIzq = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")), tile, tile);
+                    ataqueArriba = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueArriba_0001.png")), tile,
+                            tile);
+                    ataqueAbajo = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0002.png")), tile,
+                            tile);
+                    ataqueDer = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")), tile,
+                            tile);
+                    ataqueIzq = miTool.escalarImagen(
+                            ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")), tile,
+                            tile);
                 }
             } else {
-                ataqueArriba = null; ataqueAbajo = null; ataqueDer = null; ataqueIzq = null;
+                ataqueArriba = null;
+                ataqueAbajo = null;
+                ataqueDer = null;
+                ataqueIzq = null;
             }
 
             if (tieneSpritesmuerte) {
-                muerte1 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0001.png")), tile, tile);
-                muerte2 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0002.png")), tile, tile);
-                muerte3 = miTool.escalarImagen(ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0003.png")), tile, tile);
+                muerte1 = miTool.escalarImagen(
+                        ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0001.png")), tile, tile);
+                muerte2 = miTool.escalarImagen(
+                        ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0002.png")), tile, tile);
+                muerte3 = miTool.escalarImagen(
+                        ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte_0003.png")), tile, tile);
             } else {
-                muerte1 = null; muerte2 = null; muerte3 = null;
+                muerte1 = null;
+                muerte2 = null;
+                muerte3 = null;
             }
 
         } catch (IOException e) {
@@ -177,7 +220,8 @@ public class Jugador extends Entidad {
             if (contadorMuerte >= duracionFrameMuerte) {
                 frameMuerte++;
                 contadorMuerte = 0;
-                if (frameMuerte >= 3) frameMuerte = 2;
+                if (frameMuerte >= 3)
+                    frameMuerte = 2;
             }
             return;
         }
@@ -185,16 +229,27 @@ public class Jugador extends Entidad {
         if (contadorAnimAtaque > 0) {
             contadorAnimAtaque--;
             estado = EstadoEntidad.ATACANDO;
-            if (esMelee) atacarMelee();
-            if (contadorAnimAtaque == 0) estado = EstadoEntidad.IDLE;
+            if (esMelee)
+                atacarMelee();
+            if (contadorAnimAtaque == 0)
+                estado = EstadoEntidad.IDLE;
         }
 
         // Movimiento
         if (!hayMovimiento) {
-            if (entrada.arribaPres) { direccion = "arriba"; hayMovimiento = true; }
-            else if (entrada.abajoPres) { direccion = "abajo"; hayMovimiento = true; }
-            else if (entrada.izqPres) { direccion = "izquierda"; hayMovimiento = true; }
-            else if (entrada.drchPres) { direccion = "derecha"; hayMovimiento = true; }
+            if (entrada.arribaPres) {
+                direccion = "arriba";
+                hayMovimiento = true;
+            } else if (entrada.abajoPres) {
+                direccion = "abajo";
+                hayMovimiento = true;
+            } else if (entrada.izqPres) {
+                direccion = "izquierda";
+                hayMovimiento = true;
+            } else if (entrada.drchPres) {
+                direccion = "derecha";
+                hayMovimiento = true;
+            }
         }
 
         if (hayMovimiento) {
@@ -206,10 +261,18 @@ public class Jugador extends Entidad {
 
             if (!hayColision) {
                 switch (direccion) {
-                    case "arriba":    worldy -= vel; break;
-                    case "abajo":     worldy += vel; break;
-                    case "izquierda": worldx -= vel; break;
-                    case "derecha":   worldx += vel; break;
+                    case "arriba":
+                        worldy -= vel;
+                        break;
+                    case "abajo":
+                        worldy += vel;
+                        break;
+                    case "izquierda":
+                        worldx -= vel;
+                        break;
+                    case "derecha":
+                        worldx += vel;
+                        break;
                 }
             }
 
@@ -221,9 +284,12 @@ public class Jugador extends Entidad {
 
             contadorSpites++;
             if (contadorSpites > 10) {
-                if (numeroSpites == 1) numeroSpites = 2;
-                else if (numeroSpites == 2) numeroSpites = 3;
-                else if (numeroSpites == 3) numeroSpites = 1;
+                if (numeroSpites == 1)
+                    numeroSpites = 2;
+                else if (numeroSpites == 2)
+                    numeroSpites = 3;
+                else if (numeroSpites == 3)
+                    numeroSpites = 1;
                 contadorSpites = 0;
             }
         } else {
@@ -253,7 +319,8 @@ public class Jugador extends Entidad {
     private void ejecutarAtaque() {
         contadorAnimAtaque = duracionAnimAtaque;
         estado = EstadoEntidad.ATACANDO;
-        if (!esMelee) dispararProyectil();
+        if (!esMelee)
+            dispararProyectil();
     }
 
     private void dispararProyectil() {
@@ -303,7 +370,8 @@ public class Jugador extends Entidad {
 
     @Override
     public void recibirDanio(int cantidad) {
-        if (powerUps.invencibilidadActiva) return;
+        if (powerUps.invencibilidadActiva)
+            return;
         mundo.estadisticas.registrarAtaqueRecibido(cantidad);
         super.recibirDanio(cantidad);
     }
@@ -316,9 +384,12 @@ public class Jugador extends Entidad {
 
         if (estado == EstadoEntidad.MURIENDO) {
             if (tieneSpritesmuerte && muerte1 != null) {
-                if (frameMuerte == 0) imagen = muerte1;
-                else if (frameMuerte == 1) imagen = muerte2;
-                else imagen = muerte3;
+                if (frameMuerte == 0)
+                    imagen = muerte1;
+                else if (frameMuerte == 1)
+                    imagen = muerte2;
+                else
+                    imagen = muerte3;
                 g2.drawImage(imagen, screenX, screeny, null);
             } else {
                 g2.setColor(Color.RED);
@@ -345,8 +416,8 @@ public class Jugador extends Entidad {
         g2.drawImage(imagen, screenX, screeny, null);
 
         if (contadorInvulnerabilidad > 0 && contadorInvulnerabilidad % 10 < 5) {
-            g2.setColor(new Color(255, 0, 0, 100));
-            g2.fillRect(screenX, screeny, tile, tile);
+            BufferedImage tintedSprite = miTool.tintImage(imagen, new Color(255, 0, 0, 100));
+            g2.drawImage(tintedSprite, screenX, screeny, null);
         }
 
         if (debug) {
@@ -357,21 +428,31 @@ public class Jugador extends Entidad {
 
     private BufferedImage obtenerSpriteAtaque() {
         switch (direccion) {
-            case "arriba": return ataqueArriba;
-            case "abajo": return ataqueAbajo;
-            case "izquierda": return ataqueIzq;
-            case "derecha": return ataqueDer;
-            default: return null;
+            case "arriba":
+                return ataqueArriba;
+            case "abajo":
+                return ataqueAbajo;
+            case "izquierda":
+                return ataqueIzq;
+            case "derecha":
+                return ataqueDer;
+            default:
+                return null;
         }
     }
 
     private BufferedImage obtenerSpriteMovimiento() {
         switch (direccion) {
-            case "arriba":    return (numeroSpites == 1) ? arriba1 : arriba2;
-            case "abajo":     return (numeroSpites == 1) ? abajo1 : abajo2;
-            case "izquierda": return (numeroSpites == 1) ? izquierda1 : izquierda2;
-            case "derecha":   return (numeroSpites == 1) ? derecha1 : derecha2;
-            default: return abajo1;
+            case "arriba":
+                return (numeroSpites == 1) ? arriba1 : arriba2;
+            case "abajo":
+                return (numeroSpites == 1) ? abajo1 : abajo2;
+            case "izquierda":
+                return (numeroSpites == 1) ? izquierda1 : izquierda2;
+            case "derecha":
+                return (numeroSpites == 1) ? derecha1 : derecha2;
+            default:
+                return abajo1;
         }
     }
 

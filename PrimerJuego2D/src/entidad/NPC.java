@@ -7,13 +7,15 @@ import java.awt.image.BufferedImage;
 
 import configuracion.Configuracion;
 import mundo.MundoJuego;
+import utilidades.Herramientas;
 
 /**
  * Clase base para todos los NPCs (enemigos).
  * Implementa comportamiento básico de IA, combate y Object Pooling.
  *
  * OPTIMIZACIONES:
- * - Object Pooling: los NPCs se pre-instancian y se reutilizan con activar()/desactivar()
+ * - Object Pooling: los NPCs se pre-instancian y se reutilizan con
+ * activar()/desactivar()
  * - Culling Lógico: NPCs lejanos reducen frecuencia de actualización
  * - Rectángulos pre-allocados: cero creación de objetos en colisiones
  */
@@ -21,7 +23,10 @@ public abstract class NPC extends Entidad {
 
     protected MundoJuego mundo;
 
-    public enum TipoNPC { BAT, SLIME, ORCO, GHOUL }
+    public enum TipoNPC {
+        BAT, SLIME, ORCO, GHOUL
+    }
+
     public TipoNPC tipoNPC;
 
     public int radioDeteccion = 5 * 64;
@@ -130,10 +135,18 @@ public abstract class NPC extends Entidad {
 
         if (!hayColision) {
             switch (direccion) {
-                case "arriba":    worldy -= vel; break;
-                case "abajo":     worldy += vel; break;
-                case "izquierda": worldx -= vel; break;
-                case "derecha":   worldx += vel; break;
+                case "arriba":
+                    worldy -= vel;
+                    break;
+                case "abajo":
+                    worldy += vel;
+                    break;
+                case "izquierda":
+                    worldx -= vel;
+                    break;
+                case "derecha":
+                    worldx += vel;
+                    break;
             }
         }
     }
@@ -164,10 +177,18 @@ public abstract class NPC extends Entidad {
     protected void cambiarDireccionAleatoria() {
         int random = (int) (Math.random() * 4);
         switch (random) {
-            case 0: direccion = "arriba"; break;
-            case 1: direccion = "abajo"; break;
-            case 2: direccion = "izquierda"; break;
-            case 3: direccion = "derecha"; break;
+            case 0:
+                direccion = "arriba";
+                break;
+            case 1:
+                direccion = "abajo";
+                break;
+            case 2:
+                direccion = "izquierda";
+                break;
+            case 3:
+                direccion = "derecha";
+                break;
         }
     }
 
@@ -203,9 +224,12 @@ public abstract class NPC extends Entidad {
             BufferedImage sprite;
 
             if (!estaVivo) {
-                if (frameMuerte == 0) sprite = muerte1;
-                else if (frameMuerte == 1) sprite = muerte2;
-                else sprite = muerte3;
+                if (frameMuerte == 0)
+                    sprite = muerte1;
+                else if (frameMuerte == 1)
+                    sprite = muerte2;
+                else
+                    sprite = muerte3;
             } else {
                 sprite = obtenerSprite();
             }
@@ -217,8 +241,8 @@ public abstract class NPC extends Entidad {
             }
 
             if (contadorInvulnerabilidad > 0 && contadorInvulnerabilidad % 10 < 5 && estaVivo) {
-                g2.setColor(new Color(255, 0, 0, 100));
-                g2.fillRect(screenX, screenY, tile, tile);
+                BufferedImage tintedSprite = new Herramientas().tintImage(sprite, new Color(255, 0, 0, 100));
+                g2.drawImage(tintedSprite, screenX, screenY, null);
             }
         }
     }

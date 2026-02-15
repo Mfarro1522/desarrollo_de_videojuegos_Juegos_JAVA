@@ -12,7 +12,7 @@ public class CofreNormal extends SuperObjeto {
     public CofreNormal(int tamanioTile) {
         nombre = "cofre";
         try {
-            BufferedImage imagenOriginal = ImageIO.read(getClass().getResource("/objetos/cofre.png"));
+            BufferedImage imagenOriginal = ImageIO.read(getClass().getResource("/objetos/cofre_Normal.png"));
             imagen = miTool.escalarImagen(imagenOriginal, tamanioTile, tamanioTile);
         } catch (IOException e) {
             e.printStackTrace();

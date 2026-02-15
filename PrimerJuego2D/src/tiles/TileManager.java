@@ -47,16 +47,19 @@ public class TileManager {
 
             while ((linea = br.readLine()) != null) {
                 linea = linea.trim();
-                if (linea.isEmpty()) continue;
+                if (linea.isEmpty())
+                    continue;
 
                 String[] partes = linea.split(";");
-                if (partes.length < 2) continue;
+                if (partes.length < 2)
+                    continue;
 
                 String rutaImagen = partes[0].trim();
                 int colision = Integer.parseInt(partes[1].trim());
 
                 int indice = extraerIndiceTile(rutaImagen);
-                if (indice < 0 || indice >= MAX_TIPOS_TILE) continue;
+                if (indice < 0 || indice >= MAX_TIPOS_TILE)
+                    continue;
 
                 Tile tile = new Tile();
                 InputStream imgStream = getClass().getResourceAsStream(rutaImagen);
@@ -76,7 +79,46 @@ public class TileManager {
             e.printStackTrace();
         }
 
+        cargarTilesManuales(tool);
         cargarTilesAdicionales(tool);
+    }
+
+    private void cargarTilesManuales(Herramientas tool) {
+        try {
+            // TILE 0: Pasto Principal (Base)
+            cargarTileIndividual(0, "/tiles/pastoPrincipal.png", false, tool);
+
+            // TILE 2: Sólido / Obstáculo
+            cargarTileIndividual(2, "/tiles/Solido_0001.png", true, tool);
+            cargarTileIndividual(3, "/tiles/Solido_0002.png", true, tool);
+
+            // TILES 20-24: Variantes de Pasto
+            cargarTileIndividual(30, "/tiles/pastoVariantes_0001.png", false, tool);
+            cargarTileIndividual(31, "/tiles/pastoVariantes_0002.png", false, tool);
+            cargarTileIndividual(32, "/tiles/pastoVariantes_0003.png", false, tool);
+            cargarTileIndividual(33, "/tiles/pastoVariantes_0004.png", false, tool);
+
+        } catch (Exception e) {
+            System.err.println("[TileManager] Error cargando tiles manuales: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarTileIndividual(int id, String ruta, boolean colision, Herramientas tool) throws Exception {
+        if (id < 0 || id >= MAX_TIPOS_TILE)
+            return;
+
+        InputStream is = getClass().getResourceAsStream(ruta);
+        if (is != null) {
+            Tile tile = new Tile();
+            tile.imagen = tool.escalarImagen(
+                    ImageIO.read(is), Configuracion.TAMANO_TILE, Configuracion.TAMANO_TILE);
+            tile.colision = colision;
+            tiles[id] = tile;
+            is.close();
+        } else {
+            System.err.println("[TileManager] No se encontró imagen: " + ruta);
+        }
     }
 
     private int extraerIndiceTile(String ruta) {
@@ -91,7 +133,8 @@ public class TileManager {
 
     private void cargarTilesAdicionales(Herramientas tool) {
         for (int i = 0; i < MAX_TIPOS_TILE; i++) {
-            if (tiles[i] != null) continue;
+            if (tiles[i] != null)
+                continue;
 
             String ruta = "/tiles/tile_" + String.format("%02d", i) + ".png";
             try {
@@ -111,14 +154,31 @@ public class TileManager {
     }
 
     private void generarMapaProcedural() {
-        int baseTile = 17;
-        int obstacleTile = 2;
-        int[] pastoVariantes = { 17, 0, 1, 17, 17 };
+
+        int[] obstacleVariantes = { 2, 3 }; // Sólidos
+
+        // Variantes de pasto: Se repite el 0 para que sea el predominante
+        int[] pastoVariantes = {
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                30,
+                31, 31, 31,
+                32,
+                33, 33, 33,
+        };
 
         for (int tv : pastoVariantes) {
-            if (tiles[tv] != null) tiles[tv].colision = false;
+            if (tiles[tv] != null)
+                tiles[tv].colision = false;
         }
-        if (tiles[obstacleTile] != null) tiles[obstacleTile].colision = true;
+        for (int ov : obstacleVariantes) {
+            if (tiles[ov] != null)
+                tiles[ov].colision = true;
+        }
 
         int centroCol = Configuracion.MUNDO_COLUMNAS / 2;
         int centroFila = Configuracion.MUNDO_FILAS / 2;
@@ -135,13 +195,13 @@ public class TileManager {
 
                 if (col == 0 || col == Configuracion.MUNDO_COLUMNAS - 1
                         || fila == 0 || fila == Configuracion.MUNDO_FILAS - 1) {
-                    mapaPorNumeroTile[col][fila] = obstacleTile;
+                    mapaPorNumeroTile[col][fila] = obstacleVariantes[(int) (Math.random() * obstacleVariantes.length)];
                     continue;
                 }
 
                 double random = Math.random();
                 if (random < 0.03) {
-                    mapaPorNumeroTile[col][fila] = obstacleTile;
+                    mapaPorNumeroTile[col][fila] = obstacleVariantes[(int) (Math.random() * obstacleVariantes.length)];
                 } else {
                     mapaPorNumeroTile[col][fila] = elegirPastoAleatorio(pastoVariantes);
                 }
@@ -150,13 +210,8 @@ public class TileManager {
     }
 
     private int elegirPastoAleatorio(int[] variantes) {
-        double r = Math.random();
-        if (r < 0.55) {
-            return variantes[0];
-        } else {
-            int idx = 1 + (int) (Math.random() * (variantes.length - 1));
-            return variantes[idx];
-        }
+        int idx = (int) (Math.random() * variantes.length);
+        return variantes[idx];
     }
 
     /**
