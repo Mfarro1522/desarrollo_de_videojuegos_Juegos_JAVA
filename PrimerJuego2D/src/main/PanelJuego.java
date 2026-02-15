@@ -56,13 +56,16 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	public superObjeto[] objs = new superObjeto[15];
 
-	// Sistema de NPCs
-	public NPC[] npcs = new NPC[100]; // Máximo 100 NPCs simultáneos
-	public int contadorNPCs = 0; // Contador actual de NPCs vivos
+	// Sistema de NPCs (Object Pool pre-instanciado)
+	public NPC[] npcs = new NPC[AssetSetter.POOL_TOTAL];
+	public int contadorNPCs = 0; // Contador actual de NPCs activos
 
 	// Sistema de proyectiles
 	public Proyectil[] proyectiles = new Proyectil[100];
 	public int contadorProyectiles = 0;
+
+	// ===== SPATIAL HASH GRID para colisiones eficientes =====
+	public SpatialHashGrid spatialGrid;
 
 	// Sistema de estadísticas
 	public GameStats stats = new GameStats();
@@ -105,6 +108,9 @@ public class PanelJuego extends JPanel implements Runnable {
 	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
 	 */
 	public void setupJuego() {
+		// Cargar estadísticas guardadas
+		GameStats.cargarStats();
+
 		// Cargar imagen de fondo centralizada
 		try {
 			imagenFondoMenu = ImageIO.read(getClass().getResourceAsStream("/bg/fonfoPantallaPrincipal.png"));
@@ -115,12 +121,15 @@ public class PanelJuego extends JPanel implements Runnable {
 			imagenFondoMenu = null;
 		}
 
+		// ===== Inicializar Spatial Hash Grid =====
+		int tamanioCelda = tamanioTile * 3; // Cada celda = 3x3 tiles
+		spatialGrid = new SpatialHashGrid(maxWorldAncho, maxWorldAlto, tamanioCelda);
+
+		// ===== Pre-instanciar Object Pool de NPCs =====
+		aSetter.inicializarPool();
+
 		// Iniciar en el menú principal
 		gameState = menuState;
-
-		// Reproducir música del menú
-		// TODO: Descomentar cuando agregues res/sound/menu_music.wav
-		// reproducirMusicaFondo(5); // Música del menú
 	}
 
 	TileManager tileManager = new TileManager(this);
@@ -215,18 +224,18 @@ public class PanelJuego extends JPanel implements Runnable {
 			}
 		}
 
-		// Actualizar NPCs
+		// ===== SPATIAL HASH GRID: poblar grilla con NPCs activos =====
+		spatialGrid.limpiar();
 		for (int i = 0; i < npcs.length; i++) {
-			if (npcs[i] != null) {
-				if (npcs[i].estaVivo) {
-					npcs[i].update();
-				} else {
-					npcs[i].update();
-					if (npcs[i].frameMuerte >= 3) {
-						npcs[i] = null;
-						contadorNPCs--;
-					}
-				}
+			if (npcs[i] != null && npcs[i].activo) {
+				spatialGrid.insertar(i, npcs[i].worldx, npcs[i].worldy);
+			}
+		}
+
+		// ===== Actualizar NPCs activos (Object Pool) =====
+		for (int i = 0; i < npcs.length; i++) {
+			if (npcs[i] != null && npcs[i].activo) {
+				npcs[i].update();
 			}
 		}
 
@@ -255,7 +264,6 @@ public class PanelJuego extends JPanel implements Runnable {
 
 		// Verificar muerte del jugador (con delay para apreciar animación de muerte)
 		if (!jugador.estaVivo && !jugadorMuerto) {
-			// Primer frame de muerte: finalizar estadísticas y marcar como muerto
 			stats.finalizarJuego();
 			jugadorMuerto = true;
 			contadorGameOver = 0;
@@ -290,16 +298,31 @@ public class PanelJuego extends JPanel implements Runnable {
 					objs[i].draw(g2, this);
 				}
 			}
-			// NPCs
+
+			// ===== NPCs con FRUSTUM CULLING =====
+			int margenCullX = jugador.screenX + tamanioTile;
+			int margenCullY = jugador.screeny + tamanioTile;
 			for (int i = 0; i < npcs.length; i++) {
-				if (npcs[i] != null) {
-					npcs[i].draw(g2);
+				if (npcs[i] != null && npcs[i].activo) {
+					// Solo dibujar si está dentro de la cámara
+					int dx = npcs[i].worldx - jugador.worldx;
+					int dy = npcs[i].worldy - jugador.worldy;
+					if (dx > -margenCullX && dx < margenCullX
+							&& dy > -margenCullY && dy < margenCullY) {
+						npcs[i].draw(g2);
+					}
 				}
 			}
-			// Proyectiles
+
+			// Proyectiles con Frustum Culling
 			for (int i = 0; i < proyectiles.length; i++) {
 				if (proyectiles[i] != null && proyectiles[i].activo) {
-					proyectiles[i].draw(g2);
+					int dx = proyectiles[i].worldX - jugador.worldx;
+					int dy = proyectiles[i].worldY - jugador.worldy;
+					if (dx > -margenCullX && dx < margenCullX
+							&& dy > -margenCullY && dy < margenCullY) {
+						proyectiles[i].draw(g2);
+					}
 				}
 			}
 			// jugador
@@ -380,16 +403,13 @@ public class PanelJuego extends JPanel implements Runnable {
 		// Reiniciar jugador
 		jugador.powerUps = new PowerUpManager();
 
-		// Limpiar objetos (SOLUCIONA BUG: cofres no reaparecían al cambiar personaje)
+		// Limpiar objetos
 		for (int i = 0; i < objs.length; i++) {
 			objs[i] = null;
 		}
 
-		// Limpiar NPCs
-		for (int i = 0; i < npcs.length; i++) {
-			npcs[i] = null;
-		}
-		contadorNPCs = 0;
+		// ===== OBJECT POOL: desactivar todos los NPCs (NO null) =====
+		aSetter.desactivarTodos();
 
 		// Limpiar proyectiles
 		for (int i = 0; i < proyectiles.length; i++) {
@@ -408,16 +428,13 @@ public class PanelJuego extends JPanel implements Runnable {
 		jugadorMuerto = false;
 		contadorGameOver = 0;
 
-		// Colocar objetos y NPCs
+		// Colocar objetos y spawnear NPCs (usando pool)
 		aSetter.setObjetct();
 		aSetter.setNPCs();
 
 		// Sistema de música
-		stopMusic(); // Detener música anterior (si hay)
-		// TODO: Descomentar cuando agregues res/sound/battle_music.wav para usar música
-		// de batalla alternativa
-		// reproducirMusicaFondo(6); // Música de batalla
-		reproducirMusicaFondo(0); // Doom.wav para el juego (por ahora)
+		stopMusic();
+		reproducirMusicaFondo(0); // Doom.wav
 
 		// Iniciar juego
 		gameState = playState;

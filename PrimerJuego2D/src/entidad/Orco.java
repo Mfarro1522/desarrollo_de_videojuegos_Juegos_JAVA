@@ -15,123 +15,119 @@ import main.UtilityTool;
  */
 public class Orco extends NPC {
 
-    private UtilityTool tool = new UtilityTool();
+    // ===== CACHE ESTÁTICO DE SPRITES (compartidos entre todas las instancias) =====
+    private static BufferedImage s_izq1, s_izq2, s_izq3, s_izq4;
+    private static BufferedImage s_der1, s_der2, s_der3, s_der4;
+    private static BufferedImage s_ataqueIzq1, s_ataqueIzq2, s_ataqueIzq3;
+    private static BufferedImage s_ataqueDer1, s_ataqueDer2, s_ataqueDer3;
+    private static BufferedImage s_muerte1, s_muerte2, s_muerte3;
+    private static boolean spritesLoaded = false;
 
-    // 4 frames de caminar por dirección
+    // Referencias de instancia (apuntan al caché estático)
     private BufferedImage izq1, izq2, izq3, izq4;
     private BufferedImage der1, der2, der3, der4;
-
-    // 3 frames de ataque por dirección
     private BufferedImage ataqueIzq1, ataqueIzq2, ataqueIzq3;
     private BufferedImage ataqueDer1, ataqueDer2, ataqueDer3;
-
-    // 3 frames de muerte (sin dirección específica)
     private BufferedImage muerteOrco1, muerteOrco2, muerteOrco3;
 
     // Dirección horizontal para reutilizar sprites al ir arriba/abajo
     private String ultimaDireccionHorizontal = "derecha";
 
     // Sistema de animación
-    private int frameActual = 1; // 1-4 para caminar, 1-3 para ataque
+    private int frameActual = 1;
     private int contadorAnim = 0;
-    private int velocidadAnim = 10; // Frames entre cambios de sprite
+    private int velocidadAnim = 10;
 
     // Sistema de ataque
     private boolean estaAtacando = false;
     private int contadorAtaque = 0;
-    private int duracionAtaque = 30; // Duración total del ataque en frames
+    private int duracionAtaque = 30;
     private int cooldownAtaqueContador = 0;
-    private int cooldownAtaque = 60; // Tiempo entre ataques
+    private int cooldownAtaque = 60;
 
     public Orco(PanelJuego pj) {
         super(pj);
+        tipoNPC = TipoNPC.ORCO;
+        inicializarEstadisticas();
+        cargarSpritesEstaticos(pj);
+        asignarSprites();
+    }
 
-        // Estadísticas (más fuerte y lento que Bat)
+    private void inicializarEstadisticas() {
         vidaMaxima = 30;
         vidaActual = vidaMaxima;
         ataque = 8;
         defensa = 2;
-        vel = 1; // Más lento que Bat
-
+        vel = 1;
         direccion = "derecha";
-
-        // IA
         radioDeteccion = 6 * pj.tamanioTile;
-        radioAtaque = pj.tamanioTile + 10; // Rango de ataque melee
+        radioAtaque = pj.tamanioTile + 10;
         experienciaAOtorgar = 25;
-
-        cargarSprites();
     }
 
-    private void cargarSprites() {
+    /**
+     * Carga sprites UNA SOLA VEZ para todos los Orcos (Object Pooling).
+     */
+    private static synchronized void cargarSpritesEstaticos(PanelJuego pj) {
+        if (spritesLoaded) return;
+        UtilityTool tool = new UtilityTool();
         try {
-            rutaCarpeta = "/Npc/Orco/";
+            String ruta = "/Npc/Orco/";
 
-            // ===== CARGAR SPRITES DE CAMINAR (SOLO DERECHA) =====
-            BufferedImage tempDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der01.png"));
-            BufferedImage tempDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der02.png"));
-            BufferedImage tempDer3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der03.png"));
-            BufferedImage tempDer4 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der05.png"));
+            // Sprites de caminar (derecha)
+            s_der1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "der01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_der2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "der02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_der3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "der03.png")), pj.tamanioTile, pj.tamanioTile);
+            s_der4 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "der05.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // Escalar sprites de derecha
-            der1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
-            der2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
-            der3 = tool.escalarImagen(tempDer3, pj.tamanioTile, pj.tamanioTile);
-            der4 = tool.escalarImagen(tempDer4, pj.tamanioTile, pj.tamanioTile);
+            s_izq1 = tool.voltearImagenHorizontal(s_der1);
+            s_izq2 = tool.voltearImagenHorizontal(s_der2);
+            s_izq3 = tool.voltearImagenHorizontal(s_der3);
+            s_izq4 = tool.voltearImagenHorizontal(s_der4);
 
-            // Generar sprites de izquierda mediante espejo
-            izq1 = tool.voltearImagenHorizontal(der1);
-            izq2 = tool.voltearImagenHorizontal(der2);
-            izq3 = tool.voltearImagenHorizontal(der3);
-            izq4 = tool.voltearImagenHorizontal(der4);
+            // Sprites de ataque (derecha)
+            s_ataqueDer1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_ataqueDer2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_ataqueDer3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder03.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // ===== CARGAR SPRITES DE ATAQUE (SOLO DERECHA) =====
-            BufferedImage tempAtaqueDer1 = ImageIO
-                    .read(getClass().getResourceAsStream(rutaCarpeta + "ataqueder01.png"));
-            BufferedImage tempAtaqueDer2 = ImageIO
-                    .read(getClass().getResourceAsStream(rutaCarpeta + "ataqueder02.png"));
-            BufferedImage tempAtaqueDer3 = ImageIO
-                    .read(getClass().getResourceAsStream(rutaCarpeta + "ataqueder03.png"));
+            s_ataqueIzq1 = tool.voltearImagenHorizontal(s_ataqueDer1);
+            s_ataqueIzq2 = tool.voltearImagenHorizontal(s_ataqueDer2);
+            s_ataqueIzq3 = tool.voltearImagenHorizontal(s_ataqueDer3);
 
-            // Escalar sprites de ataque derecha
-            ataqueDer1 = tool.escalarImagen(tempAtaqueDer1, pj.tamanioTile, pj.tamanioTile);
-            ataqueDer2 = tool.escalarImagen(tempAtaqueDer2, pj.tamanioTile, pj.tamanioTile);
-            ataqueDer3 = tool.escalarImagen(tempAtaqueDer3, pj.tamanioTile, pj.tamanioTile);
+            // Sprites de muerte
+            s_muerte1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_muerte2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_muerte3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte03.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // Generar sprites de ataque izquierda mediante espejo
-            ataqueIzq1 = tool.voltearImagenHorizontal(ataqueDer1);
-            ataqueIzq2 = tool.voltearImagenHorizontal(ataqueDer2);
-            ataqueIzq3 = tool.voltearImagenHorizontal(ataqueDer3);
-
-            // ===== CARGAR SPRITES DE MUERTE =====
-            BufferedImage tempMuerte1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte01.png"));
-            BufferedImage tempMuerte2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte02.png"));
-            BufferedImage tempMuerte3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte03.png"));
-
-            // Escalar sprites de muerte
-            muerteOrco1 = tool.escalarImagen(tempMuerte1, pj.tamanioTile, pj.tamanioTile);
-            muerteOrco2 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile);
-            muerteOrco3 = tool.escalarImagen(tempMuerte3, pj.tamanioTile, pj.tamanioTile);
-
-            // ===== ASIGNAR SPRITES BASE PARA COMPATIBILIDAD CON NPC =====
-            izquierda1 = izq1;
-            izquierda2 = izq2;
-            derecha1 = der1;
-            derecha2 = der2;
-            arriba1 = der1;
-            arriba2 = der2;
-            abajo1 = der1;
-            abajo2 = der2;
-
-            // Sprites de muerte propios
-            muerte1 = muerteOrco1;
-            muerte2 = muerteOrco2;
-            muerte3 = muerteOrco3;
-
+            spritesLoaded = true;
         } catch (Exception e) {
             System.err.println("[Orco] Error al cargar sprites: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void asignarSprites() {
+        izq1 = s_izq1; izq2 = s_izq2; izq3 = s_izq3; izq4 = s_izq4;
+        der1 = s_der1; der2 = s_der2; der3 = s_der3; der4 = s_der4;
+        ataqueIzq1 = s_ataqueIzq1; ataqueIzq2 = s_ataqueIzq2; ataqueIzq3 = s_ataqueIzq3;
+        ataqueDer1 = s_ataqueDer1; ataqueDer2 = s_ataqueDer2; ataqueDer3 = s_ataqueDer3;
+        muerteOrco1 = s_muerte1; muerteOrco2 = s_muerte2; muerteOrco3 = s_muerte3;
+
+        izquierda1 = s_izq1; izquierda2 = s_izq2;
+        derecha1 = s_der1; derecha2 = s_der2;
+        arriba1 = s_der1; arriba2 = s_der2;
+        abajo1 = s_der1; abajo2 = s_der2;
+        muerte1 = s_muerte1; muerte2 = s_muerte2; muerte3 = s_muerte3;
+    }
+
+    @Override
+    public void resetearEstado() {
+        ultimaDireccionHorizontal = "derecha";
+        frameActual = 1;
+        contadorAnim = 0;
+        estaAtacando = false;
+        contadorAtaque = 0;
+        cooldownAtaqueContador = 0;
     }
 
     @Override
@@ -305,5 +301,9 @@ public class Orco extends NPC {
                     return der1;
             }
         }
+    }
+
+    public static void resetearCache() {
+        spritesLoaded = false;
     }
 }

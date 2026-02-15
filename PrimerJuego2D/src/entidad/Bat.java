@@ -13,9 +13,13 @@ import main.UtilityTool;
  */
 public class Bat extends NPC {
 
-    private UtilityTool tool = new UtilityTool();
+    // ===== CACHE ESTÁTICO DE SPRITES (cargados una sola vez, compartidos) =====
+    private static BufferedImage s_izq1, s_izq2, s_izq3, s_izq4;
+    private static BufferedImage s_der1, s_der2, s_der3, s_der4;
+    private static BufferedImage s_muerte1, s_muerte2, s_muerte3;
+    private static boolean spritesLoaded = false;
 
-    // 4 frames por dirección (solo izq y der)
+    // Referencias de instancia (apuntan al caché estático)
     private BufferedImage izq1, izq2, izq3, izq4;
     private BufferedImage der1, der2, der3, der4;
 
@@ -29,69 +33,78 @@ public class Bat extends NPC {
 
     public Bat(PanelJuego pj) {
         super(pj);
+        tipoNPC = TipoNPC.BAT;
+        inicializarEstadisticas();
+        cargarSpritesEstaticos(pj);
+        asignarSprites();
+    }
 
-        // Estadísticas (más rápido pero frágil)
+    private void inicializarEstadisticas() {
         vidaMaxima = 12;
         vidaActual = vidaMaxima;
         ataque = 4;
         defensa = 0;
-        vel = 2; // Más rápido que el Slime
-
+        vel = 2;
         direccion = "izquierda";
-
-        // IA
-        radioDeteccion = 8 * pj.tamanioTile; // Ve más lejos que el Slime
+        radioDeteccion = 8 * pj.tamanioTile;
         experienciaAOtorgar = 15;
-
-        cargarSprites();
     }
 
-    private void cargarSprites() {
+    /**
+     * Carga sprites UNA SOLA VEZ para todos los Bats (Object Pooling).
+     * Elimina carga duplicada de imágenes al pre-instanciar el pool.
+     */
+    private static synchronized void cargarSpritesEstaticos(PanelJuego pj) {
+        if (spritesLoaded) return;
+        UtilityTool tool = new UtilityTool();
         try {
-            rutaCarpeta = "/Npc/Bats/";
+            String ruta = "/Npc/Bats/";
 
-            // Cargar solo sprites de derecha
-            BufferedImage tempDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der01.png"));
-            BufferedImage tempDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der02.png"));
-            BufferedImage tempDer3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der03.png"));
-            BufferedImage tempDer4 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der04.png"));
+            BufferedImage tempDer1 = ImageIO.read(Bat.class.getResourceAsStream(ruta + "der01.png"));
+            BufferedImage tempDer2 = ImageIO.read(Bat.class.getResourceAsStream(ruta + "der02.png"));
+            BufferedImage tempDer3 = ImageIO.read(Bat.class.getResourceAsStream(ruta + "der03.png"));
+            BufferedImage tempDer4 = ImageIO.read(Bat.class.getResourceAsStream(ruta + "der04.png"));
 
-            // Escalar sprites de derecha
-            der1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
-            der2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
-            der3 = tool.escalarImagen(tempDer3, pj.tamanioTile, pj.tamanioTile);
-            der4 = tool.escalarImagen(tempDer4, pj.tamanioTile, pj.tamanioTile);
+            s_der1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
+            s_der2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
+            s_der3 = tool.escalarImagen(tempDer3, pj.tamanioTile, pj.tamanioTile);
+            s_der4 = tool.escalarImagen(tempDer4, pj.tamanioTile, pj.tamanioTile);
 
-            // Generar sprites de izquierda mediante espejo horizontal
-            izq1 = tool.voltearImagenHorizontal(der1);
-            izq2 = tool.voltearImagenHorizontal(der2);
-            izq3 = tool.voltearImagenHorizontal(der3);
-            izq4 = tool.voltearImagenHorizontal(der4);
+            s_izq1 = tool.voltearImagenHorizontal(s_der1);
+            s_izq2 = tool.voltearImagenHorizontal(s_der2);
+            s_izq3 = tool.voltearImagenHorizontal(s_der3);
+            s_izq4 = tool.voltearImagenHorizontal(s_der4);
 
-            // Asignar sprites base para compatibilidad con NPC.draw() (muerte)
-            // El Bat no tiene sprites de muerte propios, usar el primer frame como
-            // placeholder
-            izquierda1 = izq1;
-            izquierda2 = izq2;
-            derecha1 = der1;
-            derecha2 = der2;
-            arriba1 = der1;
-            arriba2 = der2;
-            abajo1 = der1;
-            abajo2 = der2;
+            BufferedImage tempMuerte1 = ImageIO.read(Bat.class.getResourceAsStream(ruta + "muerte01.png"));
+            BufferedImage tempMuerte2 = ImageIO.read(Bat.class.getResourceAsStream(ruta + "muerte02.png"));
 
-            // Cargar sprites de muerte
-            BufferedImage tempMuerte1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte01.png"));
-            BufferedImage tempMuerte2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte02.png"));
+            s_muerte1 = tool.escalarImagen(tempMuerte1, pj.tamanioTile, pj.tamanioTile);
+            s_muerte2 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile);
+            s_muerte3 = s_muerte2; // Reutilizar frame 2
 
-            muerte1 = tool.escalarImagen(tempMuerte1, pj.tamanioTile, pj.tamanioTile);
-            muerte2 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile);
-            muerte3 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile); // Reutilizar frame 2
-
+            spritesLoaded = true;
         } catch (Exception e) {
             System.err.println("[Bat] Error al cargar sprites: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /** Asigna las referencias estáticas a los campos de instancia. */
+    private void asignarSprites() {
+        izq1 = s_izq1; izq2 = s_izq2; izq3 = s_izq3; izq4 = s_izq4;
+        der1 = s_der1; der2 = s_der2; der3 = s_der3; der4 = s_der4;
+        izquierda1 = s_izq1; izquierda2 = s_izq2;
+        derecha1 = s_der1; derecha2 = s_der2;
+        arriba1 = s_der1; arriba2 = s_der2;
+        abajo1 = s_der1; abajo2 = s_der2;
+        muerte1 = s_muerte1; muerte2 = s_muerte2; muerte3 = s_muerte3;
+    }
+
+    @Override
+    public void resetearEstado() {
+        ultimaDireccionHorizontal = "derecha";
+        frameActual = 1;
+        contadorAnim = 0;
     }
 
     @Override
@@ -172,5 +185,12 @@ public class Bat extends NPC {
                     return der1;
             }
         }
+    }
+
+    /**
+     * Resetea el caché estático (útil para cambiar resolución).
+     */
+    public static void resetearCache() {
+        spritesLoaded = false;
     }
 }

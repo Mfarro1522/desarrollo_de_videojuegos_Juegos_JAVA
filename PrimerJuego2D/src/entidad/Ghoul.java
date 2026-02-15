@@ -6,113 +6,132 @@ import main.PanelJuego;
 import main.UtilityTool;
 
 /**
- * Enemigo tipo Ghoul (Necrófago).
- * Comportamiento: Enemigo melee con animaciones de caminar y ataque.
- * Usa espejo horizontal para generar sprites de izquierda.
+ * Enemigo tipo Ghoul.
+ * Se mueve en las 4 direcciones con animaciones de izquierda y derecha (4 frames).
+ * Al moverse arriba/abajo usa el sprite de la última dirección horizontal.
+ * Tiene un ataque cuerpo a cuerpo con animación de 3 frames.
+ *
+ * OPTIMIZACIONES:
+ * - Cache estático de sprites (compartido entre todas las instancias)
+ * - Object Pooling con resetearEstado()
+ * - Distancia al cuadrado (evita Math.sqrt)
  */
 public class Ghoul extends NPC {
 
-    private UtilityTool tool = new UtilityTool();
+    // ===== CACHE ESTÁTICO DE SPRITES (cargados una sola vez, compartidos) =====
+    private static BufferedImage s_izq1, s_izq2, s_izq3, s_izq4;
+    private static BufferedImage s_der1, s_der2, s_der3, s_der4;
+    private static BufferedImage s_ataqueIzq1, s_ataqueIzq2, s_ataqueIzq3;
+    private static BufferedImage s_ataqueDer1, s_ataqueDer2, s_ataqueDer3;
+    private static boolean spritesLoaded = false;
 
-    // Sprites de movimiento (4 frames por lado)
+    // Referencias de instancia (apuntan al caché estático)
     private BufferedImage izq1, izq2, izq3, izq4;
     private BufferedImage der1, der2, der3, der4;
-
-    // Sprites de ataque (3 frames por lado)
     private BufferedImage ataqueIzq1, ataqueIzq2, ataqueIzq3;
     private BufferedImage ataqueDer1, ataqueDer2, ataqueDer3;
 
-    // Control de animación
+    // Dirección horizontal para reutilizar sprites al ir arriba/abajo
     private String ultimaDireccionHorizontal = "derecha";
+
+    // Sistema de animación (4 frames de caminar)
     private int frameActual = 1;
     private int contadorAnim = 0;
     private int velocidadAnim = 10;
 
-    // Control de ataque
+    // Sistema de ataque cuerpo a cuerpo
     private boolean estaAtacando = false;
-    private int frameAtaque = 0;
-    private int contadorFrameAtaque = 0;
-    private int duracionFrameAtaque = 10;
-    private int radioAtaque = pj.tamanioTile; // 1 tile de rango
-    private int cooldownAtaque = 60; // 1 segundo entre ataques
+    private int contadorAtaque = 0;
+    private int duracionAtaque = 30;
     private int cooldownAtaqueContador = 0;
-    private boolean danioAplicado = false;
+    private int cooldownAtaque = 60;
+    private int radioAtaqueGhoul;
 
     public Ghoul(PanelJuego pj) {
         super(pj);
+        tipoNPC = TipoNPC.GHOUL;
+        radioAtaqueGhoul = pj.tamanioTile;
+        inicializarEstadisticas();
+        cargarSpritesEstaticos(pj);
+        asignarSprites();
+    }
 
-        // Estadísticas del Ghoul (similar al Orco pero más rápido y menos vida)
+    private void inicializarEstadisticas() {
         vidaMaxima = 25;
         vidaActual = vidaMaxima;
         ataque = 6;
         defensa = 1;
-        vel = 2; // Más rápido que el Orco
-        direccion = "abajo";
-
-        // IA
-        radioDeteccion = 7 * pj.tamanioTile; // Detecta a mayor distancia
-        experienciaAOtorgar = 15;
-
-        cargarSprites();
+        vel = 2;
+        direccion = "derecha";
+        radioDeteccion = 7 * pj.tamanioTile;
+        radioAtaque = radioAtaqueGhoul;
+        experienciaAOtorgar = 20;
     }
 
-    private void cargarSprites() {
+    /**
+     * Carga sprites UNA SOLA VEZ para todos los Ghouls (Object Pooling).
+     */
+    private static synchronized void cargarSpritesEstaticos(PanelJuego pj) {
+        if (spritesLoaded) return;
+        UtilityTool tool = new UtilityTool();
         try {
-            rutaCarpeta = "/Npc/Ghoul/";
+            String ruta = "/Npc/Ghoul/";
 
-            // Cargar solo sprites de derecha para caminar (4 frames)
-            BufferedImage tempDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ghoulDer01.png"));
-            BufferedImage tempDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ghoulDer02.png"));
-            BufferedImage tempDer3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ghoulDer03.png"));
-            BufferedImage tempDer4 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ghoulDer04.png"));
+            // Sprites de caminar (derecha, 4 frames)
+            s_der1 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ghoulDer01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_der2 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ghoulDer02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_der3 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ghoulDer03.png")), pj.tamanioTile, pj.tamanioTile);
+            s_der4 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ghoulDer04.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // Escalar sprites de derecha
-            der1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
-            der2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
-            der3 = tool.escalarImagen(tempDer3, pj.tamanioTile, pj.tamanioTile);
-            der4 = tool.escalarImagen(tempDer4, pj.tamanioTile, pj.tamanioTile);
+            // Izquierda = espejo horizontal de derecha
+            s_izq1 = tool.voltearImagenHorizontal(s_der1);
+            s_izq2 = tool.voltearImagenHorizontal(s_der2);
+            s_izq3 = tool.voltearImagenHorizontal(s_der3);
+            s_izq4 = tool.voltearImagenHorizontal(s_der4);
 
-            // Generar sprites de izquierda mediante espejo horizontal
-            izq1 = tool.voltearImagenHorizontal(der1);
-            izq2 = tool.voltearImagenHorizontal(der2);
-            izq3 = tool.voltearImagenHorizontal(der3);
-            izq4 = tool.voltearImagenHorizontal(der4);
+            // Sprites de ataque (derecha, 3 frames)
+            s_ataqueDer1 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ataqueDer1.png")), pj.tamanioTile, pj.tamanioTile);
+            s_ataqueDer2 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ataqueDer2.png")), pj.tamanioTile, pj.tamanioTile);
+            s_ataqueDer3 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ataqueDer3.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // Cargar sprites de ataque de derecha (3 frames)
-            BufferedImage tempAtaqueDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer1.png"));
-            BufferedImage tempAtaqueDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer2.png"));
-            BufferedImage tempAtaqueDer3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer3.png"));
+            s_ataqueIzq1 = tool.voltearImagenHorizontal(s_ataqueDer1);
+            s_ataqueIzq2 = tool.voltearImagenHorizontal(s_ataqueDer2);
+            s_ataqueIzq3 = tool.voltearImagenHorizontal(s_ataqueDer3);
 
-            // Escalar sprites de ataque derecha
-            ataqueDer1 = tool.escalarImagen(tempAtaqueDer1, pj.tamanioTile, pj.tamanioTile);
-            ataqueDer2 = tool.escalarImagen(tempAtaqueDer2, pj.tamanioTile, pj.tamanioTile);
-            ataqueDer3 = tool.escalarImagen(tempAtaqueDer3, pj.tamanioTile, pj.tamanioTile);
-
-            // Generar sprites de ataque izquierda
-            ataqueIzq1 = tool.voltearImagenHorizontal(ataqueDer1);
-            ataqueIzq2 = tool.voltearImagenHorizontal(ataqueDer2);
-            ataqueIzq3 = tool.voltearImagenHorizontal(ataqueDer3);
-
-            // Asignar sprites base para compatibilidad con NPC.draw()
-            // Usar primer frame de caminar para direcciones arriba/abajo
-            arriba1 = der1;
-            arriba2 = der2;
-            abajo1 = der1;
-            abajo2 = der2;
-            izquierda1 = izq1;
-            izquierda2 = izq2;
-            derecha1 = der1;
-            derecha2 = der2;
-
-            // Usar sprites de ataque como muerte (placeholder)
-            muerte1 = ataqueDer3;
-            muerte2 = ataqueDer2;
-            muerte3 = ataqueDer1;
-
+            spritesLoaded = true;
         } catch (Exception e) {
             System.err.println("[Ghoul] Error al cargar sprites: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Asigna las referencias estáticas a los campos de instancia.
+     */
+    private void asignarSprites() {
+        izq1 = s_izq1; izq2 = s_izq2; izq3 = s_izq3; izq4 = s_izq4;
+        der1 = s_der1; der2 = s_der2; der3 = s_der3; der4 = s_der4;
+        ataqueIzq1 = s_ataqueIzq1; ataqueIzq2 = s_ataqueIzq2; ataqueIzq3 = s_ataqueIzq3;
+        ataqueDer1 = s_ataqueDer1; ataqueDer2 = s_ataqueDer2; ataqueDer3 = s_ataqueDer3;
+
+        // Sprites base de NPC (para animación de NPC.draw)
+        izquierda1 = s_izq1; izquierda2 = s_izq2;
+        derecha1 = s_der1; derecha2 = s_der2;
+        arriba1 = s_der1; arriba2 = s_der2;
+        abajo1 = s_der1; abajo2 = s_der2;
+
+        // Ghoul no tiene sprites de muerte propios; reutiliza los de caminar
+        muerte1 = s_der1; muerte2 = s_der2; muerte3 = s_der3;
+    }
+
+    @Override
+    public void resetearEstado() {
+        ultimaDireccionHorizontal = "derecha";
+        frameActual = 1;
+        contadorAnim = 0;
+        estaAtacando = false;
+        contadorAtaque = 0;
+        cooldownAtaqueContador = 0;
     }
 
     @Override
@@ -121,18 +140,18 @@ public class Ghoul extends NPC {
             return; // No actualizar IA mientras ataca
         }
 
-        // Calcular distancia al jugador
         int distanciaX = pj.jugador.worldx - worldx;
         int distanciaY = pj.jugador.worldy - worldy;
-        double distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
+        int distSq = distanciaX * distanciaX + distanciaY * distanciaY;
 
-        if (distancia < radioDeteccion) {
-            // Jugador detectado
-            if (distancia <= radioAtaque && cooldownAtaqueContador == 0) {
-                // En rango de ataque y cooldown listo
+        int radioDetSq = radioDeteccion * radioDeteccion;
+        int radioAtqSq = radioAtaque * radioAtaque;
+
+        if (distSq < radioDetSq) {
+            if (distSq <= radioAtqSq && cooldownAtaqueContador == 0) {
                 iniciarAtaque();
             } else {
-                // Perseguir al jugador
+                // Moverse hacia el jugador
                 if (Math.abs(distanciaX) > Math.abs(distanciaY)) {
                     direccion = (distanciaX > 0) ? "derecha" : "izquierda";
                 } else {
@@ -145,7 +164,7 @@ public class Ghoul extends NPC {
             perseguirJugador();
         }
 
-        // Actualizar última dirección horizontal
+        // Rastrear dirección horizontal
         if (direccion.equals("izquierda") || direccion.equals("derecha")) {
             ultimaDireccionHorizontal = direccion;
         }
@@ -158,44 +177,50 @@ public class Ghoul extends NPC {
 
     private void iniciarAtaque() {
         estaAtacando = true;
-        frameAtaque = 0;
-        contadorFrameAtaque = 0;
-        danioAplicado = false;
+        contadorAtaque = 0;
+        frameActual = 1;
         estado = EstadoEntidad.ATACANDO;
+
+        // Orientarse hacia el jugador
+        int distanciaX = pj.jugador.worldx - worldx;
+        if (Math.abs(distanciaX) > 10) {
+            ultimaDireccionHorizontal = (distanciaX > 0) ? "derecha" : "izquierda";
+        }
     }
 
     @Override
     protected void mover() {
         if (estaAtacando) {
-            // Procesar animación de ataque
-            contadorFrameAtaque++;
-            if (contadorFrameAtaque >= duracionFrameAtaque) {
-                frameAtaque++;
-                contadorFrameAtaque = 0;
+            contadorAtaque++;
 
-                // Aplicar daño en el frame 1 (medio de la animación)
-                if (frameAtaque == 1 && !danioAplicado) {
-                    aplicarDanioAtaque();
-                    danioAplicado = true;
-                }
-
-                if (frameAtaque >= 3) {
-                    // Fin del ataque
-                    estaAtacando = false;
-                    frameAtaque = 0;
-                    cooldownAtaqueContador = cooldownAtaque;
-                    estado = EstadoEntidad.IDLE;
+            if (contadorAtaque % 10 == 0) {
+                frameActual++;
+                if (frameActual > 3) {
+                    frameActual = 3;
                 }
             }
-            return; // No moverse durante el ataque
+
+            // Aplicar daño en frame 2
+            if (contadorAtaque == 15) {
+                verificarColisionConJugador();
+            }
+
+            // Terminar ataque
+            if (contadorAtaque >= duracionAtaque) {
+                estaAtacando = false;
+                frameActual = 1;
+                cooldownAtaqueContador = cooldownAtaque;
+                estado = EstadoEntidad.IDLE;
+            }
+            return;
         }
 
         // Movimiento normal
         super.mover();
 
-        // Actualizar animación de caminar
+        // Animación de caminar (4 frames)
         contadorAnim++;
-        if (contadorAnim >= velocidadAnim) {
+        if (contadorAnim > velocidadAnim) {
             frameActual++;
             if (frameActual > 4) {
                 frameActual = 1;
@@ -204,51 +229,30 @@ public class Ghoul extends NPC {
         }
     }
 
-    private void aplicarDanioAtaque() {
-        // Verificar si el jugador está en rango
-        int distanciaX = Math.abs(pj.jugador.worldx - worldx);
-        int distanciaY = Math.abs(pj.jugador.worldy - worldy);
-        double distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
-
-        if (distancia <= radioAtaque) {
-            pj.jugador.recibirDanio(ataque);
-        }
-    }
-
     @Override
     protected BufferedImage obtenerSprite() {
+        // Sprites de ataque
         if (estaAtacando) {
-            // Sprites de ataque
             boolean usarIzquierda = ultimaDireccionHorizontal.equals("izquierda");
-
             if (usarIzquierda) {
-                switch (frameAtaque) {
-                    case 0:
-                        return ataqueIzq1;
-                    case 1:
-                        return ataqueIzq2;
-                    case 2:
-                        return ataqueIzq3;
-                    default:
-                        return ataqueIzq1;
+                switch (frameActual) {
+                    case 1: return ataqueIzq1;
+                    case 2: return ataqueIzq2;
+                    case 3: return ataqueIzq3;
+                    default: return ataqueIzq1;
                 }
             } else {
-                switch (frameAtaque) {
-                    case 0:
-                        return ataqueDer1;
-                    case 1:
-                        return ataqueDer2;
-                    case 2:
-                        return ataqueDer3;
-                    default:
-                        return ataqueDer1;
+                switch (frameActual) {
+                    case 1: return ataqueDer1;
+                    case 2: return ataqueDer2;
+                    case 3: return ataqueDer3;
+                    default: return ataqueDer1;
                 }
             }
         }
 
         // Sprites de caminar
         boolean usarIzquierda;
-
         switch (direccion) {
             case "izquierda":
                 usarIzquierda = true;
@@ -265,30 +269,27 @@ public class Ghoul extends NPC {
 
         if (usarIzquierda) {
             switch (frameActual) {
-                case 1:
-                    return izq1;
-                case 2:
-                    return izq2;
-                case 3:
-                    return izq3;
-                case 4:
-                    return izq4;
-                default:
-                    return izq1;
+                case 1: return izq1;
+                case 2: return izq2;
+                case 3: return izq3;
+                case 4: return izq4;
+                default: return izq1;
             }
         } else {
             switch (frameActual) {
-                case 1:
-                    return der1;
-                case 2:
-                    return der2;
-                case 3:
-                    return der3;
-                case 4:
-                    return der4;
-                default:
-                    return der1;
+                case 1: return der1;
+                case 2: return der2;
+                case 3: return der3;
+                case 4: return der4;
+                default: return der1;
             }
         }
+    }
+
+    /**
+     * Resetea el caché estático (útil para cambiar resolución).
+     */
+    public static void resetearCache() {
+        spritesLoaded = false;
     }
 }

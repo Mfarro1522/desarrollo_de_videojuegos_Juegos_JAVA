@@ -1,4 +1,7 @@
 /tiles/tile_00.png;0
 /tiles/tile_01.png;0
 /tiles/tile_02.png;1
+/tiles/tile_03.png;0
+/tiles/tile_04.png;0
+/tiles/tile_05.png;0
 /tiles/tile_17.png;0

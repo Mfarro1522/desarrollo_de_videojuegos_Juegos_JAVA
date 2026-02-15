@@ -1,207 +1,230 @@
 package tiles;
 
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import javax.imageio.ImageIO;
 import main.PanelJuego;
 import main.UtilityTool;
 
+/**
+ * Gestiona la carga, generación y renderizado del mapa de tiles.
+ *
+ * OPTIMIZACIONES:
+ * - Renderizado por rango visible: solo dibuja las ~16x12 tiles en pantalla
+ *   en lugar de iterar las 100x100 = 10,000 tiles del mundo.
+ * - Sprites pre-escalados: las imágenes se escalan una sola vez al cargar.
+ */
 public class TileManager {
 
-	PanelJuego pj;
-	public Tile[] tiles;
-	public int mapaPorNumeroTile[][];
-	private UtilityTool miTool = new UtilityTool();
+    PanelJuego pj;
 
-	private void setup(int indice, String ruta, boolean colision) {
-		try {
-			// cargar imagen
-			BufferedImage imagen_original = ImageIO.read(getClass().getResource(ruta));
-			// escalarla
-			tiles[indice].imagen = miTool.escalarImagen(imagen_original, pj.tamanioTile, pj.tamanioTile);
-			tiles[indice].colision = colision;
-		} catch (IOException e) {
-			System.err.println("Error al cargar imagen: " + ruta);
-			e.printStackTrace();
-		}
-	}
+    /** Array de tipos de tile disponibles (índice = número de tile). */
+    public Tile[] tiles;
 
-	public TileManager(PanelJuego pj) {
-		this.pj = pj;
-		mapaPorNumeroTile = new int[pj.maxWorldcol][pj.maxWorldfilas];
-		getImagenTile("/tiles/rutaTiles.txt");
-		generarMapaProcedural();
-	}
+    /** Mapa del mundo: mapaPorNumeroTile[columna][fila] = índice de tile. */
+    public int[][] mapaPorNumeroTile;
 
-	public void getImagenTile(String rutaTiles) {
+    /** Cantidad máxima de tipos de tile soportados. */
+    private static final int MAX_TIPOS_TILE = 50;
 
-		try {
-			InputStream is = getClass().getResourceAsStream(rutaTiles);
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+    public TileManager(PanelJuego pj) {
+        this.pj = pj;
+        tiles = new Tile[MAX_TIPOS_TILE];
+        mapaPorNumeroTile = new int[pj.maxWorldcol][pj.maxWorldfilas];
+        getImagenTile("/tiles/rutaTiles.txt");
+        generarMapaProcedural();
+    }
 
-			// para no usar array list
-			int numTiles = 0;
-			String linea;
-			while ((linea = br.readLine()) != null) {
-				if (!linea.trim().isEmpty()) {
-					numTiles++;
-				}
-			}
-			br.close();
-			tiles = new Tile[numTiles];
+    /**
+     * Carga las definiciones de tiles desde el archivo de configuración.
+     * Formato: /tiles/tile_XX.png;colision (0 = libre, 1 = sólido)
+     * El número XX del nombre de archivo se usa como índice en tiles[].
+     */
+    public void getImagenTile(String rutaFile) {
+        UtilityTool tool = new UtilityTool();
+        try {
+            InputStream is = getClass().getResourceAsStream(rutaFile);
+            if (is == null) {
+                System.err.println("[TileManager] No se encontró: " + rutaFile);
+                return;
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String linea;
 
-			// se tiene que iniciar de nuevo despues del close
-			is = getClass().getResourceAsStream(rutaTiles);
-			br = new BufferedReader(new InputStreamReader(is));
+            while ((linea = br.readLine()) != null) {
+                linea = linea.trim();
+                if (linea.isEmpty()) continue;
 
-			int indice = 0;
-			while ((linea = br.readLine()) != null) {
-				if (!linea.trim().isEmpty()) {
-					String[] parametros = linea.split(";");
+                String[] partes = linea.split(";");
+                if (partes.length < 2) continue;
 
-					if (parametros.length >= 2) {
-						tiles[indice] = new Tile();
-						tiles[indice].imagen = ImageIO.read(getClass().getResource(parametros[0]));
+                String rutaImagen = partes[0].trim();
+                int colision = Integer.parseInt(partes[1].trim());
 
-						boolean tieneColision = parametros[1].trim().equals("1");
-						setup(indice, parametros[0], tieneColision);
-						indice++;
-					}
-				}
-			}
-			br.close();
+                // Extraer número de tile del nombre de archivo (tile_XX.png)
+                int indice = extraerIndiceTile(rutaImagen);
+                if (indice < 0 || indice >= MAX_TIPOS_TILE) continue;
 
-		} catch (IOException e) {
-			System.err.println("Error al leer rutaTiles: " + rutaTiles);
-			e.printStackTrace();
-		} catch (Exception e) {
-			System.err.println("Error general en getImagenTile:");
-			e.printStackTrace();
-		}
+                Tile tile = new Tile();
+                tile.imagen = tool.escalarImagen(
+                        ImageIO.read(getClass().getResourceAsStream(rutaImagen)),
+                        pj.tamanioTile, pj.tamanioTile);
+                tile.colision = (colision == 1);
+                tiles[indice] = tile;
+            }
+            br.close();
+        } catch (Exception e) {
+            System.err.println("[TileManager] Error al cargar tiles: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-	}
+        // Cargar tiles adicionales que no están en rutaTiles.txt
+        cargarTilesAdicionales(tool);
+    }
 
-	// public void cargarMapa(String rutaFile) {
-	// try {
-	// InputStream is = getClass().getResourceAsStream(rutaFile);
-	// BufferedReader br = new BufferedReader(new InputStreamReader(is));
-	//
-	// int col = 0;
-	// int fila = 0;
-	//
-	// while (col < pj.maxWorldcol && fila < pj.maxWorldfilas) {
-	// // con esto leemos una linea de nuestro txt
-	// String linea = br.readLine();
-	//
-	// while (col < pj.maxWorldcol) {
-	// String numeros[] = linea.split(" ");
-	// // ahora almacenamos estos indices en nustro array que tenemos determinado
-	// para
-	// // eso
-	// int num = Integer.parseInt(numeros[col]);
-	//
-	// mapaPorNumeroTile[col][fila] = num;
-	// col++;
-	// }
-	// if (col == pj.maxWorldcol) {
-	// col = 0;
-	// fila++;
-	// }
-	//
-	// }
-	// br.close();
-	//
-	// } catch (IOException e) {
-	// e.printStackTrace();
-	// }
-	// }
+    /**
+     * Extrae el número de tile del nombre de archivo.
+     * "/tiles/tile_17.png" -> 17
+     */
+    private int extraerIndiceTile(String ruta) {
+        try {
+            String nombre = ruta.substring(ruta.lastIndexOf('/') + 1);
+            nombre = nombre.replace("tile_", "").replace(".png", "");
+            return Integer.parseInt(nombre);
+        } catch (Exception e) {
+            return -1;
+        }
+    }
 
-	/**
-	 * Genera un mapa procedural en memoria con pasto base y obstáculos aleatorios.
-	 * Reemplaza la carga desde archivo .txt.
-	 */
-	private void generarMapaProcedural() {
-		// Índices según el nuevo archivo rutaTiles.txt simplificado:
-		// 0: tile_00.png (pasto, sin colisión)
-		// 1: tile_01.png (pasto, sin colisión)
-		// 2: tile_03.png (árboles, con colisión)
-		// 3: tile_17.png (suelo general, sin colisión)
+    /**
+     * Carga tiles adicionales desde los archivos de imagen disponibles.
+     * Completa cualquier tile faltante que no estuviera en rutaTiles.txt.
+     */
+    private void cargarTilesAdicionales(UtilityTool tool) {
+        for (int i = 0; i < MAX_TIPOS_TILE; i++) {
+            if (tiles[i] != null) continue; // Ya cargado
 
-		int baseTile = 3; // tile_17.png - suelo general (sin colisión)
-		int baseTileAlt = 0; // tile_00.png - pasto (sin colisión)
-		int baseTileAlt2 = 1; // tile_01.png - pasto alternativo (sin colisión)
-		int obstacleTile = 2; // tile_03.png - árboles (con colisión)
+            String ruta = "/tiles/tile_" + String.format("%02d", i) + ".png";
+            try {
+                InputStream is = getClass().getResourceAsStream(ruta);
+                if (is != null) {
+                    Tile tile = new Tile();
+                    tile.imagen = tool.escalarImagen(
+                            ImageIO.read(is), pj.tamanioTile, pj.tamanioTile);
+                    // Tiles no definidos en rutaTiles: marcar como sólidos por seguridad
+                    tile.colision = true;
+                    tiles[i] = tile;
+                    is.close();
+                }
+            } catch (Exception e) {
+                // Tile no existe, ignorar
+            }
+        }
+    }
 
-		// Centro del mundo: zona segura de spawn
-		int centroCol = pj.maxWorldcol / 2;
-		int centroFila = pj.maxWorldfilas / 2;
-		int radioSeguro = 5; // radio de tiles libres alrededor del spawn
-		for (int col = 0; col < pj.maxWorldcol; col++) {
-			for (int fila = 0; fila < pj.maxWorldfilas; fila++) {
-				// Zona segura alrededor del spawn (sin obstáculos)
-				int distCol = Math.abs(col - centroCol);
-				int distFila = Math.abs(fila - centroFila);
-				if (distCol <= radioSeguro && distFila <= radioSeguro) {
-					mapaPorNumeroTile[col][fila] = baseTile;
-					continue;
-				}
-				// Bordes del mundo = obstáculos sólidos (muralla natural)
-				if (col == 0 || col == pj.maxWorldcol - 1 || fila == 0 || fila == pj.maxWorldfilas - 1) {
-					mapaPorNumeroTile[col][fila] = obstacleTile;
-					continue;
-				}
-				// Interior: distribución aleatoria
-				double random = Math.random();
-				if (random < 0.05) {
-					// 5% obstáculos (árboles)
-					mapaPorNumeroTile[col][fila] = obstacleTile;
-				} else if (random < 0.35) {
-					// 30% pasto tipo 1
-					mapaPorNumeroTile[col][fila] = baseTileAlt;
-				} else if (random < 0.50) {
-					// 15% pasto tipo 2
-					mapaPorNumeroTile[col][fila] = baseTileAlt2;
-				} else {
-					// 50% suelo general
-					mapaPorNumeroTile[col][fila] = baseTile;
-				}
-			}
-		}
-	}
+    /**
+     * Genera un mapa procedural en memoria con pasto variado y obstáculos aleatorios.
+     * Usa múltiples tiles de pasto para dar variedad visual al terreno.
+     */
+    private void generarMapaProcedural() {
+        int baseTile = 17;       // Pasto base (colisión = 0)
+        int obstacleTile = 2;    // Obstáculo sólido (colisión = 1)
 
-	public void draw(Graphics2D g2) {
-		int worldCol = 0;
-		int worldFila = 0;
+        // Variantes de pasto para dar variedad visual (todos sin colisión)
+        int[] pastoVariantes = { 17, 0, 1 ,17 ,17};
 
-		while (worldCol < pj.maxWorldcol && worldFila < pj.maxWorldfilas) {
+        // Asegurar que los tiles de pasto no tienen colisión
+        for (int tv : pastoVariantes) {
+            if (tiles[tv] != null) {
+                tiles[tv].colision = false;
+            }
+        }
+        if (tiles[obstacleTile] != null) {
+            tiles[obstacleTile].colision = true;
+        }
 
-			int numeroTile = mapaPorNumeroTile[worldCol][worldFila];
-			// aqui implementaremos la camara
+        // Centro del mundo: zona segura de spawn
+        int centroCol = pj.maxWorldcol / 2;
+        int centroFila = pj.maxWorldfilas / 2;
+        int radioSeguro = 5;
 
-			int worldX = worldCol * pj.tamanioTile;
-			int worldY = worldFila * pj.tamanioTile;
-			int screenX = worldX - pj.jugador.worldx + pj.jugador.screenX;
-			int screenY = worldY - pj.jugador.worldy + pj.jugador.screeny;
+        for (int col = 0; col < pj.maxWorldcol; col++) {
+            for (int fila = 0; fila < pj.maxWorldfilas; fila++) {
 
-			if (worldX + pj.tamanioTile > pj.jugador.worldx - pj.jugador.screenX
-					&& worldX - pj.tamanioTile < pj.jugador.worldx + pj.jugador.screenX
-					&& worldY + pj.tamanioTile > pj.jugador.worldy - pj.jugador.screeny
-					&& worldY - pj.tamanioTile < pj.jugador.worldy + pj.jugador.screeny) {
-				g2.drawImage(tiles[numeroTile].imagen, screenX, screenY, null);
+                // Zona segura alrededor del spawn (sin obstáculos)
+                int distCol = Math.abs(col - centroCol);
+                int distFila = Math.abs(fila - centroFila);
+                if (distCol <= radioSeguro && distFila <= radioSeguro) {
+                    mapaPorNumeroTile[col][fila] = elegirPastoAleatorio(pastoVariantes);
+                    continue;
+                }
 
-			}
-			worldCol++;
-			if (worldCol == pj.maxWorldcol) {
-				worldCol = 0;
-				worldFila++;
+                // Bordes del mundo = obstáculos sólidos (muralla natural)
+                if (col == 0 || col == pj.maxWorldcol - 1
+                        || fila == 0 || fila == pj.maxWorldfilas - 1) {
+                    mapaPorNumeroTile[col][fila] = obstacleTile;
+                    continue;
+                }
 
-			}
-		}
-	}
+                // Interior: distribución aleatoria
+                double random = Math.random();
+                if (random < 0.03) {
+                    mapaPorNumeroTile[col][fila] = obstacleTile; // 3% obstáculos (menos que antes)
+                } else {
+                    // 97% pasto con variedad visual
+                    mapaPorNumeroTile[col][fila] = elegirPastoAleatorio(pastoVariantes);
+                }
+            }
+        }
+    }
 
+    /**
+     * Elige un tile de pasto aleatorio con peso: el tile base (17) es más frecuente.
+     */
+    private int elegirPastoAleatorio(int[] variantes) {
+        double r = Math.random();
+        if (r < 0.55) {
+            return variantes[0]; // 55% tile base (17)
+        } else {
+            // 45% distribuido entre las demás variantes
+            int idx = 1 + (int) (Math.random() * (variantes.length - 1));
+            return variantes[idx];
+        }
+    }
+
+    /**
+     * Dibuja SOLO los tiles visibles en pantalla.
+     *
+     * OPTIMIZACIÓN: Calcula el rango de columnas/filas visibles según la posición
+     * de la cámara, en lugar de iterar las 100x100 = 10,000 tiles del mundo.
+     * Resultado: solo se dibujan ~16x12 = ~192 tiles por frame.
+     */
+    public void draw(Graphics2D g2) {
+        // Calcular rango visible de tiles (con margen de 1 tile extra)
+        int colInicio = Math.max(0, (pj.jugador.worldx - pj.jugador.screenX) / pj.tamanioTile - 1);
+        int colFin = Math.min(pj.maxWorldcol - 1,
+                (pj.jugador.worldx + pj.jugador.screenX) / pj.tamanioTile + 2);
+        int filaInicio = Math.max(0, (pj.jugador.worldy - pj.jugador.screeny) / pj.tamanioTile - 1);
+        int filaFin = Math.min(pj.maxWorldfilas - 1,
+                (pj.jugador.worldy + pj.jugador.screeny) / pj.tamanioTile + 2);
+
+        for (int col = colInicio; col <= colFin; col++) {
+            for (int fila = filaInicio; fila <= filaFin; fila++) {
+                int tileNum = mapaPorNumeroTile[col][fila];
+
+                // Calcular posición en pantalla
+                int worldX = col * pj.tamanioTile;
+                int worldY = fila * pj.tamanioTile;
+                int screenX = worldX - pj.jugador.worldx + pj.jugador.screenX;
+                int screenY = worldY - pj.jugador.worldy + pj.jugador.screeny;
+
+                // Dibujar tile si tiene imagen válida
+                if (tileNum >= 0 && tileNum < MAX_TIPOS_TILE && tiles[tileNum] != null) {
+                    g2.drawImage(tiles[tileNum].imagen, screenX, screenY, null);
+                }
+            }
+        }
+    }
 }

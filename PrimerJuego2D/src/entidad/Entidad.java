@@ -19,6 +19,9 @@ public class Entidad {
 	public int defensa;
 	public boolean estaVivo = true;
 
+	// ===== OBJECT POOLING: flag de activación =====
+	public boolean activo = false;
+
 	public enum EstadoEntidad {
 		IDLE, // En reposo
 		MOVIENDO, // Caminando

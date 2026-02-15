@@ -11,66 +11,74 @@ import main.UtilityTool;
  */
 public class Slime extends NPC {
 
-    private UtilityTool tool = new UtilityTool();
+    // ===== CACHE ESTÁTICO DE SPRITES =====
+    private static BufferedImage s_arriba1, s_arriba2;
+    private static BufferedImage s_abajo1, s_abajo2;
+    private static BufferedImage s_derecha1, s_derecha2;
+    private static BufferedImage s_izquierda1, s_izquierda2;
+    private static BufferedImage s_muerte1, s_muerte2, s_muerte3;
+    private static boolean spritesLoaded = false;
 
     public Slime(PanelJuego pj) {
         super(pj);
+        tipoNPC = TipoNPC.SLIME;
+        inicializarEstadisticas();
+        cargarSpritesEstaticos(pj);
+        asignarSprites();
+    }
 
-        // Estadísticas
+    private void inicializarEstadisticas() {
         vidaMaxima = 20;
         vidaActual = vidaMaxima;
         ataque = 3;
         defensa = 0;
         vel = 1;
         direccion = "abajo";
-
-        // IA
         radioDeteccion = 6 * pj.tamanioTile;
         experienciaAOtorgar = 10;
-
-        cargarSprites();
     }
 
-    private void cargarSprites() {
+    /**
+     * Carga sprites UNA SOLA VEZ para todos los Slimes (Object Pooling).
+     */
+    private static synchronized void cargarSpritesEstaticos(PanelJuego pj) {
+        if (spritesLoaded) return;
+        UtilityTool tool = new UtilityTool();
         try {
-            rutaCarpeta = "/Npc/Slime/";
+            String ruta = "/Npc/Slime/";
 
-            // Cargar sprites de movimiento (2 frames por dirección)
-            BufferedImage tempArriba1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Arriba01.png"));
-            BufferedImage tempArriba2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Arriba02.png"));
-            BufferedImage tempAbajo1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Abajo01.png"));
-            BufferedImage tempAbajo2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Abajo02.png"));
+            s_arriba1 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Arriba01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_arriba2 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Arriba02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_abajo1 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Abajo01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_abajo2 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Abajo02.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // Solo cargar sprites de derecha
-            BufferedImage tempDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Derecha01.png"));
-            BufferedImage tempDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Derecha02.png"));
+            s_derecha1 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Derecha01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_derecha2 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Derecha02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_izquierda1 = tool.voltearImagenHorizontal(s_derecha1);
+            s_izquierda2 = tool.voltearImagenHorizontal(s_derecha2);
 
-            // Cargar sprites de muerte (3 frames)
-            BufferedImage tempMuerte1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Muerte01.png"));
-            BufferedImage tempMuerte2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Muerte02.png"));
-            BufferedImage tempMuerte3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Muerte03.png"));
+            s_muerte1 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Muerte01.png")), pj.tamanioTile, pj.tamanioTile);
+            s_muerte2 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Muerte02.png")), pj.tamanioTile, pj.tamanioTile);
+            s_muerte3 = tool.escalarImagen(ImageIO.read(Slime.class.getResourceAsStream(ruta + "Muerte03.png")), pj.tamanioTile, pj.tamanioTile);
 
-            // Escalar imágenes
-            arriba1 = tool.escalarImagen(tempArriba1, pj.tamanioTile, pj.tamanioTile);
-            arriba2 = tool.escalarImagen(tempArriba2, pj.tamanioTile, pj.tamanioTile);
-            abajo1 = tool.escalarImagen(tempAbajo1, pj.tamanioTile, pj.tamanioTile);
-            abajo2 = tool.escalarImagen(tempAbajo2, pj.tamanioTile, pj.tamanioTile);
-
-            // Escalar sprites de derecha
-            derecha1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
-            derecha2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
-
-            // Generar sprites de izquierda mediante espejo horizontal
-            izquierda1 = tool.voltearImagenHorizontal(derecha1);
-            izquierda2 = tool.voltearImagenHorizontal(derecha2);
-
-            muerte1 = tool.escalarImagen(tempMuerte1, pj.tamanioTile, pj.tamanioTile);
-            muerte2 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile);
-            muerte3 = tool.escalarImagen(tempMuerte3, pj.tamanioTile, pj.tamanioTile);
-
+            spritesLoaded = true;
         } catch (Exception e) {
+            System.err.println("[Slime] Error al cargar sprites: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void asignarSprites() {
+        arriba1 = s_arriba1; arriba2 = s_arriba2;
+        abajo1 = s_abajo1; abajo2 = s_abajo2;
+        derecha1 = s_derecha1; derecha2 = s_derecha2;
+        izquierda1 = s_izquierda1; izquierda2 = s_izquierda2;
+        muerte1 = s_muerte1; muerte2 = s_muerte2; muerte3 = s_muerte3;
+    }
+
+    @Override
+    public void resetearEstado() {
+        // Slime no tiene estado adicional que resetear
     }
 
     @Override
@@ -93,5 +101,9 @@ public class Slime extends NPC {
             default:
                 return abajo1; // Default
         }
+    }
+
+    public static void resetearCache() {
+        spritesLoaded = false;
     }
 }

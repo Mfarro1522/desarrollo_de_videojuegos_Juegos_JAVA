@@ -1,9 +1,12 @@
 package main;
 
 import java.awt.Color;
+import java.io.*;
+import java.nio.file.*;
 
 /**
  * Gestiona las estadísticas del juego (tiempo, enemigos eliminados, daño recibido, etc.)
+ * Guarda y carga récords desde res/stats/stats.txt
  */
 public class GameStats {
     
@@ -96,11 +99,96 @@ public class GameStats {
         if (nivel > nivelMaximoAlcanzado) {
             nivelMaximoAlcanzado = nivel;
         }
+        // Guardar stats al archivo
+        guardarStats();
     }
     
     public String formatearTiempo(long segundos) {
         long minutos = segundos / 60;
         long segs = segundos % 60;
         return String.format("%02d:%02d", minutos, segs);
+    }
+
+    // ===== PERSISTENCIA EN ARCHIVO =====
+
+    /** Ruta del archivo de stats */
+    private static final String STATS_FILE = "res/stats/stats.txt";
+
+    /**
+     * Carga las estadísticas acumuladas desde el archivo al iniciar.
+     */
+    public static void cargarStats() {
+        try {
+            File archivo = new File(STATS_FILE);
+            if (!archivo.exists()) {
+                System.out.println("[Stats] No existe archivo de stats. Se usarán valores por defecto.");
+                return;
+            }
+
+            BufferedReader br = new BufferedReader(new FileReader(archivo));
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                linea = linea.trim();
+                if (linea.isEmpty() || linea.startsWith("#")) continue;
+
+                String[] partes = linea.split("=");
+                if (partes.length != 2) continue;
+
+                String clave = partes[0].trim();
+                String valor = partes[1].trim();
+
+                switch (clave) {
+                    case "recordTiempoSobrevivido":
+                        recordTiempoSobrevivido = Long.parseLong(valor);
+                        break;
+                    case "enemigosTotalesEliminados":
+                        enemigosTotalesEliminados = Integer.parseInt(valor);
+                        break;
+                    case "cofresTotalesRecogidos":
+                        cofresTotalesRecogidos = Integer.parseInt(valor);
+                        break;
+                    case "partidasJugadas":
+                        partidasJugadas = Integer.parseInt(valor);
+                        break;
+                    case "nivelMaximoAlcanzado":
+                        nivelMaximoAlcanzado = Integer.parseInt(valor);
+                        break;
+                    case "danioTotalRecibidoAcumulado":
+                        danioTotalRecibidoAcumulado = Integer.parseInt(valor);
+                        break;
+                }
+            }
+            br.close();
+            System.out.println("[Stats] Estadísticas cargadas desde " + STATS_FILE);
+        } catch (Exception e) {
+            System.err.println("[Stats] Error al cargar stats: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Guarda las estadísticas acumuladas en el archivo.
+     */
+    public static void guardarStats() {
+        try {
+            // Crear directorio si no existe
+            File dir = new File("res/stats");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            PrintWriter pw = new PrintWriter(new FileWriter(STATS_FILE));
+            pw.println("# Estadísticas acumuladas del juego");
+            pw.println("# No editar manualmente");
+            pw.println("recordTiempoSobrevivido=" + recordTiempoSobrevivido);
+            pw.println("enemigosTotalesEliminados=" + enemigosTotalesEliminados);
+            pw.println("cofresTotalesRecogidos=" + cofresTotalesRecogidos);
+            pw.println("partidasJugadas=" + partidasJugadas);
+            pw.println("nivelMaximoAlcanzado=" + nivelMaximoAlcanzado);
+            pw.println("danioTotalRecibidoAcumulado=" + danioTotalRecibidoAcumulado);
+            pw.close();
+            System.out.println("[Stats] Estadísticas guardadas en " + STATS_FILE);
+        } catch (Exception e) {
+            System.err.println("[Stats] Error al guardar stats: " + e.getMessage());
+        }
     }
 }

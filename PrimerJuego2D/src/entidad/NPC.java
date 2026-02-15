@@ -8,11 +8,20 @@ import main.PanelJuego;
 
 /**
  * Clase base para todos los NPCs (enemigos, aliados, etc).
- * Implementa comportamiento básico de IA y combate.
+ * Implementa comportamiento básico de IA, combate y Object Pooling.
+ *
+ * OPTIMIZACIONES:
+ * - Object Pooling: los NPCs se pre-instancian y se reutilizan con activar()/desactivar()
+ * - Culling Lógico: NPCs lejanos reducen frecuencia de actualización
+ * - Rectángulos pre-allocados: cero creación de objetos en colisiones
  */
 public abstract class NPC extends Entidad {
 
     protected PanelJuego pj;
+
+    // ===== Tipo de NPC para Object Pooling =====
+    public enum TipoNPC { BAT, SLIME, ORCO, GHOUL }
+    public TipoNPC tipoNPC;
 
     // ===== Sistema de IA =====
     public int radioDeteccion = 5 * 64; // 5 tiles de distancia
@@ -29,6 +38,15 @@ public abstract class NPC extends Entidad {
     // ===== Sistema de drops =====
     public int experienciaAOtorgar = 10;
 
+    // ===== Culling Lógico: reduce updates para NPCs lejanos =====
+    private int contadorCulling = 0;
+    private static final int DISTANCIA_CULLING_TILES = 20;
+    private static final int FRAMES_SKIP_LEJANO = 10;
+
+    // ===== Rectángulos pre-allocados para colisiones (cero GC) =====
+    private final Rectangle tempAreaJugador = new Rectangle();
+    private final Rectangle tempAreaNPC = new Rectangle();
+
     public NPC(PanelJuego pj) {
         this.pj = pj;
         AreaSolida = new Rectangle(8, 16, 48, 48);
@@ -41,8 +59,49 @@ public abstract class NPC extends Entidad {
      */
     public abstract void actualizarIA();
 
+    // ===== OBJECT POOLING: Métodos de ciclo de vida =====
+
     /**
-     * Método principal de actualización.
+     * Activa un NPC del pool en la posición dada. Resetea todo su estado.
+     * Incrementa automáticamente el contador de NPCs activos.
+     */
+    public void activar(int x, int y) {
+        worldx = x;
+        worldy = y;
+        vidaActual = vidaMaxima;
+        estaVivo = true;
+        activo = true;
+        estado = EstadoEntidad.IDLE;
+        direccion = "abajo";
+        frameMuerte = 0;
+        contadorMuerte = 0;
+        contadorInvulnerabilidad = 0;
+        contadorDanio = 0;
+        contadorMovimiento = 0;
+        contadorCulling = 0;
+        hayColision = false;
+        resetearEstado();
+        pj.contadorNPCs++;
+    }
+
+    /**
+     * Desactiva el NPC y lo devuelve al pool para reutilización.
+     * Decrementa automáticamente el contador de NPCs activos.
+     */
+    public void desactivar() {
+        activo = false;
+        pj.contadorNPCs--;
+    }
+
+    /**
+     * Resetea el estado específico de la subclase (cooldowns, flags de ataque, etc).
+     * Cada subclase debe implementar este método.
+     */
+    public abstract void resetearEstado();
+
+    /**
+     * Método principal de actualización con culling lógico.
+     * NPCs lejanos al jugador reducen su frecuencia de actualización.
      */
     public void update() {
         if (!estaVivo) {
@@ -52,12 +111,26 @@ public abstract class NPC extends Entidad {
                 frameMuerte++;
                 contadorMuerte = 0;
 
-                // Después del tercer frame, marcar para eliminación
+                // Después del tercer frame, desactivar y devolver al pool
                 if (frameMuerte >= 3) {
-                    // El NPC será eliminado por el sistema de gestión
+                    desactivar();
                 }
             }
             return;
+        }
+
+        // ===== CULLING LÓGICO: reducir updates para NPCs lejanos =====
+        int dxJ = pj.jugador.worldx - worldx;
+        int dyJ = pj.jugador.worldy - worldy;
+        int distSqJugador = dxJ * dxJ + dyJ * dyJ;
+        int distCulling = DISTANCIA_CULLING_TILES * pj.tamanioTile;
+        int distSqCulling = distCulling * distCulling;
+
+        if (distSqJugador > distSqCulling) {
+            contadorCulling++;
+            if (contadorCulling % FRAMES_SKIP_LEJANO != 0) {
+                return; // Saltar este frame para NPCs lejanos
+            }
         }
 
         actualizarInvulnerabilidad();
@@ -105,13 +178,15 @@ public abstract class NPC extends Entidad {
 
     /**
      * Detecta si el jugador está cerca y lo persigue.
+     * Optimizado: usa distancia al cuadrado para evitar Math.sqrt().
      */
     protected void perseguirJugador() {
         int distanciaX = pj.jugador.worldx - worldx;
         int distanciaY = pj.jugador.worldy - worldy;
-        double distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
+        int distanciaSq = distanciaX * distanciaX + distanciaY * distanciaY;
+        int radioSq = radioDeteccion * radioDeteccion;
 
-        if (distancia < radioDeteccion) {
+        if (distanciaSq < radioSq) {
             // Perseguir al jugador
             if (Math.abs(distanciaX) > Math.abs(distanciaY)) {
                 direccion = (distanciaX > 0) ? "derecha" : "izquierda";
@@ -153,23 +228,23 @@ public abstract class NPC extends Entidad {
 
     /**
      * Verifica si está tocando al jugador y causa daño.
-     * Usa cooldown individual para permitir daño múltiple.
+     * Optimizado: usa rectángulos pre-allocados para cero GC.
      */
     protected void verificarColisionConJugador() {
-        Rectangle areaJugador = new Rectangle(
+        tempAreaJugador.setBounds(
                 pj.jugador.worldx + pj.jugador.AreaSolida.x,
                 pj.jugador.worldy + pj.jugador.AreaSolida.y,
                 pj.jugador.AreaSolida.width,
                 pj.jugador.AreaSolida.height);
 
-        Rectangle areaNPC = new Rectangle(
+        tempAreaNPC.setBounds(
                 worldx + AreaSolida.x,
                 worldy + AreaSolida.y,
                 AreaSolida.width,
                 AreaSolida.height);
 
         // Solo causar daño si hay colisión y el cooldown expiró
-        if (areaJugador.intersects(areaNPC) && contadorDanio == 0) {
+        if (tempAreaJugador.intersects(tempAreaNPC) && contadorDanio == 0) {
             pj.jugador.recibirDanio(ataque);
             contadorDanio = cooldownDanio; // Reiniciar cooldown
         }

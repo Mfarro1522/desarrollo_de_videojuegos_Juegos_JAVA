@@ -20,6 +20,9 @@ public class Proyectil {
     private int tamano = 16;
     private int distanciaRecorrida = 0;
     private int alcanceMaximo = 400; // Píxeles
+
+    // Rectángulo pre-allocado para colisiones (cero GC)
+    private final Rectangle npcArea = new Rectangle();
     
     // Tipos de proyectil
     public enum TipoProyectil {
@@ -57,22 +60,27 @@ public class Proyectil {
             return;
         }
         
-        // Verificar colisión con NPCs
+        // Verificar colisión con NPCs usando Spatial Hash Grid
         Rectangle proyectilArea = new Rectangle(worldX, worldY, tamano, tamano);
-        
-        for (int i = 0; i < pj.npcs.length; i++) {
-            if (pj.npcs[i] != null && pj.npcs[i].estaVivo) {
-                Rectangle npcArea = new Rectangle(
+
+        pj.spatialGrid.consultar(worldX, worldY);
+        int[] cercanos = pj.spatialGrid.getResultado();
+        int count = pj.spatialGrid.getResultadoCount();
+
+        for (int j = 0; j < count; j++) {
+            int i = cercanos[j];
+            if (pj.npcs[i] != null && pj.npcs[i].activo && pj.npcs[i].estaVivo) {
+                npcArea.setBounds(
                     pj.npcs[i].worldx + pj.npcs[i].AreaSolida.x,
                     pj.npcs[i].worldy + pj.npcs[i].AreaSolida.y,
                     pj.npcs[i].AreaSolida.width,
                     pj.npcs[i].AreaSolida.height
                 );
-                
+
                 if (proyectilArea.intersects(npcArea)) {
                     pj.npcs[i].recibirDanio(dano);
                     activo = false;
-                    
+
                     // Si el NPC murió, dar experiencia
                     if (!pj.npcs[i].estaVivo) {
                         pj.stats.registrarEnemigoEliminado();

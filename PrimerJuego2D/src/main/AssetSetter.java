@@ -1,288 +1,326 @@
 package main;
 
-import java.awt.Color;
-import entidad.Bat;
-import entidad.Ghoul;
-import entidad.Orco;
-import entidad.Slime;
-import objetos.OBJ_llave;
-import objetos.OBJ_puerta;
-import objetos.OBJ_botas;
-import objetos.OBJ_cofre;
-import objetos.OBJ_CofrePowerUp;
+import entidad.*;
+import entidad.NPC.TipoNPC;
+import objetos.*;
 
 /**
- * Encargada de colocar los objetos (como llaves, puertas, cofres) en el mapa
- * del juego.
+ * Configura y gestiona la colocación de objetos y NPCs en el mundo.
+ *
+ * OPTIMIZACIONES:
+ * - Object Pool: pre-instancia POOL_TOTAL NPCs al inicio (cero 'new' durante gameplay)
+ * - Activación/Desactivación: reutiliza instancias muertas sin crear nuevas
+ * - Spawn por tipo según nivel del jugador
  */
 public class AssetSetter {
-	PanelJuego pj;
 
-	public AssetSetter(PanelJuego pj) {
-		this.pj = pj;
-	}
+    PanelJuego pj;
 
-	/**
-	 * Instancia y posiciona los objetos en el mapa (cofres power-up).
-	 */
-	public void setObjetct() {
-		// Colocar cofres power-up aleatoriamente por TODO el mapa
-		colocarCofresPowerUp(10); // 10 cofres iniciales
-	}
+    // ===== TAMAÑO DEL POOL =====
+    public static final int POOL_TOTAL = 1000;
+    private static final int POOL_BAT = 250;
+    private static final int POOL_SLIME = 250;
+    private static final int POOL_ORCO = 250;
+    private static final int POOL_GHOUL = 250;
 
-	/**
-	 * Coloca cofres power-up aleatoriamente por TODO el mapa
-	 */
-	private void colocarCofresPowerUp(int cantidad) {
-		OBJ_CofrePowerUp.TipoPowerUp[] tipos = OBJ_CofrePowerUp.TipoPowerUp.values();
+    // Rangos de índices por tipo (para búsqueda rápida de slots libres)
+    private static final int INICIO_BAT = 0;
+    private static final int INICIO_SLIME = POOL_BAT;
+    private static final int INICIO_ORCO = POOL_BAT + POOL_SLIME;
+    private static final int INICIO_GHOUL = POOL_BAT + POOL_SLIME + POOL_ORCO;
 
-		for (int i = 0; i < cantidad && i < pj.objs.length; i++) {
-			// Tipo aleatorio
-			OBJ_CofrePowerUp.TipoPowerUp tipoAleatorio = tipos[(int) (Math.random() * tipos.length)];
+    // Límites de NPCs activos simultáneamente
+    private int maxNPCsActivos = 80;
 
-			pj.objs[i] = new OBJ_CofrePowerUp(pj.tamanioTile, tipoAleatorio);
+    // Configuración de spawn
+    private static final int DISTANCIA_MIN_SPAWN = 5;  // tiles
+    private static final int DISTANCIA_MAX_SPAWN = 20; // tiles
 
-			// Posición COMPLETAMENTE ALEATORIA en TODO el mapa
-			int worldX = (int) (Math.random() * (pj.maxWorldcol - 4) + 2) * pj.tamanioTile;
-			int worldY = (int) (Math.random() * (pj.maxWorldfilas - 4) + 2) * pj.tamanioTile;
+    public AssetSetter(PanelJuego pj) {
+        this.pj = pj;
+    }
 
-			pj.objs[i].worldX = worldX;
-			pj.objs[i].worldY = worldY;
-		}
+    // ===== OBJECT POOL: Pre-instanciar todos los NPCs =====
 
-		pj.agregarNotificacion("✓ " + cantidad + " cofres aparecieron por el mapa", Color.GREEN, 3);
-	}
+    /**
+     * Pre-instancia POOL_TOTAL NPCs (desactivados).
+     * Se llama UNA VEZ en setupJuego(). Elimina allocations durante gameplay.
+     */
+    public void inicializarPool() {
+        for (int i = INICIO_BAT; i < INICIO_BAT + POOL_BAT; i++) {
+            pj.npcs[i] = new Bat(pj);
+        }
+        for (int i = INICIO_SLIME; i < INICIO_SLIME + POOL_SLIME; i++) {
+            pj.npcs[i] = new Slime(pj);
+        }
+        for (int i = INICIO_ORCO; i < INICIO_ORCO + POOL_ORCO; i++) {
+            pj.npcs[i] = new Orco(pj);
+        }
+        for (int i = INICIO_GHOUL; i < INICIO_GHOUL + POOL_GHOUL; i++) {
+            pj.npcs[i] = new Ghoul(pj);
+        }
+        System.out.println("[Pool] Inicializado: " + POOL_TOTAL + " NPCs pre-instanciados.");
+    }
 
-	/**
-	 * Genera NPCs enemigos por TODO el mapa.
-	 */
-	public void setNPCs() {
-		// Spawn inicial: 60 slimes distribuidos por TODO el mapa
-		int cantidadEnemigos = 60;
+    /**
+     * Desactiva todos los NPCs del pool (para reinicio de partida).
+     */
+    public void desactivarTodos() {
+        for (int i = 0; i < POOL_TOTAL; i++) {
+            if (pj.npcs[i] != null) {
+                pj.npcs[i].activo = false;
+            }
+        }
+        pj.contadorNPCs = 0;
+    }
 
-		for (int i = 0; i < cantidadEnemigos; i++) {
-			spawnearEnemigoAleatorio();
-		}
+    // ===== BÚSQUEDA DE SLOTS LIBRES =====
 
-		pj.agregarNotificacion("⚔ " + cantidadEnemigos + " enemigos aparecieron", Color.RED, 3);
-	}
+    /**
+     * Busca un slot inactivo para el tipo dado.
+     * @return índice del slot libre, o -1 si no hay disponible.
+     */
+    private int buscarSlotInactivo(TipoNPC tipo) {
+        int inicio, fin;
+        switch (tipo) {
+            case BAT:
+                inicio = INICIO_BAT;
+                fin = INICIO_BAT + POOL_BAT;
+                break;
+            case SLIME:
+                inicio = INICIO_SLIME;
+                fin = INICIO_SLIME + POOL_SLIME;
+                break;
+            case ORCO:
+                inicio = INICIO_ORCO;
+                fin = INICIO_ORCO + POOL_ORCO;
+                break;
+            case GHOUL:
+                inicio = INICIO_GHOUL;
+                fin = INICIO_GHOUL + POOL_GHOUL;
+                break;
+            default:
+                return -1;
+        }
 
-	/**
-	 * Genera oleadas continuas de enemigos.
-	 * Llamar desde update() cuando hay pocos enemigos.
-	 */
-	public void respawnearEnemigos() {
-		// Mantener entre 50 y 80 enemigos activos para acción constante
-		int minimoEnemigos = 50;
-		int maximoEnemigos = 80;
+        for (int i = inicio; i < fin; i++) {
+            if (pj.npcs[i] != null && !pj.npcs[i].activo) {
+                return i;
+            }
+        }
+        return -1; // Pool agotado para este tipo
+    }
 
-		if (pj.contadorNPCs < minimoEnemigos) {
-			// Spawnear oleadas grandes (8 a 15 enemigos)
-			int cantidad = (int) (Math.random() * 8) + 8;
+    // ===== SELECCIÓN DE TIPO SEGÚN NIVEL =====
 
-			for (int i = 0; i < cantidad; i++) {
-				spawnearEnemigo();
-			}
-		} else if (pj.contadorNPCs < maximoEnemigos) {
-			// Spawnear pequeños grupos (2 a 4 enemigos)
-			int cantidad = (int) (Math.random() * 3) + 2;
+    /**
+     * Elige el tipo de enemigo a spawnear basándose en el nivel del jugador.
+     * - Lvl 1-2: solo Bats
+     * - Lvl 3-4: Bats + Slimes
+     * - Lvl 5-9: Slimes + Orcos (desaparecen Bats)
+     * - Lvl 10-14: Orcos + Ghouls (desaparecen Slimes)
+     * - Lvl 15+: todos los tipos
+     */
+    private TipoNPC elegirTipoEnemigo() {
+        int nivel = pj.stats.nivel;
+        double rand = Math.random();
 
-			for (int i = 0; i < cantidad; i++) {
-				spawnearEnemigo();
-			}
-		}
-	}
+        if (nivel <= 2) {
+            // Nivel 1-2: solo Bats
+            return TipoNPC.BAT;
+        } else if (nivel <= 4) {
+            // Nivel 3-4: 50% Bat, 50% Slime
+            if (rand < 0.50) return TipoNPC.BAT;
+            return TipoNPC.SLIME;
+        } else if (nivel <= 9) {
+            // Nivel 5-9: 60% Slime, 40% Orco (Bats desaparecen)
+            if (rand < 0.60) return TipoNPC.SLIME;
+            return TipoNPC.ORCO;
+        } else if (nivel <= 14) {
+            // Nivel 10-14: 50% Orco, 50% Ghoul (Slimes desaparecen)
+            if (rand < 0.50) return TipoNPC.ORCO;
+            return TipoNPC.GHOUL;
+        } else {
+            // Nivel 15+: todos los tipos
+            if (rand < 0.25) return TipoNPC.BAT;
+            if (rand < 0.50) return TipoNPC.SLIME;
+            if (rand < 0.75) return TipoNPC.ORCO;
+            return TipoNPC.GHOUL;
+        }
+    }
 
-	/**
-	 * Spawnea un enemigo en una posición cercana al jugador.
-	 */
-	private void spawnearEnemigo() {
-		// Buscar slot vacío
-		int slot = -1;
-		for (int i = 0; i < pj.npcs.length; i++) {
-			if (pj.npcs[i] == null) {
-				slot = i;
-				break;
-			}
-		}
+    // ===== GENERACIÓN DE POSICIONES =====
 
-		if (slot == -1)
-			return; // Array lleno
+    /**
+     * Genera una posición aleatoria válida en el mapa (dentro de los bordes).
+     * @return array [x, y] en coordenadas del mundo
+     */
+    private int[] generarPosicionAleatoria() {
+        int margen = 3 * pj.tamanioTile; // No spawnear en los bordes
+        int x = margen + (int) (Math.random() * (pj.maxWorldAncho - 2 * margen));
+        int y = margen + (int) (Math.random() * (pj.maxWorldAlto - 2 * margen));
+        return new int[] { x, y };
+    }
 
-		pj.npcs[slot] = crearEnemigoAleatorio();
+    /**
+     * Genera una posición aleatoria a una distancia razonable del jugador.
+     * Evita spawns demasiado cerca o demasiado lejos.
+     * @return array [x, y] en coordenadas del mundo
+     */
+    private int[] generarPosicionCercaJugador() {
+        int minDist = DISTANCIA_MIN_SPAWN * pj.tamanioTile;
+        int maxDist = DISTANCIA_MAX_SPAWN * pj.tamanioTile;
 
-		// Generar posición aleatoria cerca del jugador
-		int distanciaMinima = 6 * pj.tamanioTile;
-		int distanciaMaxima = 12 * pj.tamanioTile;
+        for (int intento = 0; intento < 10; intento++) {
+            double angulo = Math.random() * 2 * Math.PI;
+            int distancia = minDist + (int) (Math.random() * (maxDist - minDist));
+            int x = pj.jugador.worldx + (int) (Math.cos(angulo) * distancia);
+            int y = pj.jugador.worldy + (int) (Math.sin(angulo) * distancia);
 
-		double angulo = Math.random() * 2 * Math.PI;
-		int distancia = (int) (Math.random() * (distanciaMaxima - distanciaMinima) + distanciaMinima);
+            // Asegurar que esté dentro del mapa
+            int margen = 2 * pj.tamanioTile;
+            x = Math.max(margen, Math.min(x, pj.maxWorldAncho - margen));
+            y = Math.max(margen, Math.min(y, pj.maxWorldAlto - margen));
 
-		int offsetX = (int) (Math.cos(angulo) * distancia);
-		int offsetY = (int) (Math.sin(angulo) * distancia);
+            return new int[] { x, y };
+        }
 
-		int worldX = pj.jugador.worldx + offsetX;
-		int worldY = pj.jugador.worldy + offsetY;
+        // Fallback: posición aleatoria
+        return generarPosicionAleatoria();
+    }
 
-		// Asegurar límites
-		worldX = Math.max(pj.tamanioTile, Math.min(worldX, pj.maxWorldAncho - pj.tamanioTile));
-		worldY = Math.max(pj.tamanioTile, Math.min(worldY, pj.maxWorldAlto - pj.tamanioTile));
+    // ===== SPAWN DE NPCS (usando Object Pool) =====
 
-		pj.npcs[slot].worldx = worldX;
-		pj.npcs[slot].worldy = worldY;
-		pj.npcs[slot].direccion = "abajo";
+    /**
+     * Activa un NPC del pool en una posición dada.
+     * @return true si se activó exitosamente
+     */
+    private boolean spawnearNPC(TipoNPC tipo, int x, int y) {
+        int slot = buscarSlotInactivo(tipo);
+        if (slot == -1) return false;
 
-		pj.contadorNPCs++;
-	}
+        pj.npcs[slot].activar(x, y);
+        return true;
+    }
 
-	/**
-	 * Spawnea un enemigo en una posición COMPLETAMENTE ALEATORIA del mapa.
-	 */
-	private void spawnearEnemigoAleatorio() {
-		// Buscar slot vacío
-		int slot = -1;
-		for (int i = 0; i < pj.npcs.length; i++) {
-			if (pj.npcs[i] == null) {
-				slot = i;
-				break;
-			}
-		}
+    // ===== MÉTODOS PÚBLICOS (referenciados por PanelJuego) =====
 
-		if (slot == -1)
-			return; // Array lleno
+    /**
+     * Coloca los objetos iniciales del juego (solo cofres).
+     */
+    public void setObjetct() {
+        int t = pj.tamanioTile;
 
-		pj.npcs[slot] = crearEnemigoAleatorio();
+        // Cofre normal
+        pj.objs[0] = new OBJ_cofre(t);
+        pj.objs[0].worldX = 30 * t;
+        pj.objs[0].worldY = 29 * t;
 
-		// Posición COMPLETAMENTE ALEATORIA en TODO el mapa
-		int worldX = (int) (Math.random() * (pj.maxWorldcol - 4) + 2) * pj.tamanioTile;
-		int worldY = (int) (Math.random() * (pj.maxWorldfilas - 4) + 2) * pj.tamanioTile;
+        // Cofres de PowerUp distribuidos por el mapa
+        pj.objs[1] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.INVENCIBILIDAD);
+        pj.objs[1].worldX = 15 * t;
+        pj.objs[1].worldY = 15 * t;
 
-		pj.npcs[slot].worldx = worldX;
-		pj.npcs[slot].worldy = worldY;
-		pj.npcs[slot].direccion = "abajo";
+        pj.objs[2] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.VELOCIDAD);
+        pj.objs[2].worldX = 45 * t;
+        pj.objs[2].worldY = 45 * t;
 
-		pj.contadorNPCs++;
-	}
+        pj.objs[3] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.ATAQUE);
+        pj.objs[3].worldX = 60 * t;
+        pj.objs[3].worldY = 30 * t;
 
-	/**
-	 * Verifica si hay enemigos cerca del jugador.
-	 * Si no hay enemigos en un radio cercano, spawnea una oleada inmediata.
-	 */
-	public void verificarYSpawnearCercanos() {
-		int radioCercano = 10 * pj.tamanioTile; // Radio de 10 tiles
-		int enemigosCercanos = 0;
+        pj.objs[4] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.CURACION);
+        pj.objs[4].worldX = 25 * t;
+        pj.objs[4].worldY = 50 * t;
 
-		// Contar enemigos cercanos
-		for (int i = 0; i < pj.npcs.length; i++) {
-			if (pj.npcs[i] != null && pj.npcs[i].estaVivo) {
-				int distanciaX = Math.abs(pj.npcs[i].worldx - pj.jugador.worldx);
-				int distanciaY = Math.abs(pj.npcs[i].worldy - pj.jugador.worldy);
-				double distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
+        // Cofres adicionales en otras zonas
+        pj.objs[5] = new OBJ_cofre(t);
+        pj.objs[5].worldX = 70 * t;
+        pj.objs[5].worldY = 20 * t;
 
-				if (distancia < radioCercano) {
-					enemigosCercanos++;
-				}
-			}
-		}
+        pj.objs[6] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.CURACION);
+        pj.objs[6].worldX = 80 * t;
+        pj.objs[6].worldY = 70 * t;
 
-		// Si hay menos de 10 enemigos cerca, spawnear oleada inmediata
-		if (enemigosCercanos < 10) {
-			int cantidad = 15 - enemigosCercanos; // Llenar hasta 15 cercanos
+        pj.objs[7] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.VELOCIDAD);
+        pj.objs[7].worldX = 10 * t;
+        pj.objs[7].worldY = 80 * t;
 
-			for (int i = 0; i < cantidad; i++) {
-				spawnearEnemigoCercano();
-			}
+        pj.objs[8] = new OBJ_cofre(t);
+        pj.objs[8].worldX = 55 * t;
+        pj.objs[8].worldY = 65 * t;
 
-			pj.agregarNotificacion("⚡ Oleada de refuerzo: +" + cantidad + " enemigos", Color.ORANGE, 2);
-		}
-	}
+        pj.objs[9] = new OBJ_CofrePowerUp(t, OBJ_CofrePowerUp.TipoPowerUp.INVENCIBILIDAD);
+        pj.objs[9].worldX = 85 * t;
+        pj.objs[9].worldY = 40 * t;
+    }
 
-	/**
-	 * Spawnea un enemigo específicamente CERCA del jugador (para oleadas de
-	 * refuerzo).
-	 */
-	private void spawnearEnemigoCercano() {
-		// Buscar slot vacío
-		int slot = -1;
-		for (int i = 0; i < pj.npcs.length; i++) {
-			if (pj.npcs[i] == null) {
-				slot = i;
-				break;
-			}
-		}
+    /**
+     * Spawn inicial de NPCs al comenzar partida.
+     * Activa 60 enemigos distribuidos aleatoriamente usando el pool.
+     */
+    public void setNPCs() {
+        int cantidadInicial = 60;
+        for (int i = 0; i < cantidadInicial; i++) {
+            TipoNPC tipo = elegirTipoEnemigo();
+            int[] pos = generarPosicionAleatoria();
+            spawnearNPC(tipo, pos[0], pos[1]);
+        }
+        System.out.println("[Pool] Spawn inicial: " + pj.contadorNPCs + " NPCs activos.");
+    }
 
-		if (slot == -1)
-			return; // Array lleno
+    /**
+     * Respawnea enemigos periódicamente (llamado cada segundo por PanelJuego).
+     * Mantiene una presión constante de enemigos según el nivel.
+     */
+    public void respawnearEnemigos() {
+        // Ajustar cantidad máxima según nivel
+        maxNPCsActivos = 60 + (pj.stats.nivel * 10);
+        if (maxNPCsActivos > 300) {
+            maxNPCsActivos = 300; // Tope absoluto
+        }
 
-		pj.npcs[slot] = crearEnemigoAleatorio();
+        // Solo spawnear si hay menos NPCs que el máximo
+        if (pj.contadorNPCs >= maxNPCsActivos) {
+            return;
+        }
 
-		// Spawn MUY cerca para acción inmediata
-		int distanciaMinima = 4 * pj.tamanioTile; // Muy cerca
-		int distanciaMaxima = 8 * pj.tamanioTile; // Cercano
+        // Spawnear 1-3 enemigos por ciclo
+        int cantidad = 1 + (int) (Math.random() * 3);
+        for (int i = 0; i < cantidad && pj.contadorNPCs < maxNPCsActivos; i++) {
+            TipoNPC tipo = elegirTipoEnemigo();
+            int[] pos = generarPosicionCercaJugador();
+            spawnearNPC(tipo, pos[0], pos[1]);
+        }
+    }
 
-		double angulo = Math.random() * 2 * Math.PI;
-		int distancia = (int) (Math.random() * (distanciaMaxima - distanciaMinima) + distanciaMinima);
+    /**
+     * Verifica si hay enemigos cerca del jugador y spawna si no hay suficientes.
+     * Evita que el jugador se quede sin acción en zonas vacías.
+     */
+    public void verificarYSpawnearCercanos() {
+        int radioCercano = 10 * pj.tamanioTile;
+        int radioSq = radioCercano * radioCercano;
+        int enemigoCercanos = 0;
 
-		int offsetX = (int) (Math.cos(angulo) * distancia);
-		int offsetY = (int) (Math.sin(angulo) * distancia);
+        for (int i = 0; i < POOL_TOTAL; i++) {
+            if (pj.npcs[i] != null && pj.npcs[i].activo && pj.npcs[i].estaVivo) {
+                int dx = pj.npcs[i].worldx - pj.jugador.worldx;
+                int dy = pj.npcs[i].worldy - pj.jugador.worldy;
+                if (dx * dx + dy * dy < radioSq) {
+                    enemigoCercanos++;
+                }
+            }
+        }
 
-		int worldX = pj.jugador.worldx + offsetX;
-		int worldY = pj.jugador.worldy + offsetY;
-
-		// Asegurar límites
-		worldX = Math.max(pj.tamanioTile, Math.min(worldX, pj.maxWorldAncho - pj.tamanioTile));
-		worldY = Math.max(pj.tamanioTile, Math.min(worldY, pj.maxWorldAlto - pj.tamanioTile));
-
-		pj.npcs[slot].worldx = worldX;
-		pj.npcs[slot].worldy = worldY;
-		pj.npcs[slot].direccion = "abajo";
-
-		pj.contadorNPCs++;
-	}
-
-	/**
-	 * Crea un enemigo aleatorio basado en el nivel del jugador.
-	 * Progresión:
-	 * - Nivel 1: Solo Bats
-	 * - Nivel 2-4: Bats + Slimes
-	 * - Nivel 5-9: Slimes + Orcos (Bats desaparecen)
-	 * - Nivel 10-14: Orcos + Ghouls (Slimes desaparecen)
-	 * - Nivel 15+: Todos los enemigos
-	 */
-	private entidad.NPC crearEnemigoAleatorio() {
-		int nivelJugador = pj.stats.nivel;
-
-		// Nivel 1: Solo Bats (100%)
-		if (nivelJugador < 2) {
-			return new Bat(pj);
-		}
-
-		// Nivel 2-4: Bats (50%) + Slimes (50%)
-		if (nivelJugador < 5) {
-			return (Math.random() < 0.5) ? new Bat(pj) : new Slime(pj);
-		}
-
-		// Nivel 5-9: Slimes (60%) + Orcos (40%)
-		if (nivelJugador < 10) {
-			return (Math.random() < 0.6) ? new Slime(pj) : new Orco(pj);
-		}
-
-		// Nivel 10-14: Orcos (50%) + Ghouls (50%)
-		if (nivelJugador < 15) {
-			return (Math.random() < 0.5) ? new Orco(pj) : new Ghoul(pj);
-		}
-
-		// Nivel 15+: Todos los enemigos (25% cada uno)
-		double random = Math.random();
-		if (random < 0.25) {
-			return new Bat(pj);
-		} else if (random < 0.50) {
-			return new Slime(pj);
-		} else if (random < 0.75) {
-			return new Orco(pj);
-		} else {
-			return new Ghoul(pj);
-		}
-	}
-
+        // Si hay menos de 5 enemigos cerca, forzar spawn
+        if (enemigoCercanos < 5) {
+            int necesarios = 5 - enemigoCercanos;
+            for (int i = 0; i < necesarios; i++) {
+                TipoNPC tipo = elegirTipoEnemigo();
+                int[] pos = generarPosicionCercaJugador();
+                spawnearNPC(tipo, pos[0], pos[1]);
+            }
+        }
+    }
 }

@@ -28,11 +28,19 @@ public class detectorColisiones {
 		int filaArriba = areaArribaY / pj.tamanioTile;
 		int filaAbajo = areaAbajoY / pj.tamanioTile;
 
+		// Protección de límites del mapa
+		if (columnaIzquierda < 0 || columnaDerechaX >= pj.maxWorldcol
+			|| filaArriba < 0 || filaAbajo >= pj.maxWorldfilas) {
+			e.hayColision = true;
+			return;
+		}
+
 		int tileIzquierdo, tileDerechoOCentral;
 
 		switch (e.direccion) {
 		case "arriba":
 			int filaArribaProxima = (areaArribaY - e.vel) / pj.tamanioTile;
+			if (filaArribaProxima < 0) { e.hayColision = true; break; }
 			tileIzquierdo = pj.tileManager.mapaPorNumeroTile[columnaIzquierda][filaArribaProxima];
 			tileDerechoOCentral = pj.tileManager.mapaPorNumeroTile[columnaDerechaX][filaArribaProxima];
 			if (pj.tileManager.tiles[tileIzquierdo].colision || pj.tileManager.tiles[tileDerechoOCentral].colision)
@@ -40,6 +48,7 @@ public class detectorColisiones {
 			break;
 		case "abajo":
 			int filaAbajoProxima = (areaAbajoY + e.vel) / pj.tamanioTile;
+			if (filaAbajoProxima >= pj.maxWorldfilas) { e.hayColision = true; break; }
 			tileIzquierdo = pj.tileManager.mapaPorNumeroTile[columnaIzquierda][filaAbajoProxima];
 			tileDerechoOCentral = pj.tileManager.mapaPorNumeroTile[columnaDerechaX][filaAbajoProxima];
 			if (pj.tileManager.tiles[tileIzquierdo].colision || pj.tileManager.tiles[tileDerechoOCentral].colision)
@@ -48,6 +57,7 @@ public class detectorColisiones {
 
 		case "izquierda":
 			int columnaIzquierdaProxima = (areaIzquierdaX - e.vel) / pj.tamanioTile;
+			if (columnaIzquierdaProxima < 0) { e.hayColision = true; break; }
 			tileIzquierdo = pj.tileManager.mapaPorNumeroTile[columnaIzquierdaProxima][filaArriba];
 			tileDerechoOCentral = pj.tileManager.mapaPorNumeroTile[columnaIzquierdaProxima][filaAbajo];
 			if (pj.tileManager.tiles[tileIzquierdo].colision || pj.tileManager.tiles[tileDerechoOCentral].colision)
@@ -56,6 +66,7 @@ public class detectorColisiones {
 
 		case "derecha":
 			int columnaDerechaProxima = (areaDerechaX + e.vel) / pj.tamanioTile;
+			if (columnaDerechaProxima >= pj.maxWorldcol) { e.hayColision = true; break; }
 			tileIzquierdo = pj.tileManager.mapaPorNumeroTile[columnaDerechaProxima][filaArriba];
 			tileDerechoOCentral = pj.tileManager.mapaPorNumeroTile[columnaDerechaProxima][filaAbajo];
 			if (pj.tileManager.tiles[tileIzquierdo].colision || pj.tileManager.tiles[tileDerechoOCentral].colision)

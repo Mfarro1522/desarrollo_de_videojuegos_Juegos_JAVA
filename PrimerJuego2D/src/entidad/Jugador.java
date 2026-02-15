@@ -25,8 +25,6 @@ public class Jugador extends Entidad {
 	boolean debug = false;// Cambiar a false para producción
 	private UtilityTool miTool = new UtilityTool();
 
-	public int numeroLlaves = 0; // Contador de llaves recolectadas
-
 	// Sistema de power-ups
 	public PowerUpManager powerUps = new PowerUpManager();
 
@@ -34,6 +32,10 @@ public class Jugador extends Entidad {
 	private int contadorAtaque = 0;
 	private int intervaloAtaque = 30; // Dispara cada 30 frames (0.5 seg a 60 FPS)
 	private int velocidadBase = 4;
+
+	// Rectángulos pre-allocados para colisiones melee (cero GC)
+	private final Rectangle tempAreaJugador = new Rectangle();
+	private final Rectangle tempAreaNPC = new Rectangle();
 
 	// ===== Sistema de personaje =====
 	public String tipoPersonaje = "Doom"; // "Sideral", "Mago", "Doom"
@@ -412,43 +414,40 @@ public class Jugador extends Entidad {
 	}
 
 	/**
-	 * Ataque melee (Doom): verifica colisión directa con NPCs y aplica daño.
-	 * Solo funciona mientras el jugador está en estado ATACANDO.
+	 * Ataque melee (Doom): usa SpatialHashGrid para encontrar NPCs cercanos.
+	 * Optimizado: solo verifica colisión con NPCs en celdas adyacentes.
 	 */
 	private void atacarMelee() {
-		Rectangle areaJugador = new Rectangle(
+		tempAreaJugador.setBounds(
 				worldx + AreaSolida.x,
 				worldy + AreaSolida.y,
 				AreaSolida.width,
 				AreaSolida.height);
 
 		int dano = (int) (ataque * powerUps.multiplicadorAtaque);
-		boolean ataqueConectado = false; // Flag para reproducir sonido solo una vez
 
-		for (int i = 0; i < pj.npcs.length; i++) {
-			if (pj.npcs[i] != null && pj.npcs[i].estaVivo) {
-				Rectangle areaNPC = new Rectangle(
+		pj.spatialGrid.consultar(worldx, worldy);
+		int[] cercanos = pj.spatialGrid.getResultado();
+		int count = pj.spatialGrid.getResultadoCount();
+
+		for (int j = 0; j < count; j++) {
+			int i = cercanos[j];
+			if (pj.npcs[i] != null && pj.npcs[i].activo && pj.npcs[i].estaVivo) {
+				tempAreaNPC.setBounds(
 						pj.npcs[i].worldx + pj.npcs[i].AreaSolida.x,
 						pj.npcs[i].worldy + pj.npcs[i].AreaSolida.y,
 						pj.npcs[i].AreaSolida.width,
 						pj.npcs[i].AreaSolida.height);
 
-				if (areaJugador.intersects(areaNPC)) {
+				if (tempAreaJugador.intersects(tempAreaNPC)) {
 					pj.npcs[i].recibirDanio(dano);
-					ataqueConectado = true;
 
-					// Si el NPC murió, dar experiencia
 					if (!pj.npcs[i].estaVivo) {
 						pj.stats.registrarEnemigoEliminado();
 						pj.stats.ganarExperiencia(pj.npcs[i].experienciaAOtorgar);
 					}
 				}
 			}
-		}
-
-		// TODO: Descomentar cuando agregues el archivo res/sound/attack.wav
-		if (ataqueConectado) {
-			// pj.playSE(7); // Efecto de sonido al atacar (melee)
 		}
 	}
 
@@ -594,6 +593,12 @@ public class Jugador extends Entidad {
 				}
 
 				pj.stats.registrarCofreRecogido();
+				pj.objs[index] = null;
+			} else if (pj.objs[index] instanceof objetos.OBJ_cofre) {
+				// Cofre normal: otorga puntos y experiencia
+				pj.stats.registrarCofreRecogido();
+				pj.agregarNotificacion("📦 Cofre encontrado! +50 EXP", Color.ORANGE, 3);
+				pj.stats.ganarExperiencia(50);
 				pj.objs[index] = null;
 			}
 		}

@@ -342,9 +342,9 @@ public class UI {
 
 			// Panel
 			int panelAncho = 800;
-			int panelAlto = 500;
+			int panelAlto = 600; // Aumentado de 500
 			int panelX = ancho / 2 - panelAncho / 2;
-			int panelY = 130;
+			int panelY = 100; // Subido de 130
 			g2.setColor(COLOR_PANEL);
 			g2.fillRoundRect(panelX, panelY, panelAncho, panelAlto, 20, 20);
 			g2.setColor(COLOR_BORDE);
@@ -499,6 +499,11 @@ public class UI {
 		g2.drawString("💔 Daño Total Recibido:", x, y);
 		g2.setColor(Color.WHITE);
 		g2.drawString(String.valueOf(GameStats.danioTotalRecibidoAcumulado), x + 450, y);
+
+		// Indicador de persistencia
+		g2.setFont(new Font("Arial", Font.ITALIC, 14));
+		g2.setColor(new Color(100, 200, 100));
+		g2.drawString("✔ Estadísticas guardadas en res/stats/stats.txt", panelX + 60, panelY + panelAlto - 15);
 
 		// Instrucciones
 		g2.setFont(fuentePequena);
