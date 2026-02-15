@@ -2,150 +2,111 @@
 
 ## 1. Arquitectura del Proyecto
 
-El proyecto sigue una arquitectura clásica de **Game Loop** (Bucle de Juego) centralizado, típico en desarrollos 2D con Java Swing/AWT.
+El proyecto ha evolucionado hacia una arquitectura robusta y modular, separando claramente la vista (rendering/loop) de la lógica y los datos (estado del mundo).
 
 ### Estructura General
-*   **Núcleo (`main`):**
-    *   `PanelJuego.java`: Es la clase la "Dueña" del estado del juego. Hereda de `JPanel` e implementa `Runnable` para gestionar el hilo principal.
-    *   **Game Loop**: Implementado en el método `run()` usando el patrón "Delta Time" para asegurar una ejecución estable a **60 FPS**.
-    *   **Ciclo de actualización**:
-        1.  **UPDATE**: Actualiza la lógica (movimiento, colisiones, IA) de todas las entidades (`jugador.update()`, `npcs[i].update()`).
-        2.  **DRAW**: Renderiza todo en pantalla (`paintComponent`).
+
+*   **Núcleo (`main` / `nucleo`):**
+    *   **`PanelJuego.java` (VISTA/LOOP):** Es el contenedor gráfico (`JPanel`) y responsable exclusivamente del **Game Loop**.
+        *   **Game Loop**: Mantiene la ejecución a **60 FPS** usando "Delta Time".
+        *   **Responsabilidad**: Delegar el `update()` a `MundoJuego` y el `draw()` a los componentes visuales. No mantiene estado del juego.
+    *   **`MundoJuego.java` (MODELO/LÓGICA):** Es el **corazón** del juego. Contiene:
+        *   El estado actual (`gameState`: menú, jugando, pausa, game over).
+        *   Los arrays de entidades (`npcs`, `proyectiles`, `objs`).
+        *   Referencias a todos los subsistemas (`TileManager`, `DetectorColisiones`, `GestorRecursos`, `Estadisticas`).
+        *   Lógica central de actualización (`update()`) y orquestación.
 
 *   **Sistema de Entidades (`entidad`):**
-    *   Usa herencia y polimorfismo.
-    *   `Entidad` (Clase Base): Define coordenadas (`worldx`, `worldy`), velocidad, vida y sprites.
-    *   `NPC` (Abstracta): Extiende `Entidad`. Añade IA básica, rangos de detección y lógica de combate.
-    *   `Jugador`, `Orco`, `Slime`, `Bat`: Implementaciones concretas.
+    *   Usa herencia y polimorfismo (`Entidad` -> `NPC` -> `Bat`, `Slime`, `Orco`, `Ghoul`).
+    *   **`Jugador`**: Gestiona entrada, movimiento y estados del héroe.
+    *   **`NPC`**: Clase base abstracta con IA básica, máquinas de estados y **Object Pooling**.
 
-*   **Gestión del Mundo (`tiles` / `main`):**
-    *   `TileManager`: Dibuja el mapa estático.
-    *   `AssetSetter`: Responsable de "popular" el mundo (poner objetos y enemigos).
+*   **Gestión de Recursos (`mundo` / `tiles`):**
+    *   **`TileManager`**: Dibuja el mapa estático basado en archivos de texto.
+    *   **`GestorRecursos`**: Responsable de la **generación procedural** de enemigos y objetos (sustituye al antiguo `AssetSetter`).
 
 ---
 
 ## 2. Clases y Métodos Principales
 
-### `main.PanelJuego`
-Es el contenedor de memoria de todos los objetos vivos.
-*   **Arrays de Gestión**: Mantiene arrays fijos para gestionar las entidades en memoria.
-    *   `public NPC[] npcs = new NPC[100];` (Límite duro de 100 enemigos).
-    *   `public Proyectil[] proyectiles = new Proyectil[100];`
-    *   `public superObjeto[] objs = new superObjeto[15];`
-*   **Método `update()`**: Orquesta el comportamiento de todos los elementos frame a frame.
+### `mundo.MundoJuego`
+Es el contenedor de memoria y estado.
+*   **Arrays de Gestión**: Arrays estáticos para evitar GC (Garbage Collection).
+    *   `public NPC[] npcs = new NPC[1000];` (Object Pool global).
+    *   `public Proyectil[] proyectiles = new Proyectil[MAX];`
+*   **Método `update()`**: Orquesta la lógica frame a frame (notificaciones, grid espacial, NPCs, respawn, proyectiles).
+*   **Método `iniciarJuego()`**: Resetea el estado y prepara una nueva partida.
 
-### `main.AssetSetter`
-El "Director de Escena".
-*   `setNPCs()`: Colocación inicial.
-*   `respawnearEnemigos()`: Lógica de regeneración continua.
-*   `verificarYSpawnearCercanos()`: Sistema de presión al jugador (spawn forzado).
+### `mundo.GestorRecursos`
+El "Director de Escena" y generador de contenido.
+*   **`inicializarPool()`**: Pre-instancia 1000 enemigos en memoria al inicio.
+*   **`respawnearEnemigos()`**: Mantiene la población de enemigos activa basándose en el nivel del jugador.
+*   **`verificarYSpawnearCercanos()`**: Sistema de presión constante (anti-campeo).
+*   **`elegirTipoEnemigo()`**: Decide qué enemigo spawnear (Bat, Slime, Orco, Ghoul) según probabilidades y nivel.
 
-### `entidad.Entidad` y `entidad.NPC`
-*   **Estado**: Manejan máquinas de estados simples (`IDLE`, `MOVIENDO`, `ATACANDO`, `MURIENDO`).
-*   **`actualizarIA()`**: Método abstracto en `NPC` que define el comportamiento único de cada monstruo.
+### `nucleo.PanelJuego`
+*   **`paintComponent(Graphics g)`**: Método de renderizado optimizado.
+    *   Implementa **Frustum Culling**: Solo dibuja entidades dentro de la pantalla visible.
 
 ---
 
 ## 3. Generación y Gestión de Enemigos (Análisis Profundo)
 
-Aquí es donde ocurre la "magia" de la dificultad y el rendimiento del juego.
+El sistema ha sido reescrito para maximizar el rendimiento y escalar la dificultad.
 
-### A. Gestión de Memoria (El Array `npcs`)
-El juego **NO** utiliza listas dinámicas (`ArrayList`) para los enemigos durante el ciclo de juego, sino un **Array Estático de tamaño fijo (100)**: `NPC[] npcs`.
+### A. Gestión de Memoria (Object Pooling)
+El juego utiliza un **Object Pool** masivo de **1000 NPCs** (`GestorRecursos.POOL_TOTAL`).
 
-1.  **¿Por qué?**: Esto evita la sobrecarga de redimensionar listas en tiempo de ejecución y es más rápido de iterar, algo crítico para un game loop de 60 FPS.
-2.  **Slots de Memoria**: El array actúa como un conjunto de "slots". Un slot puede contener una referencia a un objeto `Orco` (ocupado) o ser `null` (vacío).
-    *   **Lectura**: El juego recorre el array. Si `npcs[i] != null`, ejecuta su lógica. Si es `null`, lo salta.
+1.  **Cero `new` en Gameplay**:
+    *   Al inicio (`setupJuego`), se crean 250 murciélagos, 250 slimes, 250 orcos y 250 ghouls.
+    *   Durante el juego, **NUNCA** se instancia un nuevo NPC.
+2.  **Ciclo de Vida (Activación/Desactivación)**:
+    *   **Spawn**: Se busca un slot inactivo del tipo deseado y se llama a `activar(x, y)`. Esto resetea su vida y estado.
+    *   **Muerte**: Al morir, se reproduce la animación y se llama a `desactivar()`, devolviendo el slot al pool (marcando `activo = false`).
+3.  **Beneficio**: El Garbage Collector de Java no tiene trabajo durante la partida, eliminando los tirones (lag spikes).
 
-### B. El Ciclo de Vida de un Enemigo (En Memoria)
+### B. Algoritmo de Dificultad Dinámica
 
-1.  **Nacimiento (Instanciación)**:
-    *   Cuando el `AssetSetter` decide crear un enemigo, busca el **primer slot vacío (`null`)** en el array `npcs`.
-    *   Ejecuta `npcs[i] = new Orco(pj);`. Java asigna memoria en el *Heap* para el nuevo objeto.
-2.  **Vida (Update)**:
-    *   Frame a frame, `PanelJuego` accede a `npcs[i]` y modifica sus atributos (`x`, `y`, `vida`).
-3.  **Muerte y Limpieza (Garbage Collection)**:
-    *   Cuando la vida llega a 0, se activa un flag `estaVivo = false`.
-    *   Se reproduce la animación de muerte. Al finalizar, `PanelJuego` ejecuta:
-        ```java
-        npcs[i] = null; // El slot queda libre
-        ```
-    *   **¿Qué pasa en memoria?**: Al eliminar la referencia del array, el objeto `Orco` queda "huérfano" (sin referencias). El **Garbage Collector (GC)** de Java detectará esto y liberará la memoria RAM automáticamente en su próxima pasada.
-    *   *Nota*: El juego instancia objetos nuevos constantemente (`new Orco()`) en lugar de reutilizar los viejos (Object Pooling). Dado el número bajo (100), el GC puede manejarlo, pero en escalas mayores esto causaría tirones (lag spikes).
+La lógica en `GestorRecursos` ajusta la dificultad en tiempo real:
 
-### C. Algoritmos de Generación (Spawning Logic)
+1.  **Población Máxima**:
+    *   Calculada como `60 + (Nivel * 10)`. Tope de 300 enemigos simultáneos en pantalla.
+2.  **Progresión de Tipos**:
+    *   **Nivel 1-2**: Solo Murciélagos.
+    *   **Nivel 3-4**: Murciélagos y Slimes.
+    *   **Nivel 5-9**: Se suman Orcos.
+    *   **Nivel 15+**: Aparecen Ghouls y aumenta la densidad de Orcos.
+3.  **Spawn de Proximidad**:
+    *   Si hay menos de 5 enemigos cerca del jugador (radio 10 tiles), el juego fuerza la aparición inmediata de una oleada cercana.
 
-La "inteligencia" de aparición reside en `AssetSetter.java` y se divide en tres capas:
+### C. Optimizaciones de Rendimiento (Engine)
 
-#### 1. Spawn Inicial
-Al arrancar, crea **60 enemigos** en posiciones aleatorias de todo el mapa (`setNPCs`).
+1.  **Spatial Hash Grid (`GrillaEspacial`)**:
+    *   Divide el mundo en celdas grandes. Las colisiones solo se comprueban contra entidades en la misma celda o vecinas. Reduce la complejidad de O(N²) a casi O(N).
+2.  **Logic Culling**:
+    *   Los enemigos lejanos (> 20 tiles) actualizan su IA solo 1 de cada 10 frames. Ahorra muchísimo CPU.
+3.  **Frustum Culling**:
+    *   El renderizado (`PanelJuego.paintComponent`) ignora completamente cualquier entidad fuera de la cámara.
+4.  **Rectángulos Pre-allocados**:
+    *   Las clases `NPC` usan `Rectangle` reutilizables para cálculos de colisión, evitando crear miles de objetos temporales por segundo.
 
-#### 2. Respawn Continuo (Mantenimiento de Población)
-Cada segundo (60 frames), el juego verifica cuántos enemigos quedan:
-*   Si hay **< 50 enemigos**: Spawnea grupos grandes (8-15).
-*   Si hay **< 80 enemigos**: Spawnea grupos pequeños (2-4).
-*   **Resultado**: El jugador nunca puede "limpiar" el mapa por completo; siempre habrá presión constante.
+---
 
-#### 3. Spawn de Proximidad (Sistema Anti-Aburrimiento)
-Cada 3 segundos, verifica si el jugador está "solo" (radio de 10 tiles):
-*   Si hay **< 10 enemigos cerca**: Fuerza la aparición inmediata de una oleada de refuerzo **MUY CERCA** (4-8 tiles de distancia).
-*   Esto asegura que el jugador no pueda quedarse quieto en una zona segura; el juego le enviará enemigos activamente.
+## 4. Estructura de Paquetes y Componentes
 
-#### 4. Selección de Tipo de Enemigo (Progresión)
-La clase de enemigo instanciado depende del **Nivel del Jugador** (`pj.stats.nivel`):
-*   Nivel 1: 100% Murciélagos (`Bat`).
-*   Nivel 5-9: Slimes y Orcos.
-*   Nivel 15+: Todos (incluyendo `Ghoul`).
-Esto se gestiona mediante probabilidades simples (`Math.random()`) en `crearEnemigoAleatorio()`.
+El proyecto está organizado en 12 paquetes especializados:
 
-### D. Optimizaciones de Rendimiento
-
-#### 1. Object Pooling
-*   **1,000 NPCs pre-instanciados** al inicio (250 por tipo: `Bat`, `Slime`, `Orco`, `Ghoul`).
-*   Ciclo de vida `activar(x,y)` / `desactivar()` — cero `new` durante el gameplay.
-*   Cada tipo de NPC implementa `resetearEstado()` para reutilización limpia.
-
-#### 2. Spatial Hashing + Logic Culling
-*   `SpatialHashGrid.java` — Consultas O(1) de NPCs cercanos en lugar de O(N²).
-*   Utilizado por `Proyectil` y `Jugador.atacarMelee()` para detección de colisiones.
-*   **Logic Culling**: NPCs a > 20 tiles actualizan solo cada 10º frame.
-
-#### 3. Frustum Culling
-*   `PanelJuego.paintComponent()` — NPCs y proyectiles fuera del viewport se saltan (sin llamada a `draw()`).
-
-#### 4. Renderizado de Tiles por Rango Visible
-*   `TileManager.draw()` — Calcula el rango visible de 16×12 tiles y solo dibuja esos (192 tiles en lugar de 10,000).
-
-#### Optimizaciones Adicionales
-*   Cachés estáticos de sprites en `Bat`, `Slime`, `Orco`, `Ghoul` — imágenes cargadas una vez, compartidas entre instancias.
-*   Rectángulos pre-asignados en verificaciones de colisión de NPCs — cero presión GC por frame.
-*   Cálculos de distancia al cuadrado en todo el código (sin `Math.sqrt()`).
-*   Bounds checking en `detectorColisiones` para prevenir `ArrayIndexOutOfBounds`.
-
-
-## 4. Refactorización y Optimizaciones Implementadas
-
-### Estructura Nueva (12 paquetes, 35 archivos)
-
-Se realizó una refactorización completa del proyecto para mejorar mantenibilidad, rendimiento y escalabilidad.
-
-#### Problemas Resueltos
-
-| Problema | Solución |
-|----------|----------|
-| God Object `PanelJuego` (458 líneas) | Dividido en `PanelJuego` (140 líneas) + `MundoJuego` (220 líneas) |
-| UI monolítica (792 líneas) | Dividida en 9 clases: `InterfazUsuario` + `HUD` + 7 pantallas |
-| Input duplicado (`keyHandler` + `MouseHandler`) | Unificado en `GestorEntrada` |
-| Constantes dispersas | Centralizadas en `Configuracion` (estáticas) |
-| Dependencia circular (entidades → `PanelJuego`) | Entidades referencian `MundoJuego` (dirección única) |
-| Naming conventions violadas | Clases renombradas (PascalCase) con paquetes en español |
-| Capas sin definir | 12 paquetes con responsabilidades claras |
-
-#### Optimizaciones Preservadas
-
-*   **Object Pool**: 1000 NPCs pre-asignados (cero `new` en gameplay).
-*   **Spatial Hash Grid**: Colisiones O(N).
-*   **Frustum Culling + Logical Culling**: Renderizado optimizado.
-*   **Pre-allocated rectangles**: Cero generación de basura (GC).
-*   **Sprite cache estático**: Por tipo de NPC.
-*   **Mapa procedural**: 100×100 tiles.
+| Paquete | Descripción | Contenido Clave |
+| :--- | :--- | :--- |
+| **`nucleo`** | Motor principal | `PanelJuego` (Loop), `Main` (Entry) |
+| **`mundo`** | Estado y datos | `MundoJuego` (State), `GestorRecursos` (Spawning) |
+| **`entidad`** | Actores del juego | `Jugador`, `NPC` (IA), `Orco`, `Slime`, `Bat` |
+| **`interfaz`** | GUI y Menús | `InterfazUsuario`, `HUD`, `PantallaSeleccion` |
+| **`tiles`** | Mapa | `TileManager` (Renderizado del mundo) |
+| **`entrada`** | Input | `GestorEntrada` (Teclado/Mouse unificado) |
+| **`colision`** | Física | `DetectorColisiones` (Hitbox logic) |
+| **`objetos`** | Items interactivos | `SuperObjeto`, `Cofres`, `PowerUps` |
+| **`audio`** | Sonido | `GestorAudio` |
+| **`configuracion`** | Constantes | `Configuracion` (Resolución, Flags) |
+| **`estadisticas`** | Meta-juego | `Estadisticas` (Nivel, XP, Highscore) |
+| **`utilidades`** | Tools | `Herramientas` (Escalado de imagen), `Notificacion` |
