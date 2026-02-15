@@ -79,8 +79,8 @@ public class Jugador extends Entidad {
 				defensa = 3;
 				velocidadBase = 5;
 				esMelee = false;
-				tieneSpritesAtaque = false; // Usa placeholders rojos
-				tieneSpritesmuerte = false; // Usa placeholders rojos
+				tieneSpritesAtaque = true;
+				tieneSpritesmuerte = true;
 				break;
 			case "Mago":
 				rutaCarpeta = "/jugador/Mago/";
@@ -178,18 +178,38 @@ public class Jugador extends Entidad {
 
 			// ===== Sprites de ataque (si existen) =====
 			if (tieneSpritesAtaque) {
-				ataqueArriba = miTool.escalarImagen(
-						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueArriba_0001.png")),
-						pj.tamanioTile, pj.tamanioTile);
-				ataqueAbajo = miTool.escalarImagen(
-						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0002.png")),
-						pj.tamanioTile, pj.tamanioTile);
-				ataqueDer = miTool.escalarImagen(
-						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")),
-						pj.tamanioTile, pj.tamanioTile);
-				ataqueIzq = miTool.escalarImagen(
-						ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")),
-						pj.tamanioTile, pj.tamanioTile);
+				if (tipoPersonaje.equals("Sideral")) {
+					// Sideral tiene nombres de archivo ligeramente diferentes
+					// Usa movimiento arriba para ataque arriba
+					ataqueArriba = arriba1;
+
+					// Carga ataque abajo 0001 (Doom usa 0002)
+					ataqueAbajo = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0001.png")),
+							pj.tamanioTile, pj.tamanioTile);
+
+					ataqueDer = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")),
+							pj.tamanioTile, pj.tamanioTile);
+					ataqueIzq = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")),
+							pj.tamanioTile, pj.tamanioTile);
+
+				} else {
+					// Lógica estándar (Doom/Mago)
+					ataqueArriba = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueArriba_0001.png")),
+							pj.tamanioTile, pj.tamanioTile);
+					ataqueAbajo = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueAbajo_0002.png")),
+							pj.tamanioTile, pj.tamanioTile);
+					ataqueDer = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueDer_0001.png")),
+							pj.tamanioTile, pj.tamanioTile);
+					ataqueIzq = miTool.escalarImagen(
+							ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "ataqueIzq_0001.png")),
+							pj.tamanioTile, pj.tamanioTile);
+				}
 			} else {
 				// Placeholders: se dibujarán como cuadros rojos en draw()
 				ataqueArriba = null;
@@ -382,10 +402,10 @@ public class Jugador extends Entidad {
 				int proyectilY = worldy + pj.tamanioTile / 2 - 8;
 
 				pj.proyectiles[i] = new Proyectil(pj, proyectilX, proyectilY, direccion, dano);
-				
+
 				// TODO: Descomentar cuando agregues el archivo res/sound/attack.wav
 				// pj.playSE(7); // Efecto de sonido al atacar
-				
+
 				break;
 			}
 		}
@@ -425,7 +445,7 @@ public class Jugador extends Entidad {
 				}
 			}
 		}
-		
+
 		// TODO: Descomentar cuando agregues el archivo res/sound/attack.wav
 		if (ataqueConectado) {
 			// pj.playSE(7); // Efecto de sonido al atacar (melee)

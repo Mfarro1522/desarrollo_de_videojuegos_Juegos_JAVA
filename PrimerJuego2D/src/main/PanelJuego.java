@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 import javax.swing.JPanel;
 
@@ -43,6 +45,7 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	// lsitener
 	keyHandler kh = new keyHandler(this);
+	MouseHandler mh;
 	Thread threadJuego;
 
 	// jugador
@@ -90,6 +93,9 @@ public class PanelJuego extends JPanel implements Runnable {
 	// Estado actual del juego
 	public int gameState;
 
+	// Fondo centralizado para menús
+	public BufferedImage imagenFondoMenu;
+
 	// Sistema de medición de rendimiento
 	private boolean chkTiempoDibujado = true; // debug
 	private long iniciDibujo;
@@ -99,9 +105,19 @@ public class PanelJuego extends JPanel implements Runnable {
 	 * Configura el estado inicial del juego (coloca objetos, NPCs, etc).
 	 */
 	public void setupJuego() {
+		// Cargar imagen de fondo centralizada
+		try {
+			imagenFondoMenu = ImageIO.read(getClass().getResourceAsStream("/bg/fonfoPantallaPrincipal.png"));
+			UtilityTool tool = new UtilityTool();
+			imagenFondoMenu = tool.escalarImagen(imagenFondoMenu, anchoPantalla, altoPantalla);
+		} catch (Exception e) {
+			System.out.println("Error al cargar la imagen de fondo centralizada: " + e.getMessage());
+			imagenFondoMenu = null;
+		}
+
 		// Iniciar en el menú principal
 		gameState = menuState;
-		
+
 		// Reproducir música del menú
 		// TODO: Descomentar cuando agregues res/sound/menu_music.wav
 		// reproducirMusicaFondo(5); // Música del menú
@@ -116,6 +132,12 @@ public class PanelJuego extends JPanel implements Runnable {
 		// MEJORA EL RENDIMIENTO
 		this.setDoubleBuffered(true);
 		this.addKeyListener(kh);
+
+		// Agregar soporte para mouse
+		mh = new MouseHandler(this, kh);
+		this.addMouseListener(mh);
+		this.addMouseMotionListener(mh);
+
 		setFocusable(true);
 
 	}
@@ -167,7 +189,7 @@ public class PanelJuego extends JPanel implements Runnable {
 	private final int intervaloRespawn = 60; // Cada 1 segundo (60 FPS)
 	private int contadorVerificacionCercanos = 0;
 	private final int intervaloVerificacionCercanos = 180; // Cada 3 segundos
-	
+
 	// Sistema de delay para Game Over (para apreciar animación de muerte)
 	private boolean jugadorMuerto = false;
 	private int contadorGameOver = 0;
@@ -238,7 +260,7 @@ public class PanelJuego extends JPanel implements Runnable {
 			jugadorMuerto = true;
 			contadorGameOver = 0;
 		}
-		
+
 		// Contar frames después de la muerte antes de mostrar Game Over
 		if (jugadorMuerto) {
 			contadorGameOver++;
@@ -338,7 +360,7 @@ public class PanelJuego extends JPanel implements Runnable {
 	public void reiniciarJuego() {
 		// Volver al menú principal
 		gameState = menuState;
-		
+
 		// Detener música de batalla y reproducir música del menú
 		stopMusic();
 		// TODO: Descomentar cuando agregues res/sound/menu_music.wav
@@ -381,7 +403,7 @@ public class PanelJuego extends JPanel implements Runnable {
 		stats = new GameStats();
 		stats.setPanelJuego(this);
 		stats.iniciar();
-		
+
 		// Resetear flag de muerte
 		jugadorMuerto = false;
 		contadorGameOver = 0;
@@ -392,7 +414,8 @@ public class PanelJuego extends JPanel implements Runnable {
 
 		// Sistema de música
 		stopMusic(); // Detener música anterior (si hay)
-		// TODO: Descomentar cuando agregues res/sound/battle_music.wav para usar música de batalla alternativa
+		// TODO: Descomentar cuando agregues res/sound/battle_music.wav para usar música
+		// de batalla alternativa
 		// reproducirMusicaFondo(6); // Música de batalla
 		reproducirMusicaFondo(0); // Doom.wav para el juego (por ahora)
 

@@ -2,6 +2,8 @@ package main;
 
 import java.awt.Color;
 import entidad.Bat;
+import entidad.Ghoul;
+import entidad.Orco;
 import entidad.Slime;
 import objetos.OBJ_llave;
 import objetos.OBJ_puerta;
@@ -239,13 +241,47 @@ public class AssetSetter {
 	}
 
 	/**
-	 * Crea un enemigo aleatorio (Slime 70% o Bat 30%).
+	 * Crea un enemigo aleatorio basado en el nivel del jugador.
+	 * Progresión:
+	 * - Nivel 1: Solo Bats
+	 * - Nivel 2-4: Bats + Slimes
+	 * - Nivel 5-9: Slimes + Orcos (Bats desaparecen)
+	 * - Nivel 10-14: Orcos + Ghouls (Slimes desaparecen)
+	 * - Nivel 15+: Todos los enemigos
 	 */
 	private entidad.NPC crearEnemigoAleatorio() {
-		if (Math.random() < 0.3) {
+		int nivelJugador = pj.stats.nivel;
+
+		// Nivel 1: Solo Bats (100%)
+		if (nivelJugador < 2) {
 			return new Bat(pj);
-		} else {
+		}
+
+		// Nivel 2-4: Bats (50%) + Slimes (50%)
+		if (nivelJugador < 5) {
+			return (Math.random() < 0.5) ? new Bat(pj) : new Slime(pj);
+		}
+
+		// Nivel 5-9: Slimes (60%) + Orcos (40%)
+		if (nivelJugador < 10) {
+			return (Math.random() < 0.6) ? new Slime(pj) : new Orco(pj);
+		}
+
+		// Nivel 10-14: Orcos (50%) + Ghouls (50%)
+		if (nivelJugador < 15) {
+			return (Math.random() < 0.5) ? new Orco(pj) : new Ghoul(pj);
+		}
+
+		// Nivel 15+: Todos los enemigos (25% cada uno)
+		double random = Math.random();
+		if (random < 0.25) {
+			return new Bat(pj);
+		} else if (random < 0.50) {
 			return new Slime(pj);
+		} else if (random < 0.75) {
+			return new Orco(pj);
+		} else {
+			return new Ghoul(pj);
 		}
 	}
 

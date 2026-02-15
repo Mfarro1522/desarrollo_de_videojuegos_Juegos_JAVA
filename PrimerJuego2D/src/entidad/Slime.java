@@ -40,24 +40,29 @@ public class Slime extends NPC {
             BufferedImage tempArriba2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Arriba02.png"));
             BufferedImage tempAbajo1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Abajo01.png"));
             BufferedImage tempAbajo2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Abajo02.png"));
-            BufferedImage tempIzq1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Izquierda01.png"));
-            BufferedImage tempIzq2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Izquierda02.png"));
+
+            // Solo cargar sprites de derecha
             BufferedImage tempDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Derecha01.png"));
+            BufferedImage tempDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Derecha02.png"));
 
             // Cargar sprites de muerte (3 frames)
             BufferedImage tempMuerte1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Muerte01.png"));
             BufferedImage tempMuerte2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Muerte02.png"));
             BufferedImage tempMuerte3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "Muerte03.png"));
 
-            // Escalar todas las imágenes
+            // Escalar imágenes
             arriba1 = tool.escalarImagen(tempArriba1, pj.tamanioTile, pj.tamanioTile);
             arriba2 = tool.escalarImagen(tempArriba2, pj.tamanioTile, pj.tamanioTile);
             abajo1 = tool.escalarImagen(tempAbajo1, pj.tamanioTile, pj.tamanioTile);
             abajo2 = tool.escalarImagen(tempAbajo2, pj.tamanioTile, pj.tamanioTile);
-            izquierda1 = tool.escalarImagen(tempIzq1, pj.tamanioTile, pj.tamanioTile);
-            izquierda2 = tool.escalarImagen(tempIzq2, pj.tamanioTile, pj.tamanioTile);
+
+            // Escalar sprites de derecha
             derecha1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
-            derecha2 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile); // Solo hay 1 imagen de derecha
+            derecha2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
+
+            // Generar sprites de izquierda mediante espejo horizontal
+            izquierda1 = tool.voltearImagenHorizontal(derecha1);
+            izquierda2 = tool.voltearImagenHorizontal(derecha2);
 
             muerte1 = tool.escalarImagen(tempMuerte1, pj.tamanioTile, pj.tamanioTile);
             muerte2 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile);

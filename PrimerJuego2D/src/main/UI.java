@@ -14,11 +14,17 @@ public class UI {
 	PanelJuego pj;
 	Graphics2D g2;
 
+	// Opacidad para fondos de submenús
+	private final float OPACIDAD_FONDO = 0.4f;
+
 	// Fuentes
 	Font arial_40;
 	Font arial_80B;
 
-	// Colores del menú
+	// Menú principal (clase separada)
+	public MenuPrincipal menuPrincipal;
+
+	// Colores del menú (compartidos con subpantallas)
 	private final Color COLOR_FONDO = new Color(15, 15, 25);
 	private final Color COLOR_PANEL = new Color(30, 30, 60, 220);
 	private final Color COLOR_BORDE = new Color(120, 80, 200);
@@ -38,17 +44,11 @@ public class UI {
 
 	// Sprites de preview para selección de personaje
 	private BufferedImage[] spritesPreview = new BufferedImage[3];
-	
-	// Imagen de fondo del menú principal
-	// TODO: Agregar imagen de fondo del menú
-	// 1. Colocar la imagen en: res/menu/fondo_menu.png (dimensiones recomendadas: 1024x768)
-	// 2. Descomentar la línea en el método cargarImagenFondoMenu()
-	// 3. La imagen se dibujará automáticamente ajustada a la pantalla
-	private BufferedImage imagenFondoMenu = null;
-	
+
 	// Imagen para la pantalla de Ayuda
 	// TODO: Agregar imagen de ayuda
-	// 1. Colocar la imagen en: res/menu/ayuda.png (dimensiones recomendadas: 1024x768)
+	// 1. Colocar la imagen en: res/menu/ayuda.png (dimensiones recomendadas:
+	// 1024x768)
 	// 2. Descomentar la línea en el método cargarImagenAyuda()
 	// 3. La imagen mostrará controles, mecánicas y tips del juego
 	private BufferedImage imagenAyuda = null;
@@ -56,10 +56,10 @@ public class UI {
 	// Datos de personajes
 	private final String[] NOMBRES_PERSONAJES = { "Sideral", "Mago", "Doom" };
 	private final String[] RANGOS = { "Rango Sideral", "Mago Arcano", "Guerrero Infernal" };
-	private final String[] DESCRIPCIONES = {
-			"Dragón con ataques a distancia",
-			"Mago con ataques mágicos a distancia",
-			"Guerrero cuerpo a cuerpo con espada"
+	private final String[][] DESCRIPCIONES = {
+			{ "Dragón con ataques", "a distancia" },
+			{ "Mago con ataques", "mágicos a distancia" },
+			{ "Guerrero cuerpo a", "cuerpo con espada" }
 	};
 	private final int[][] STATS = {
 			// { vida, ataque, defensa, velocidad }
@@ -87,38 +87,25 @@ public class UI {
 
 		// Cargar sprites de preview
 		cargarSpritesPreview();
-		
-		// Cargar imagen de fondo del menú
-		cargarImagenFondoMenu();
-		
+
+		// Crear menú principal (clase separada)
+		menuPrincipal = new MenuPrincipal(pj);
+
 		// Cargar imagen de ayuda
 		cargarImagenAyuda();
 	}
-	
-	/**
-	 * Carga la imagen de fondo del menú principal.
-	 */
-	private void cargarImagenFondoMenu() {
-		try {
-			// TODO: Descomentar cuando agregues la imagen en res/menu/fondo_menu.png
-			// imagenFondoMenu = ImageIO.read(getClass().getResourceAsStream("/menu/fondo_menu.png"));
-			// UtilityTool tool = new UtilityTool();
-			// imagenFondoMenu = tool.escalarImagen(imagenFondoMenu, pj.anchoPantalla, pj.altoPantalla);
-		} catch (Exception e) {
-			imagenFondoMenu = null;
-			// Si no se encuentra la imagen, se usará el fondo por defecto
-		}
-	}
-	
+
 	/**
 	 * Carga la imagen de la pantalla de Ayuda.
 	 */
 	private void cargarImagenAyuda() {
 		try {
 			// TODO: Descomentar cuando agregues la imagen en res/menu/ayuda.png
-			// imagenAyuda = ImageIO.read(getClass().getResourceAsStream("/menu/ayuda.png"));
+			// imagenAyuda =
+			// ImageIO.read(getClass().getResourceAsStream("/menu/ayuda.png"));
 			// UtilityTool tool = new UtilityTool();
-			// imagenAyuda = tool.escalarImagen(imagenAyuda, pj.anchoPantalla, pj.altoPantalla);
+			// imagenAyuda = tool.escalarImagen(imagenAyuda, pj.anchoPantalla,
+			// pj.altoPantalla);
 		} catch (Exception e) {
 			imagenAyuda = null;
 		}
@@ -150,14 +137,18 @@ public class UI {
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		if (pj.gameState == pj.menuState) {
-			dibujarMenu();
+			menuPrincipal.dibujar(g2);
 		} else if (pj.gameState == pj.seleccionState) {
+			dibujarFondoMenu(OPACIDAD_FONDO);
 			dibujarSeleccionPersonaje();
 		} else if (pj.gameState == pj.ayudaState) {
+			dibujarFondoMenu(OPACIDAD_FONDO);
 			dibujarAyuda();
 		} else if (pj.gameState == pj.logrosState) {
+			dibujarFondoMenu(OPACIDAD_FONDO);
 			dibujarLogros();
 		} else if (pj.gameState == pj.creditosState) {
+			dibujarFondoMenu(OPACIDAD_FONDO);
 			dibujarCreditos();
 		} else if (pj.gameState == pj.playState) {
 			dibujarHUD();
@@ -170,111 +161,6 @@ public class UI {
 	}
 
 	// ===================================================================
-	// MENÚ PRINCIPAL
-	// ===================================================================
-
-	private void dibujarMenu() {
-		int ancho = pj.anchoPantalla;
-		int alto = pj.altoPantalla;
-
-		// Fondo - Imagen o color sólido
-		if (imagenFondoMenu != null) {
-			// Dibujar imagen de fondo
-			g2.drawImage(imagenFondoMenu, 0, 0, null);
-		} else {
-			// Fondo por defecto
-			g2.setColor(COLOR_FONDO);
-			g2.fillRect(0, 0, ancho, alto);
-
-			// Líneas decorativas de fondo
-			g2.setColor(new Color(40, 20, 60));
-			for (int i = 0; i < ancho; i += 40) {
-				g2.drawLine(i, 0, i, alto);
-			}
-			for (int i = 0; i < alto; i += 40) {
-				g2.drawLine(0, i, ancho, i);
-			}
-		}
-
-		// Título
-		g2.setFont(fuenteTitulo);
-		String titulo = "ARENA SURVIVORS";
-		int xTitulo = obtenerXCentrado(titulo);
-		// Sombra
-		g2.setColor(new Color(80, 0, 0));
-		g2.drawString(titulo, xTitulo + 3, 133);
-		// Texto
-		g2.setColor(COLOR_TITULO);
-		g2.drawString(titulo, xTitulo, 130);
-
-		// Subtítulo
-		g2.setFont(fuentePequena);
-		g2.setColor(COLOR_SUBTITULO);
-		String sub = "Sobrevive. Evoluciona. Conquista.";
-		g2.drawString(sub, obtenerXCentrado(sub), 165);
-
-		// Botones del menú
-		int botonAncho = 260;
-		int botonAlto = 50;
-		int xCentro = ancho / 2 - botonAncho / 2;
-		int yInicio = 220;
-		int espaciado = 70;
-
-		String[] opciones = { "COMENZAR", "AYUDA", "LOGROS", "CRÉDITOS" };
-		int menuOpcion = pj.kh.menuOpcion;
-
-		for (int i = 0; i < opciones.length; i++) {
-			int yBoton = yInicio + i * espaciado;
-			boolean seleccionado = (i == menuOpcion);
-
-			// Fondo del botón
-			if (seleccionado) {
-				g2.setColor(COLOR_BOTON_SELECCIONADO);
-			} else {
-				g2.setColor(COLOR_BOTON);
-			}
-			g2.fillRoundRect(xCentro, yBoton, botonAncho, botonAlto, 15, 15);
-
-			// Borde
-			if (seleccionado) {
-				g2.setColor(COLOR_HIGHLIGHT);
-				g2.drawRoundRect(xCentro - 1, yBoton - 1, botonAncho + 2, botonAlto + 2, 15, 15);
-			} else {
-				g2.setColor(COLOR_BORDE);
-				g2.drawRoundRect(xCentro, yBoton, botonAncho, botonAlto, 15, 15);
-			}
-
-			// Texto del botón
-			g2.setFont(fuenteBoton);
-			g2.setColor(seleccionado ? COLOR_HIGHLIGHT : COLOR_TEXTO);
-			FontMetrics fm = g2.getFontMetrics();
-			int xTexto = xCentro + (botonAncho - fm.stringWidth(opciones[i])) / 2;
-			int yTexto = yBoton + (botonAlto + fm.getAscent() - fm.getDescent()) / 2;
-			g2.drawString(opciones[i], xTexto, yTexto);
-
-			// Indicador de selección
-			if (seleccionado) {
-				g2.setColor(COLOR_HIGHLIGHT);
-				g2.drawString("▶", xCentro - 30, yTexto);
-			}
-		}
-
-		// Placeholder solo para Ayuda (Logros ya está implementado)
-		if (menuOpcion == 1) {
-			g2.setFont(fuentePequena);
-			g2.setColor(new Color(255, 255, 100, 180));
-			g2.drawString("(Próximamente)", obtenerXCentrado("(Próximamente)"),
-					yInicio + menuOpcion * espaciado + botonAlto + 18);
-		}
-
-		// Instrucciones
-		g2.setFont(fuentePequena);
-		g2.setColor(new Color(150, 150, 170));
-		String instrucciones = "W/S o ↑/↓ para navegar  •  ENTER para seleccionar";
-		g2.drawString(instrucciones, obtenerXCentrado(instrucciones), alto - 30);
-	}
-
-	// ===================================================================
 	// SELECCIÓN DE PERSONAJE
 	// ===================================================================
 
@@ -283,9 +169,7 @@ public class UI {
 		int alto = pj.altoPantalla;
 		int seleccion = pj.kh.seleccionPersonaje;
 
-		// Fondo
-		g2.setColor(COLOR_FONDO);
-		g2.fillRect(0, 0, ancho, alto);
+		// El fondo ya se dibuja en draw() con opacidad si es necesario
 
 		// Título
 		g2.setFont(new Font("Arial", Font.BOLD, 42));
@@ -359,11 +243,14 @@ public class UI {
 			}
 			contenidoY += previewSize + 20;
 
-			// Descripción
+			// Descripción (2 líneas)
 			g2.setFont(fuentePequena);
 			g2.setColor(new Color(180, 180, 200));
-			g2.drawString(DESCRIPCIONES[i], contenidoX, contenidoY);
-			contenidoY += 30;
+			for (String linea : DESCRIPCIONES[i]) {
+				g2.drawString(linea, contenidoX, contenidoY);
+				contenidoY += 18;
+			}
+			contenidoY += 10;
 
 			// Stats
 			g2.setFont(fuenteStats);
@@ -441,14 +328,11 @@ public class UI {
 		int ancho = pj.anchoPantalla;
 		int alto = pj.altoPantalla;
 
-		// Fondo - Imagen o color sólido
 		if (imagenAyuda != null) {
 			// Dibujar imagen de ayuda
 			g2.drawImage(imagenAyuda, 0, 0, null);
 		} else {
-			// Fondo por defecto
-			g2.setColor(COLOR_FONDO);
-			g2.fillRect(0, 0, ancho, alto);
+			// El fondo ya se dibuja en draw()
 
 			// Título
 			g2.setFont(new Font("Arial", Font.BOLD, 48));
@@ -532,9 +416,7 @@ public class UI {
 		int ancho = pj.anchoPantalla;
 		int alto = pj.altoPantalla;
 
-		// Fondo
-		g2.setColor(COLOR_FONDO);
-		g2.fillRect(0, 0, ancho, alto);
+		// El fondo ya se dibuja en draw()
 
 		// Título
 		g2.setFont(new Font("Arial", Font.BOLD, 48));
@@ -583,7 +465,7 @@ public class UI {
 		// Crear estadísticas acumuladas (podrían ser estáticas en GameStats)
 		g2.setFont(new Font("Arial", Font.BOLD, 20));
 		g2.setColor(COLOR_TEXTO);
-		
+
 		// Enemigos totales eliminados
 		g2.setColor(new Color(255, 100, 100));
 		g2.drawString("⚔ Enemigos Eliminados Totales:", x, y);
@@ -633,9 +515,7 @@ public class UI {
 		int ancho = pj.anchoPantalla;
 		int alto = pj.altoPantalla;
 
-		// Fondo
-		g2.setColor(COLOR_FONDO);
-		g2.fillRect(0, 0, ancho, alto);
+		// El fondo ya se dibuja en draw()
 
 		// Título
 		g2.setFont(new Font("Arial", Font.BOLD, 48));
@@ -882,5 +762,25 @@ public class UI {
 	public int obtenerXCentrado(String texto) {
 		int longitudTexto = (int) g2.getFontMetrics().getStringBounds(texto, g2).getWidth();
 		return (pj.anchoPantalla / 2) - (longitudTexto / 2);
+	}
+
+	/**
+	 * Dibuja el fondo del menú centralizado con la opacidad indicada.
+	 */
+	private void dibujarFondoMenu(float opacidad) {
+		int ancho = pj.anchoPantalla;
+		int alto = pj.altoPantalla;
+
+		if (pj.imagenFondoMenu != null) {
+			// Dibujar imagen con opacidad
+			java.awt.Composite originalComposite = g2.getComposite();
+			g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, opacidad));
+			g2.drawImage(pj.imagenFondoMenu, 0, 0, null);
+			g2.setComposite(originalComposite);
+		} else {
+			// Fondo sólido por defecto
+			g2.setColor(COLOR_FONDO);
+			g2.fillRect(0, 0, ancho, alto);
+		}
 	}
 }

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-
 import javax.imageio.ImageIO;
 import main.PanelJuego;
 import main.UtilityTool;
@@ -87,50 +86,57 @@ public class TileManager {
 
 	}
 
-//	public void cargarMapa(String rutaFile) {
-//		try {
-//			InputStream is = getClass().getResourceAsStream(rutaFile);
-//			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-//
-//			int col = 0;
-//			int fila = 0;
-//
-//			while (col < pj.maxWorldcol && fila < pj.maxWorldfilas) {
-//				// con esto leemos una linea de nuestro txt
-//				String linea = br.readLine();
-//
-//				while (col < pj.maxWorldcol) {
-//					String numeros[] = linea.split(" ");
-//					// ahora almacenamos estos indices en nustro array que tenemos determinado para
-//					// eso
-//					int num = Integer.parseInt(numeros[col]);
-//
-//					mapaPorNumeroTile[col][fila] = num;
-//					col++;
-//				}
-//				if (col == pj.maxWorldcol) {
-//					col = 0;
-//					fila++;
-//				}
-//
-//			}
-//			br.close();
-//
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
+	// public void cargarMapa(String rutaFile) {
+	// try {
+	// InputStream is = getClass().getResourceAsStream(rutaFile);
+	// BufferedReader br = new BufferedReader(new InputStreamReader(is));
+	//
+	// int col = 0;
+	// int fila = 0;
+	//
+	// while (col < pj.maxWorldcol && fila < pj.maxWorldfilas) {
+	// // con esto leemos una linea de nuestro txt
+	// String linea = br.readLine();
+	//
+	// while (col < pj.maxWorldcol) {
+	// String numeros[] = linea.split(" ");
+	// // ahora almacenamos estos indices en nustro array que tenemos determinado
+	// para
+	// // eso
+	// int num = Integer.parseInt(numeros[col]);
+	//
+	// mapaPorNumeroTile[col][fila] = num;
+	// col++;
+	// }
+	// if (col == pj.maxWorldcol) {
+	// col = 0;
+	// fila++;
+	// }
+	//
+	// }
+	// br.close();
+	//
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// }
+	// }
 
 	/**
 	 * Genera un mapa procedural en memoria con pasto base y obstáculos aleatorios.
 	 * Reemplaza la carga desde archivo .txt.
 	 */
 	private void generarMapaProcedural() {
-		int baseTile = 17; // pasto base (colisión = 0)
-		int baseTileAlt = 30; // pasto alternativo (colisión = 0)
-		int obstacleTile = 0; // obstáculo (colisión = 1)[!TIP] Zona segura: El radioSeguro = 5 crea una zona
-								// de 11×11tiles sin obstáculos alrededor del spawn, evitando que el
-								// jugadorquede atrapado al iniciar.
+		// Índices según el nuevo archivo rutaTiles.txt simplificado:
+		// 0: tile_00.png (pasto, sin colisión)
+		// 1: tile_01.png (pasto, sin colisión)
+		// 2: tile_03.png (árboles, con colisión)
+		// 3: tile_17.png (suelo general, sin colisión)
+
+		int baseTile = 3; // tile_17.png - suelo general (sin colisión)
+		int baseTileAlt = 0; // tile_00.png - pasto (sin colisión)
+		int baseTileAlt2 = 1; // tile_01.png - pasto alternativo (sin colisión)
+		int obstacleTile = 2; // tile_03.png - árboles (con colisión)
+
 		// Centro del mundo: zona segura de spawn
 		int centroCol = pj.maxWorldcol / 2;
 		int centroFila = pj.maxWorldfilas / 2;
@@ -152,13 +158,16 @@ public class TileManager {
 				// Interior: distribución aleatoria
 				double random = Math.random();
 				if (random < 0.05) {
-					// 5% obstáculos
+					// 5% obstáculos (árboles)
 					mapaPorNumeroTile[col][fila] = obstacleTile;
-				} else if (random < 0.20) {
-					// 15% pasto alternativo (variedad visual)
+				} else if (random < 0.35) {
+					// 30% pasto tipo 1
 					mapaPorNumeroTile[col][fila] = baseTileAlt;
+				} else if (random < 0.50) {
+					// 15% pasto tipo 2
+					mapaPorNumeroTile[col][fila] = baseTileAlt2;
 				} else {
-					// 80% pasto base
+					// 50% suelo general
 					mapaPorNumeroTile[col][fila] = baseTile;
 				}
 			}

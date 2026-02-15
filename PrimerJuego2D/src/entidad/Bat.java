@@ -1,7 +1,5 @@
 package entidad;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import main.PanelJuego;
@@ -52,28 +50,23 @@ public class Bat extends NPC {
         try {
             rutaCarpeta = "/Npc/Bats/";
 
-            // 4 frames izquierda
-            BufferedImage tempIzq1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izq01.png"));
-            BufferedImage tempIzq2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izq02.png"));
-            BufferedImage tempIzq3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izq03.png"));
-            BufferedImage tempIzq4 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "izq04.png"));
-
-            // 4 frames derecha
+            // Cargar solo sprites de derecha
             BufferedImage tempDer1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der01.png"));
             BufferedImage tempDer2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der02.png"));
             BufferedImage tempDer3 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der03.png"));
             BufferedImage tempDer4 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "der04.png"));
 
-            // Escalar todas las imágenes
-            izq1 = tool.escalarImagen(tempIzq1, pj.tamanioTile, pj.tamanioTile);
-            izq2 = tool.escalarImagen(tempIzq2, pj.tamanioTile, pj.tamanioTile);
-            izq3 = tool.escalarImagen(tempIzq3, pj.tamanioTile, pj.tamanioTile);
-            izq4 = tool.escalarImagen(tempIzq4, pj.tamanioTile, pj.tamanioTile);
-
+            // Escalar sprites de derecha
             der1 = tool.escalarImagen(tempDer1, pj.tamanioTile, pj.tamanioTile);
             der2 = tool.escalarImagen(tempDer2, pj.tamanioTile, pj.tamanioTile);
             der3 = tool.escalarImagen(tempDer3, pj.tamanioTile, pj.tamanioTile);
             der4 = tool.escalarImagen(tempDer4, pj.tamanioTile, pj.tamanioTile);
+
+            // Generar sprites de izquierda mediante espejo horizontal
+            izq1 = tool.voltearImagenHorizontal(der1);
+            izq2 = tool.voltearImagenHorizontal(der2);
+            izq3 = tool.voltearImagenHorizontal(der3);
+            izq4 = tool.voltearImagenHorizontal(der4);
 
             // Asignar sprites base para compatibilidad con NPC.draw() (muerte)
             // El Bat no tiene sprites de muerte propios, usar el primer frame como
@@ -87,37 +80,18 @@ public class Bat extends NPC {
             abajo1 = der1;
             abajo2 = der2;
 
-            // Sin sprites de muerte — crear placeholder rojo
-            muerte1 = crearPlaceholderMuerte(1);
-            muerte2 = crearPlaceholderMuerte(2);
-            muerte3 = crearPlaceholderMuerte(3);
+            // Cargar sprites de muerte
+            BufferedImage tempMuerte1 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte01.png"));
+            BufferedImage tempMuerte2 = ImageIO.read(getClass().getResourceAsStream(rutaCarpeta + "muerte02.png"));
+
+            muerte1 = tool.escalarImagen(tempMuerte1, pj.tamanioTile, pj.tamanioTile);
+            muerte2 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile);
+            muerte3 = tool.escalarImagen(tempMuerte2, pj.tamanioTile, pj.tamanioTile); // Reutilizar frame 2
 
         } catch (Exception e) {
             System.err.println("[Bat] Error al cargar sprites: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Crea un sprite placeholder rojo para la animación de muerte.
-     */
-    private BufferedImage crearPlaceholderMuerte(int frame) {
-        int size = pj.tamanioTile;
-        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-
-        // Fondo rojo semitransparente que se desvanece
-        int alpha = 255 - (frame * 70);
-        g.setColor(new Color(180, 30, 30, Math.max(alpha, 50)));
-        g.fillOval(size / 4, size / 4, size / 2, size / 2);
-
-        // "X" blanca
-        g.setColor(Color.WHITE);
-        g.drawLine(size / 3, size / 3, 2 * size / 3, 2 * size / 3);
-        g.drawLine(2 * size / 3, size / 3, size / 3, 2 * size / 3);
-
-        g.dispose();
-        return img;
     }
 
     @Override
