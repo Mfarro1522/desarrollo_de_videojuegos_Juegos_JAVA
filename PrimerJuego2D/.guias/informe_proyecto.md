@@ -41,7 +41,7 @@ Es el contenedor de memoria y estado.
 El "Director de Escena" y generador de contenido.
 *   **`inicializarPool()`**: Pre-instancia 1000 enemigos en memoria al inicio.
 *   **`respawnearEnemigos()`**: Mantiene la población de enemigos activa basándose en el nivel del jugador.
-*   **`verificarYSpawnearCercanos()`**: Sistema de presión constante (anti-campeo).
+*   **`spawnearEnAnillo()`**: Genera enemigos constantemente en los bordes de la cámara ("El Cerco") para mantener la presión.
 *   **`elegirTipoEnemigo()`**: Decide qué enemigo spawnear (Bat, Slime, Orco, Ghoul) según probabilidades y nivel.
 
 ### `nucleo.PanelJuego`
@@ -56,6 +56,10 @@ El sistema ha sido reescrito para maximizar el rendimiento y escalar la dificult
 
 ### A. Gestión de Memoria (Object Pooling)
 El juego utiliza un **Object Pool** masivo de **1000 NPCs** (`GestorRecursos.POOL_TOTAL`).
+*   **Separación Suave (Soft Collisions)**:
+    *   Se eliminaron las colisiones rígidas (cajas invisibles) entre enemigos, que causaban bloqueos y cuellos de botella.
+    *   Nuevo sistema de **Vectores de Repulsión**: Cada enemigo calcula un vector para alejarse de sus vecinos cercanos (usando la `GrillaEspacial`) y otro para perseguir al jugador.
+    *   El resultado es un movimiento fluido tipo "enjambre" que permite cientos de unidades sin atascos.
 
 1.  **Cero `new` en Gameplay**:
     *   Al inicio (`setupJuego`), se crean 250 murciélagos, 250 slimes, 250 orcos y 250 ghouls.
@@ -69,15 +73,22 @@ El juego utiliza un **Object Pool** masivo de **1000 NPCs** (`GestorRecursos.POO
 
 La lógica en `GestorRecursos` ajusta la dificultad en tiempo real:
 
-1.  **Población Máxima**:
-    *   Calculada como `60 + (Nivel * 10)`. Tope de 300 enemigos simultáneos en pantalla.
+1.  **Población Máxima (Escalado Exponencial)**:
+    *   Fórmula antigua: `60 + (Nivel * 10)` (Tope 300).
+    *   **Fórmula nueva (Cuadrática)**: `80 + (2 * Nivel^2)`.
+    *   **Progreso**: Comienza suave (Lvl 1 ≈ 82) y escala agresivamente al final (Lvl 20 ≈ 880).
+    *   **Tope**: `POOL_TOTAL - 10`.
+    *   Esto permite oleadas masivas en niveles altos, aprovechando las optimizaciones de colisiones y reciclaje.
 2.  **Progresión de Tipos**:
     *   **Nivel 1-2**: Solo Murciélagos.
     *   **Nivel 3-4**: Murciélagos y Slimes.
     *   **Nivel 5-9**: Se suman Orcos.
     *   **Nivel 15+**: Aparecen Ghouls y aumenta la densidad de Orcos.
-3.  **Spawn de Proximidad**:
-    *   Si hay menos de 5 enemigos cerca del jugador (radio 10 tiles), el juego fuerza la aparición inmediata de una oleada cercana.
+3.  **Spawn de Anillo (El Cerco)**:
+    *   **Concepto**: Una oleada constante y dinámica que rodea al jugador, reemplazando el respawn por intervalos o proximidad estática.
+    *   **Implementación**: `GestorRecursos.spawnearEnAnillo()` se ejecuta constantemente. Calcula el rectángulo de la cámara y define un margen de 2 tiles hacia afuera.
+    *   **Lógica**: Elige aleatoriamente uno de los 4 lados (Arriba, Abajo, Izquierda, Derecha) y spawnea un enemigo en una posición válida de ese borde.
+    *   **Objetivo**: Mantener la población siempre cercana al máximo permitido (`maxNPCsActivos`), generando presión constante desde fuera de la pantalla.
 
 ### C. Optimizaciones de Rendimiento (Engine)
 
@@ -89,6 +100,10 @@ La lógica en `GestorRecursos` ajusta la dificultad en tiempo real:
     *   El renderizado (`PanelJuego.paintComponent`) ignora completamente cualquier entidad fuera de la cámara.
 4.  **Rectángulos Pre-allocados**:
     *   Las clases `NPC` usan `Rectangle` reutilizables para cálculos de colisión, evitando crear miles de objetos temporales por segundo.
+5.  **Reciclaje Agresivo (Desaparición)**:
+    *   **Concepto**: Enemigos que quedan muy atrás ("Retaguardia") son inútiles para el jugador.
+    *   **Implementación**: Si la distancia al cuadrado entre NPC y Jugador supera `DISTANCIA_DESAPARICION_SQ` (aprox 1.5x ancho de pantalla), el NPC llama a `desactivar()` inmediatamente.
+    *   **Beneficio**: Libera slots del Pool instantáneamente para que `GestorRecursos` pueda usarlos en generar enemigos nuevos *frente* al jugador.
 
 ---
 

@@ -121,8 +121,7 @@ public class Bat extends NPC {
     }
 
     @Override
-    protected void mover() {
-        super.mover();
+    public void actualizarAnimacion() {
         contadorAnim++;
         if (contadorAnim > velocidadAnim) {
             frameActual++;

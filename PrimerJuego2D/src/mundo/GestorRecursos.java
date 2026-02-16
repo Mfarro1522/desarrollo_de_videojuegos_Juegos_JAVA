@@ -9,7 +9,8 @@ import items.*;
  * Configura y gestiona la colocación de objetos y NPCs en el mundo.
  *
  * OPTIMIZACIONES:
- * - Object Pool: pre-instancia POOL_TOTAL NPCs al inicio (cero 'new' durante gameplay)
+ * - Object Pool: pre-instancia POOL_TOTAL NPCs al inicio (cero 'new' durante
+ * gameplay)
  * - Activación/Desactivación: reutiliza instancias sin crear nuevas
  * - Spawn por tipo según nivel del jugador
  */
@@ -29,9 +30,6 @@ public class GestorRecursos {
     private static final int INICIO_GHOUL = POOL_BAT + POOL_SLIME + POOL_ORCO;
 
     private int maxNPCsActivos = 80;
-
-    private static final int DISTANCIA_MIN_SPAWN = 5;
-    private static final int DISTANCIA_MAX_SPAWN = 20;
 
     public GestorRecursos(MundoJuego mundo) {
         this.mundo = mundo;
@@ -53,7 +51,8 @@ public class GestorRecursos {
 
     public void desactivarTodos() {
         for (int i = 0; i < POOL_TOTAL; i++) {
-            if (mundo.npcs[i] != null) mundo.npcs[i].activo = false;
+            if (mundo.npcs[i] != null)
+                mundo.npcs[i].activo = false;
         }
         mundo.contadorNPCs = 0;
     }
@@ -63,14 +62,28 @@ public class GestorRecursos {
     private int buscarSlotInactivo(TipoNPC tipo) {
         int inicio, fin;
         switch (tipo) {
-            case BAT:    inicio = INICIO_BAT;    fin = INICIO_BAT + POOL_BAT;    break;
-            case SLIME:  inicio = INICIO_SLIME;  fin = INICIO_SLIME + POOL_SLIME;  break;
-            case ORCO:   inicio = INICIO_ORCO;   fin = INICIO_ORCO + POOL_ORCO;   break;
-            case GHOUL:  inicio = INICIO_GHOUL;  fin = INICIO_GHOUL + POOL_GHOUL;  break;
-            default: return -1;
+            case BAT:
+                inicio = INICIO_BAT;
+                fin = INICIO_BAT + POOL_BAT;
+                break;
+            case SLIME:
+                inicio = INICIO_SLIME;
+                fin = INICIO_SLIME + POOL_SLIME;
+                break;
+            case ORCO:
+                inicio = INICIO_ORCO;
+                fin = INICIO_ORCO + POOL_ORCO;
+                break;
+            case GHOUL:
+                inicio = INICIO_GHOUL;
+                fin = INICIO_GHOUL + POOL_GHOUL;
+                break;
+            default:
+                return -1;
         }
         for (int i = inicio; i < fin; i++) {
-            if (mundo.npcs[i] != null && !mundo.npcs[i].activo) return i;
+            if (mundo.npcs[i] != null && !mundo.npcs[i].activo)
+                return i;
         }
         return -1;
     }
@@ -81,7 +94,8 @@ public class GestorRecursos {
         int nivel = mundo.estadisticas.nivel;
         double rand = Math.random();
 
-        if (nivel <= 2) return TipoNPC.BAT;
+        if (nivel <= 2)
+            return TipoNPC.BAT;
         else if (nivel <= 4) {
             return (rand < 0.50) ? TipoNPC.BAT : TipoNPC.SLIME;
         } else if (nivel <= 9) {
@@ -89,9 +103,12 @@ public class GestorRecursos {
         } else if (nivel <= 14) {
             return (rand < 0.50) ? TipoNPC.ORCO : TipoNPC.GHOUL;
         } else {
-            if (rand < 0.25) return TipoNPC.BAT;
-            if (rand < 0.50) return TipoNPC.SLIME;
-            if (rand < 0.75) return TipoNPC.ORCO;
+            if (rand < 0.25)
+                return TipoNPC.BAT;
+            if (rand < 0.50)
+                return TipoNPC.SLIME;
+            if (rand < 0.75)
+                return TipoNPC.ORCO;
             return TipoNPC.GHOUL;
         }
     }
@@ -105,30 +122,28 @@ public class GestorRecursos {
         return new int[] { x, y };
     }
 
-    private int[] generarPosicionCercaJugador() {
-        int minDist = DISTANCIA_MIN_SPAWN * Configuracion.TAMANO_TILE;
-        int maxDist = DISTANCIA_MAX_SPAWN * Configuracion.TAMANO_TILE;
+    private boolean esUbicacionValida(int x, int y) {
+        int col = x / Configuracion.TAMANO_TILE;
+        int fila = y / Configuracion.TAMANO_TILE;
 
-        for (int intento = 0; intento < 10; intento++) {
-            double angulo = Math.random() * 2 * Math.PI;
-            int distancia = minDist + (int) (Math.random() * (maxDist - minDist));
-            int x = mundo.jugador.worldx + (int) (Math.cos(angulo) * distancia);
-            int y = mundo.jugador.worldy + (int) (Math.sin(angulo) * distancia);
-
-            int margen = 2 * Configuracion.TAMANO_TILE;
-            x = Math.max(margen, Math.min(x, Configuracion.MUNDO_ANCHO - margen));
-            y = Math.max(margen, Math.min(y, Configuracion.MUNDO_ALTO - margen));
-
-            return new int[] { x, y };
+        if (col < 0 || col >= Configuracion.MUNDO_COLUMNAS ||
+                fila < 0 || fila >= Configuracion.MUNDO_FILAS) {
+            return false;
         }
-        return generarPosicionAleatoria();
+
+        int tileNum = mundo.tileManager.mapaPorNumeroTile[col][fila];
+        if (mundo.tileManager.tiles[tileNum] != null && mundo.tileManager.tiles[tileNum].colision) {
+            return false;
+        }
+        return true;
     }
 
     // ===== SPAWN =====
 
     private boolean spawnearNPC(TipoNPC tipo, int x, int y) {
         int slot = buscarSlotInactivo(tipo);
-        if (slot == -1) return false;
+        if (slot == -1)
+            return false;
         mundo.npcs[slot].activar(x, y);
         return true;
     }
@@ -143,31 +158,40 @@ public class GestorRecursos {
         mundo.objs[0].worldY = 29 * t;
 
         mundo.objs[1] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.INVENCIBILIDAD);
-        mundo.objs[1].worldX = 15 * t; mundo.objs[1].worldY = 15 * t;
+        mundo.objs[1].worldX = 15 * t;
+        mundo.objs[1].worldY = 15 * t;
 
         mundo.objs[2] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.VELOCIDAD);
-        mundo.objs[2].worldX = 45 * t; mundo.objs[2].worldY = 45 * t;
+        mundo.objs[2].worldX = 45 * t;
+        mundo.objs[2].worldY = 45 * t;
 
         mundo.objs[3] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.ATAQUE);
-        mundo.objs[3].worldX = 60 * t; mundo.objs[3].worldY = 30 * t;
+        mundo.objs[3].worldX = 60 * t;
+        mundo.objs[3].worldY = 30 * t;
 
         mundo.objs[4] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.CURACION);
-        mundo.objs[4].worldX = 25 * t; mundo.objs[4].worldY = 50 * t;
+        mundo.objs[4].worldX = 25 * t;
+        mundo.objs[4].worldY = 50 * t;
 
         mundo.objs[5] = new CofreNormal(t);
-        mundo.objs[5].worldX = 70 * t; mundo.objs[5].worldY = 20 * t;
+        mundo.objs[5].worldX = 70 * t;
+        mundo.objs[5].worldY = 20 * t;
 
         mundo.objs[6] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.CURACION);
-        mundo.objs[6].worldX = 80 * t; mundo.objs[6].worldY = 70 * t;
+        mundo.objs[6].worldX = 80 * t;
+        mundo.objs[6].worldY = 70 * t;
 
         mundo.objs[7] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.VELOCIDAD);
-        mundo.objs[7].worldX = 10 * t; mundo.objs[7].worldY = 80 * t;
+        mundo.objs[7].worldX = 10 * t;
+        mundo.objs[7].worldY = 80 * t;
 
         mundo.objs[8] = new CofreNormal(t);
-        mundo.objs[8].worldX = 55 * t; mundo.objs[8].worldY = 65 * t;
+        mundo.objs[8].worldX = 55 * t;
+        mundo.objs[8].worldY = 65 * t;
 
         mundo.objs[9] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.INVENCIBILIDAD);
-        mundo.objs[9].worldX = 85 * t; mundo.objs[9].worldY = 40 * t;
+        mundo.objs[9].worldX = 85 * t;
+        mundo.objs[9].worldY = 40 * t;
     }
 
     public void setNPCs() {
@@ -180,40 +204,61 @@ public class GestorRecursos {
         System.out.println("[Pool] Spawn inicial: " + mundo.contadorNPCs + " NPCs activos.");
     }
 
-    public void respawnearEnemigos() {
-        maxNPCsActivos = 60 + (mundo.estadisticas.nivel * 10);
-        if (maxNPCsActivos > 300) maxNPCsActivos = 300;
+    // ===== SPAWNING EN ANILLO (EL CERCO) =====
 
-        if (mundo.contadorNPCs >= maxNPCsActivos) return;
+    public void spawnearEnAnillo() {
+        // 1. Verificar límite de población
 
-        int cantidad = 1 + (int) (Math.random() * 3);
-        for (int i = 0; i < cantidad && mundo.contadorNPCs < maxNPCsActivos; i++) {
+        maxNPCsActivos = Math.min(1000, 50 + (mundo.estadisticas.nivel * 15));
+
+        // Tope de seguridad para no desbordar el array
+        if (maxNPCsActivos > POOL_TOTAL - 10)
+            maxNPCsActivos = POOL_TOTAL - 10;
+
+        if (mundo.contadorNPCs >= maxNPCsActivos)
+            return;
+
+        // 2. Definir Frustum (Cámara) + Margen
+        int cameraX = mundo.jugador.worldx - mundo.jugador.screenX;
+        int cameraY = mundo.jugador.worldy - mundo.jugador.screeny;
+
+        // Margen de 2 tiles fuera de la cámara
+        int margin = 2 * Configuracion.TAMANO_TILE;
+
+        int minX = cameraX - margin;
+        int maxX = cameraX + Configuracion.ANCHO_PANTALLA + margin;
+        int minY = cameraY - margin;
+        int maxY = cameraY + Configuracion.ALTO_PANTALLA + margin;
+
+        // 3. Seleccionar Lado del Anillo (0: Arriba, 1: Abajo, 2: Izquierda, 3:
+        // Derecha)
+        int side = (int) (Math.random() * 4);
+        int spawnX = 0;
+        int spawnY = 0;
+
+        switch (side) {
+            case 0: // Arriba
+                spawnX = minX + (int) (Math.random() * (maxX - minX));
+                spawnY = minY;
+                break;
+            case 1: // Abajo
+                spawnX = minX + (int) (Math.random() * (maxX - minX));
+                spawnY = maxY;
+                break;
+            case 2: // Izquierda
+                spawnX = minX;
+                spawnY = minY + (int) (Math.random() * (maxY - minY));
+                break;
+            case 3: // Derecha
+                spawnX = maxX;
+                spawnY = minY + (int) (Math.random() * (maxY - minY));
+                break;
+        }
+
+        // 4. Validar y Spawnear
+        if (esUbicacionValida(spawnX, spawnY)) {
             TipoNPC tipo = elegirTipoEnemigo();
-            int[] pos = generarPosicionCercaJugador();
-            spawnearNPC(tipo, pos[0], pos[1]);
-        }
-    }
-
-    public void verificarYSpawnearCercanos() {
-        int radioCercano = 10 * Configuracion.TAMANO_TILE;
-        int radioSq = radioCercano * radioCercano;
-        int enemigoCercanos = 0;
-
-        for (int i = 0; i < POOL_TOTAL; i++) {
-            if (mundo.npcs[i] != null && mundo.npcs[i].activo && mundo.npcs[i].estaVivo) {
-                int dx = mundo.npcs[i].worldx - mundo.jugador.worldx;
-                int dy = mundo.npcs[i].worldy - mundo.jugador.worldy;
-                if (dx * dx + dy * dy < radioSq) enemigoCercanos++;
-            }
-        }
-
-        if (enemigoCercanos < 5) {
-            int necesarios = 5 - enemigoCercanos;
-            for (int i = 0; i < necesarios; i++) {
-                TipoNPC tipo = elegirTipoEnemigo();
-                int[] pos = generarPosicionCercaJugador();
-                spawnearNPC(tipo, pos[0], pos[1]);
-            }
+            spawnearNPC(tipo, spawnX, spawnY);
         }
     }
 }

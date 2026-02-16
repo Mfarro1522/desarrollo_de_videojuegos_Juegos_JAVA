@@ -4,14 +4,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-
 import configuracion.Configuracion;
 import entrada.GestorEntrada;
 import mundo.MundoJuego;
-import utilidades.Herramientas;
 
 /**
  * Orquestador de la interfaz de usuario.

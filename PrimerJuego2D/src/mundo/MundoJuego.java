@@ -19,16 +19,17 @@ import utilidades.Notificacion;
  * Contiene TODA la data y lógica del mundo de juego.
  *
  * Responsabilidades:
- *  - Almacena arrays de entidades (jugador, npcs, objetos, proyectiles)
- *  - Ejecuta la lógica de update (movimiento, colisiones, respawn, muerte)
- *  - Mantiene el estado del juego (gameState)
- *  - Coordina subsistemas (TileManager, DetectorColisiones, GrillaEspacial, etc.)
+ * - Almacena arrays de entidades (jugador, npcs, objetos, proyectiles)
+ * - Ejecuta la lógica de update (movimiento, colisiones, respawn, muerte)
+ * - Mantiene el estado del juego (gameState)
+ * - Coordina subsistemas (TileManager, DetectorColisiones, GrillaEspacial,
+ * etc.)
  *
  * OPTIMIZACIONES PRESERVADAS:
- *  - Object Pool de 1000 NPCs pre-instanciados
- *  - Spatial Hash Grid para colisiones O(N)
- *  - Frustum Culling y Logical Culling
- *  - Pre-allocated rectangles (zero GC)
+ * - Object Pool de 1000 NPCs pre-instanciados
+ * - Spatial Hash Grid para colisiones O(N)
+ * - Frustum Culling y Logical Culling
+ * - Pre-allocated rectangles (zero GC)
  */
 public class MundoJuego {
 
@@ -58,10 +59,6 @@ public class MundoJuego {
     public BufferedImage imagenFondoMenu;
 
     // ===== RESPAWN =====
-    private int contadorRespawn = 0;
-    private final int intervaloRespawn = 60;
-    private int contadorVerificacionCercanos = 0;
-    private final int intervaloVerificacionCercanos = 180;
 
     // ===== DELAY GAME OVER =====
     private boolean jugadorMuerto = false;
@@ -108,6 +105,7 @@ public class MundoJuego {
 
         // Iniciar en menú principal
         gameState = Configuracion.ESTADO_MENU;
+        reproducirMusicaFondo(5);
     }
 
     // ===== UPDATE =====
@@ -116,7 +114,8 @@ public class MundoJuego {
      * Actualiza toda la lógica del juego (solo en playState).
      */
     public void update() {
-        if (gameState != Configuracion.ESTADO_JUGANDO) return;
+        if (gameState != Configuracion.ESTADO_JUGANDO)
+            return;
 
         jugador.update();
         estadisticas.actualizar();
@@ -144,18 +143,9 @@ public class MundoJuego {
             }
         }
 
-        // Respawn de enemigos
-        contadorRespawn++;
-        if (contadorRespawn >= intervaloRespawn) {
-            gestorRecursos.respawnearEnemigos();
-            contadorRespawn = 0;
-        }
-
-        contadorVerificacionCercanos++;
-        if (contadorVerificacionCercanos >= intervaloVerificacionCercanos) {
-            gestorRecursos.verificarYSpawnearCercanos();
-            contadorVerificacionCercanos = 0;
-        }
+        // ===== Generación de Enemigos (Anillo Dinámico) =====
+        // Intentamos spawnear en cada frame si hay cupo
+        gestorRecursos.spawnearEnAnillo();
 
         // Proyectiles
         for (int i = 0; i < proyectiles.length; i++) {
@@ -192,13 +182,15 @@ public class MundoJuego {
         jugador.powerUps = new PowerUpManager();
 
         // Limpiar objetos
-        for (int i = 0; i < objs.length; i++) objs[i] = null;
+        for (int i = 0; i < objs.length; i++)
+            objs[i] = null;
 
         // Desactivar pool (NO null)
         gestorRecursos.desactivarTodos();
 
         // Limpiar proyectiles
-        for (int i = 0; i < proyectiles.length; i++) proyectiles[i] = null;
+        for (int i = 0; i < proyectiles.length; i++)
+            proyectiles[i] = null;
 
         // Limpiar notificaciones
         notificaciones.clear();
@@ -220,7 +212,6 @@ public class MundoJuego {
         stopMusic();
         reproducirMusicaFondo(0);
 
-        // ¡A jugar!
         gameState = Configuracion.ESTADO_JUGANDO;
     }
 
@@ -230,6 +221,7 @@ public class MundoJuego {
     public void reiniciarJuego() {
         gameState = Configuracion.ESTADO_MENU;
         stopMusic();
+        reproducirMusicaFondo(5);
     }
 
     // ===== AUDIO =====
@@ -240,7 +232,9 @@ public class MundoJuego {
         musica.loop();
     }
 
-    public void stopMusic() { musica.stop(); }
+    public void stopMusic() {
+        musica.stop();
+    }
 
     public void playSE(int i) {
         efectoSonido.setFile(i);
@@ -251,6 +245,7 @@ public class MundoJuego {
 
     public void agregarNotificacion(String mensaje, Color color, int duracionSegundos) {
         notificaciones.add(new Notificacion(mensaje, color, duracionSegundos));
-        if (notificaciones.size() > 10) notificaciones.remove(0);
+        if (notificaciones.size() > 10)
+            notificaciones.remove(0);
     }
 }

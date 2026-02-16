@@ -57,7 +57,8 @@ public class Orco extends NPC {
     }
 
     private synchronized void cargarSpritesEstaticos() {
-        if (spritesLoaded) return;
+        if (spritesLoaded)
+            return;
         Herramientas tool = new Herramientas();
         int tile = Configuracion.TAMANO_TILE;
         try {
@@ -73,17 +74,23 @@ public class Orco extends NPC {
             s_izq3 = tool.voltearImagenHorizontal(s_der3);
             s_izq4 = tool.voltearImagenHorizontal(s_der4);
 
-            s_ataqueDer1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder01.png")), tile, tile);
-            s_ataqueDer2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder02.png")), tile, tile);
-            s_ataqueDer3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder03.png")), tile, tile);
+            s_ataqueDer1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder01.png")),
+                    tile, tile);
+            s_ataqueDer2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder02.png")),
+                    tile, tile);
+            s_ataqueDer3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "ataqueder03.png")),
+                    tile, tile);
 
             s_ataqueIzq1 = tool.voltearImagenHorizontal(s_ataqueDer1);
             s_ataqueIzq2 = tool.voltearImagenHorizontal(s_ataqueDer2);
             s_ataqueIzq3 = tool.voltearImagenHorizontal(s_ataqueDer3);
 
-            s_muerte1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte01.png")), tile, tile);
-            s_muerte2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte02.png")), tile, tile);
-            s_muerte3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte03.png")), tile, tile);
+            s_muerte1 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte01.png")), tile,
+                    tile);
+            s_muerte2 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte02.png")), tile,
+                    tile);
+            s_muerte3 = tool.escalarImagen(ImageIO.read(Orco.class.getResourceAsStream(ruta + "muerte03.png")), tile,
+                    tile);
 
             spritesLoaded = true;
         } catch (Exception e) {
@@ -93,16 +100,32 @@ public class Orco extends NPC {
     }
 
     private void asignarSprites() {
-        izq1 = s_izq1; izq2 = s_izq2; izq3 = s_izq3; izq4 = s_izq4;
-        der1 = s_der1; der2 = s_der2; der3 = s_der3; der4 = s_der4;
-        ataqueIzq1 = s_ataqueIzq1; ataqueIzq2 = s_ataqueIzq2; ataqueIzq3 = s_ataqueIzq3;
-        ataqueDer1 = s_ataqueDer1; ataqueDer2 = s_ataqueDer2; ataqueDer3 = s_ataqueDer3;
+        izq1 = s_izq1;
+        izq2 = s_izq2;
+        izq3 = s_izq3;
+        izq4 = s_izq4;
+        der1 = s_der1;
+        der2 = s_der2;
+        der3 = s_der3;
+        der4 = s_der4;
+        ataqueIzq1 = s_ataqueIzq1;
+        ataqueIzq2 = s_ataqueIzq2;
+        ataqueIzq3 = s_ataqueIzq3;
+        ataqueDer1 = s_ataqueDer1;
+        ataqueDer2 = s_ataqueDer2;
+        ataqueDer3 = s_ataqueDer3;
 
-        izquierda1 = s_izq1; izquierda2 = s_izq2;
-        derecha1 = s_der1; derecha2 = s_der2;
-        arriba1 = s_der1; arriba2 = s_der2;
-        abajo1 = s_der1; abajo2 = s_der2;
-        muerte1 = s_muerte1; muerte2 = s_muerte2; muerte3 = s_muerte3;
+        izquierda1 = s_izq1;
+        izquierda2 = s_izq2;
+        derecha1 = s_der1;
+        derecha2 = s_der2;
+        arriba1 = s_der1;
+        arriba2 = s_der2;
+        abajo1 = s_der1;
+        abajo2 = s_der2;
+        muerte1 = s_muerte1;
+        muerte2 = s_muerte2;
+        muerte3 = s_muerte3;
     }
 
     @Override
@@ -117,7 +140,8 @@ public class Orco extends NPC {
 
     @Override
     public void actualizarIA() {
-        if (estaAtacando) return;
+        if (estaAtacando)
+            return;
 
         int distanciaX = mundo.jugador.worldx - worldx;
         int distanciaY = mundo.jugador.worldy - worldy;
@@ -142,7 +166,8 @@ public class Orco extends NPC {
             ultimaDireccionHorizontal = direccion;
         }
 
-        if (cooldownAtaqueContador > 0) cooldownAtaqueContador--;
+        if (cooldownAtaqueContador > 0)
+            cooldownAtaqueContador--;
     }
 
     private void iniciarAtaque() {
@@ -158,12 +183,13 @@ public class Orco extends NPC {
     }
 
     @Override
-    protected void mover() {
+    protected void actualizarAnimacion() {
         if (estaAtacando) {
             contadorAtaque++;
             if (contadorAtaque % 10 == 0) {
                 frameActual++;
-                if (frameActual > 3) frameActual = 3;
+                if (frameActual > 3)
+                    frameActual = 3;
             }
             if (contadorAtaque == 15) {
                 verificarColisionConJugador();
@@ -177,11 +203,11 @@ public class Orco extends NPC {
             return;
         }
 
-        super.mover();
         contadorAnim++;
         if (contadorAnim > velocidadAnim) {
             frameActual++;
-            if (frameActual > 4) frameActual = 1;
+            if (frameActual > 4)
+                frameActual = 1;
             contadorAnim = 0;
         }
     }
@@ -192,42 +218,72 @@ public class Orco extends NPC {
             boolean usarIzquierda = ultimaDireccionHorizontal.equals("izquierda");
             if (usarIzquierda) {
                 switch (frameActual) {
-                    case 1: return ataqueIzq1;
-                    case 2: return ataqueIzq2;
-                    case 3: return ataqueIzq3;
-                    default: return ataqueIzq1;
+                    case 1:
+                        return ataqueIzq1;
+                    case 2:
+                        return ataqueIzq2;
+                    case 3:
+                        return ataqueIzq3;
+                    default:
+                        return ataqueIzq1;
                 }
             } else {
                 switch (frameActual) {
-                    case 1: return ataqueDer1;
-                    case 2: return ataqueDer2;
-                    case 3: return ataqueDer3;
-                    default: return ataqueDer1;
+                    case 1:
+                        return ataqueDer1;
+                    case 2:
+                        return ataqueDer2;
+                    case 3:
+                        return ataqueDer3;
+                    default:
+                        return ataqueDer1;
                 }
             }
         }
 
         boolean usarIzquierda;
         switch (direccion) {
-            case "izquierda": usarIzquierda = true; break;
-            case "derecha":   usarIzquierda = false; break;
-            default:          usarIzquierda = ultimaDireccionHorizontal.equals("izquierda"); break;
+            case "izquierda":
+                usarIzquierda = true;
+                break;
+            case "derecha":
+                usarIzquierda = false;
+                break;
+            default:
+                usarIzquierda = ultimaDireccionHorizontal.equals("izquierda");
+                break;
         }
 
         if (usarIzquierda) {
             switch (frameActual) {
-                case 1: return izq1; case 2: return izq2;
-                case 3: return izq3; case 4: return izq4;
-                default: return izq1;
+                case 1:
+                    return izq1;
+                case 2:
+                    return izq2;
+                case 3:
+                    return izq3;
+                case 4:
+                    return izq4;
+                default:
+                    return izq1;
             }
         } else {
             switch (frameActual) {
-                case 1: return der1; case 2: return der2;
-                case 3: return der3; case 4: return der4;
-                default: return der1;
+                case 1:
+                    return der1;
+                case 2:
+                    return der2;
+                case 3:
+                    return der3;
+                case 4:
+                    return der4;
+                default:
+                    return der1;
             }
         }
     }
 
-    public static void resetearCache() { spritesLoaded = false; }
+    public static void resetearCache() {
+        spritesLoaded = false;
+    }
 }
