@@ -73,22 +73,39 @@ El juego utiliza un **Object Pool** masivo de **1000 NPCs** (`GestorRecursos.POO
 
 La lógica en `GestorRecursos` ajusta la dificultad en tiempo real:
 
-1.  **Población Máxima (Escalado Exponencial)**:
-    *   Fórmula antigua: `60 + (Nivel * 10)` (Tope 300).
-    *   **Fórmula nueva (Cuadrática)**: `80 + (2 * Nivel^2)`.
-    *   **Progreso**: Comienza suave (Lvl 1 ≈ 82) y escala agresivamente al final (Lvl 20 ≈ 880).
-    *   **Tope**: `POOL_TOTAL - 10`.
-    *   Esto permite oleadas masivas en niveles altos, aprovechando las optimizaciones de colisiones y reciclaje.
-2.  **Progresión de Tipos**:
-    *   **Nivel 1-2**: Solo Murciélagos.
-    *   **Nivel 3-4**: Murciélagos y Slimes.
-    *   **Nivel 5-9**: Se suman Orcos.
-    *   **Nivel 15+**: Aparecen Ghouls y aumenta la densidad de Orcos.
-3.  **Spawn de Anillo (El Cerco)**:
-    *   **Concepto**: Una oleada constante y dinámica que rodea al jugador, reemplazando el respawn por intervalos o proximidad estática.
-    *   **Implementación**: `GestorRecursos.spawnearEnAnillo()` se ejecuta constantemente. Calcula el rectángulo de la cámara y define un margen de 2 tiles hacia afuera.
-    *   **Lógica**: Elige aleatoriamente uno de los 4 lados (Arriba, Abajo, Izquierda, Derecha) y spawnea un enemigo en una posición válida de ese borde.
-    *   **Objetivo**: Mantener la población siempre cercana al máximo permitido (`maxNPCsActivos`), generando presión constante desde fuera de la pantalla.
+### 3.4 Sistema de Oleadas (Fase 4 y 5)
+Implementamos un sistema de **amenaza progresiva** que utiliza una **Función Escalonada (Step Function)** y composición ponderada.
+
+#### Curva de Cantidad (Step Function)
+En lugar de una fórmula matemática continua, definimos escalones de dificultad diseñados a mano para controlar el ritmo:
+*   **Nivel 1 (Tutorial)**: Máx 12 enemigos. Espacio para aprender controles.
+*   **Nivel 2-3 (Calentamiento)**: Máx 35 enemigos.
+*   **Nivel 4-6 (La Horda)**: Máx 90 enemigos.
+*   **Nivel 7-9 (Presión)**: Máx 180 enemigos.
+*   **Nivel 10+ (El Diluvio)**: `min(POOL_TOTAL - 10, 250 + ((Nivel - 10) * 20))`.
+
+#### Composición de Enemigos
+La mezcla de enemigos cambia según el nivel para introducir mecánicas nuevas:
+*   **Nv 1-4**: 100% Murciélagos (Rápidos, débiles).
+*   **Nv 5-9**: 85% Murciélagos + 15% Orcos (Tanques).
+*   **Nv 10+**: 40% Murciélagos, 40% Slimes, 20% Orcos.
+
+### 3.5 Escalado del Jugador (Fase 5)
+Para mantener el interés, el jugador recibe mejoras tangibles al subir de nivel:
+*   **Salud**: +10 HP Máx.
+*   **Curación**: +30% de Salud Máxima (Recompensa parcial).
+*   **Daño**: +2 Ataque (Escalado conservador).
+*   **Implementación**: Patrón `Observer` ligera. `Estadisticas` notifica a `Jugador` vía callback `onLevelUp`.
+
+## 4. Estadísticas de Entidades (Balanceo)
+
+| Entidad | HP | Ataque | Vel | Rol |
+| :--- | :---: | :---: | :---: | :--- |
+| **Jugador (Doom)** | 25 (+10/lvl) | 10 (+2/lvl) | 5 | DPS Melee |
+| **Murciélago (Bat)** | 20 | 2 | 2 | Enjambre débil |
+| **Slime** | 30 | 3 | 1 | Masa media |
+| **Orco** | 50 | 5 | 1 | Tanque temprano |
+| **Ghoul** | 80 | 8 | 2 | Tanque agresivo |
 
 ### C. Optimizaciones de Rendimiento (Engine)
 

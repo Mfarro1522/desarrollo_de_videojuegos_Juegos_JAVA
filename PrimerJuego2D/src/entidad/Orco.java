@@ -45,15 +45,15 @@ public class Orco extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 30;
+        vidaMaxima = 50; // Tanque medio
         vidaActual = vidaMaxima;
-        ataque = 8;
-        defensa = 2;
+        ataque = 5; // Daño medio
+        defensa = 1;
         vel = 1;
         direccion = "derecha";
         radioDeteccion = 6 * Configuracion.TAMANO_TILE;
         radioAtaque = Configuracion.TAMANO_TILE + 10;
-        experienciaAOtorgar = 25;
+        experienciaAOtorgar = 20;
     }
 
     private synchronized void cargarSpritesEstaticos() {

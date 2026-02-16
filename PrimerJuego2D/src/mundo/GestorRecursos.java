@@ -92,24 +92,27 @@ public class GestorRecursos {
 
     private TipoNPC elegirTipoEnemigo() {
         int nivel = mundo.estadisticas.nivel;
-        double rand = Math.random();
+        int roll = (int) (Math.random() * 100);
 
-        if (nivel <= 2)
+        if (nivel <= 4) {
+            // Nivel 1-4: 100% Murciélagos
             return TipoNPC.BAT;
-        else if (nivel <= 4) {
-            return (rand < 0.50) ? TipoNPC.BAT : TipoNPC.SLIME;
         } else if (nivel <= 9) {
-            return (rand < 0.60) ? TipoNPC.SLIME : TipoNPC.ORCO;
-        } else if (nivel <= 14) {
-            return (rand < 0.50) ? TipoNPC.ORCO : TipoNPC.GHOUL;
-        } else {
-            if (rand < 0.25)
+            // Nivel 5-9: 85% Murciélagos, 15% Orcos (Tanques introductorios)
+            if (roll < 85)
                 return TipoNPC.BAT;
-            if (rand < 0.50)
-                return TipoNPC.SLIME;
-            if (rand < 0.75)
+            else
                 return TipoNPC.ORCO;
-            return TipoNPC.GHOUL;
+        } else {
+            // Nivel 10+: 40% Murciélagos, 40% Slimes, 20% Orcos (Mix completo)
+            // Nota: Slimes añadidos aquí según lógica de "amenaza masiva"
+            if (roll < 40)
+                return TipoNPC.BAT;
+            else if (roll < 80)
+                return TipoNPC.SLIME;
+            else
+                return TipoNPC.ORCO;
+            // Ghouls pueden añadirse más tarde o como evento especial
         }
     }
 
@@ -208,12 +211,7 @@ public class GestorRecursos {
 
     public void spawnearEnAnillo() {
         // 1. Verificar límite de población
-
-        maxNPCsActivos = Math.min(1000, 50 + (mundo.estadisticas.nivel * 15));
-
-        // Tope de seguridad para no desbordar el array
-        if (maxNPCsActivos > POOL_TOTAL - 10)
-            maxNPCsActivos = POOL_TOTAL - 10;
+        actualizarLimitesDeAparicion();
 
         if (mundo.contadorNPCs >= maxNPCsActivos)
             return;
@@ -259,6 +257,24 @@ public class GestorRecursos {
         if (esUbicacionValida(spawnX, spawnY)) {
             TipoNPC tipo = elegirTipoEnemigo();
             spawnearNPC(tipo, spawnX, spawnY);
+        }
+    }
+
+    private void actualizarLimitesDeAparicion() {
+        int nivel = mundo.estadisticas.nivel;
+
+        if (nivel == 1) {
+            maxNPCsActivos = 12; // Fase de introducción: pocos murciélagos.
+        } else if (nivel <= 3) {
+            maxNPCsActivos = 35; // Empiezan a agruparse.
+        } else if (nivel <= 6) {
+            maxNPCsActivos = 90; // Primera sensación de horda.
+        } else if (nivel <= 9) {
+            maxNPCsActivos = 180; // Presión alta, forzando al jugador a moverse.
+        } else {
+            // Nivel 10 en adelante: Se suelta el límite y entran cientos.
+            // Usamos el Math.min para proteger la memoria estática de tus arrays.
+            maxNPCsActivos = Math.min(POOL_TOTAL - 10, 250 + ((nivel - 10) * 20));
         }
     }
 }

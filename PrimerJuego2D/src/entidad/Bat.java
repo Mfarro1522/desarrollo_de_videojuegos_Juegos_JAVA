@@ -35,14 +35,14 @@ public class Bat extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 12;
+        vidaMaxima = 20; // Aumentado a 20 para aguantar 2 golpes al inicio
         vidaActual = vidaMaxima;
-        ataque = 4;
+        ataque = 2; // Daño bajo
         defensa = 0;
         vel = 2;
         direccion = "izquierda";
         radioDeteccion = 8 * Configuracion.TAMANO_TILE;
-        experienciaAOtorgar = 15;
+        experienciaAOtorgar = 5;
         vuela = true;
     }
 

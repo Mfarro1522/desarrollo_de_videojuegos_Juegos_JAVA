@@ -198,6 +198,11 @@ public class MundoJuego {
         // Reiniciar estadísticas
         estadisticas = new Estadisticas();
         estadisticas.setCallbackNotificacion(this::agregarNotificacion);
+        // CRITICAL: Conectar lógica de nivel
+        estadisticas.setCallbackLevelUp(nivel -> {
+            if (jugador != null)
+                jugador.subirNivel();
+        });
         estadisticas.iniciar();
 
         // Reset flags de muerte

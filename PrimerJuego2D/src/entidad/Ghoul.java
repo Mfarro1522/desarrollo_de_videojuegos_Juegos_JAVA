@@ -46,15 +46,15 @@ public class Ghoul extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 25;
+        vidaMaxima = 80; // Tanque pesado late-game
         vidaActual = vidaMaxima;
-        ataque = 6;
-        defensa = 1;
+        ataque = 8; // Daño alto
+        defensa = 2;
         vel = 2;
         direccion = "derecha";
         radioDeteccion = 7 * Configuracion.TAMANO_TILE;
         radioAtaque = radioAtaqueGhoul;
-        experienciaAOtorgar = 20;
+        experienciaAOtorgar = 30;
     }
 
     private synchronized void cargarSpritesEstaticos() {

@@ -30,6 +30,9 @@ public class Estadisticas {
     // Callback para notificaciones (inyectado por MundoJuego)
     private NotificacionCallback callbackNotificacion;
 
+    // Callback para lógica de nivel (inyectado por MundoJuego)
+    private LevelUpCallback callbackLevelUp;
+
     // Récords y estadísticas acumuladas (estáticas para persistir entre juegos)
     public static long recordTiempoSobrevivido = 0;
     public static int enemigosTotalesEliminados = 0;
@@ -44,8 +47,17 @@ public class Estadisticas {
         void notificar(String mensaje, Color color, int duracionSegundos);
     }
 
+    /** Interfaz funcional para lógica de subida de nivel. */
+    public interface LevelUpCallback {
+        void onLevelUp(int nuevoNivel);
+    }
+
     public void setCallbackNotificacion(NotificacionCallback cb) {
         this.callbackNotificacion = cb;
+    }
+
+    public void setCallbackLevelUp(LevelUpCallback cb) {
+        this.callbackLevelUp = cb;
     }
 
     public void iniciar() {
@@ -90,6 +102,10 @@ public class Estadisticas {
         if (callbackNotificacion != null) {
             callbackNotificacion.notificar("⭐ ¡NIVEL " + nivel + "!", Color.YELLOW, 3);
         }
+
+        if (callbackLevelUp != null) {
+            callbackLevelUp.onLevelUp(nivel);
+        }
     }
 
     public void finalizarJuego() {
@@ -126,27 +142,35 @@ public class Estadisticas {
             String linea;
             while ((linea = br.readLine()) != null) {
                 linea = linea.trim();
-                if (linea.isEmpty() || linea.startsWith("#")) continue;
+                if (linea.isEmpty() || linea.startsWith("#"))
+                    continue;
 
                 String[] partes = linea.split("=");
-                if (partes.length != 2) continue;
+                if (partes.length != 2)
+                    continue;
 
                 String clave = partes[0].trim();
                 String valor = partes[1].trim();
 
                 switch (clave) {
                     case "recordTiempoSobrevivido":
-                        recordTiempoSobrevivido = Long.parseLong(valor); break;
+                        recordTiempoSobrevivido = Long.parseLong(valor);
+                        break;
                     case "enemigosTotalesEliminados":
-                        enemigosTotalesEliminados = Integer.parseInt(valor); break;
+                        enemigosTotalesEliminados = Integer.parseInt(valor);
+                        break;
                     case "cofresTotalesRecogidos":
-                        cofresTotalesRecogidos = Integer.parseInt(valor); break;
+                        cofresTotalesRecogidos = Integer.parseInt(valor);
+                        break;
                     case "partidasJugadas":
-                        partidasJugadas = Integer.parseInt(valor); break;
+                        partidasJugadas = Integer.parseInt(valor);
+                        break;
                     case "nivelMaximoAlcanzado":
-                        nivelMaximoAlcanzado = Integer.parseInt(valor); break;
+                        nivelMaximoAlcanzado = Integer.parseInt(valor);
+                        break;
                     case "danioTotalRecibidoAcumulado":
-                        danioTotalRecibidoAcumulado = Integer.parseInt(valor); break;
+                        danioTotalRecibidoAcumulado = Integer.parseInt(valor);
+                        break;
                 }
             }
             br.close();
@@ -159,7 +183,8 @@ public class Estadisticas {
     public static void guardarStats() {
         try {
             File dir = new File("res/stats");
-            if (!dir.exists()) dir.mkdirs();
+            if (!dir.exists())
+                dir.mkdirs();
 
             PrintWriter pw = new PrintWriter(new FileWriter(STATS_FILE));
             pw.println("# Estadísticas acumuladas del juego");

@@ -72,9 +72,9 @@ public class Jugador extends Entidad {
         switch (tipo) {
             case "Sideral":
                 rutaCarpeta = "/jugador/Sideral/";
-                vidaMaxima = 20;
-                ataque = 15;
-                defensa = 15;
+                vidaMaxima = 25;
+                ataque = 12;
+                defensa = 3;
                 velocidadBase = 3;
                 esMelee = false;
                 tieneSpritesAtaque = true;
@@ -82,8 +82,8 @@ public class Jugador extends Entidad {
                 break;
             case "Mago":
                 rutaCarpeta = "/jugador/Mago/";
-                vidaMaxima = 50;
-                ataque = 20;
+                vidaMaxima = 20;
+                ataque = 10;
                 defensa = 2;
                 velocidadBase = 7;
                 esMelee = false;
@@ -93,9 +93,9 @@ public class Jugador extends Entidad {
             case "Doom":
             default:
                 rutaCarpeta = "/jugador/Doom/";
-                vidaMaxima = 75;
-                ataque = 35;
-                defensa = 10;
+                vidaMaxima = 30;
+                ataque = 10; // BASE ATAQUE (Bajado de 17 para escalar)
+                defensa = 5;
                 velocidadBase = 5;
                 esMelee = true;
                 tieneSpritesAtaque = true;
@@ -126,12 +126,29 @@ public class Jugador extends Entidad {
 
         vidaMaxima = 25;
         vidaActual = vidaMaxima;
-        ataque = 10;
+        ataque = 10; // BASE ATAQUE DOOM
         defensa = 5;
         estaVivo = true;
         estado = EstadoEntidad.IDLE;
 
         getImagenDelJugador();
+    }
+
+    /**
+     * Aplica las mejoras al subir de nivel.
+     */
+    public void subirNivel() {
+        // 1. Aumentar Vida Máxima (+10)
+        vidaMaxima += 10;
+
+        // 2. Curación Completa (Recompensa de supervivencia)
+        vidaActual = vidaMaxima;
+
+        // 3. Aumentar Daño (+2)
+        ataque += 2;
+
+        // Feedback visual (opcional, por ahora solo stats)
+        System.out.println("[Jugador] Nivel Subido! VidaMax: " + vidaMaxima + ", Ataque: " + ataque);
     }
 
     public void getImagenDelJugador() {
