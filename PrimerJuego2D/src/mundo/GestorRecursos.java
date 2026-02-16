@@ -94,7 +94,7 @@ public class GestorRecursos {
         int nivel = mundo.estadisticas.nivel;
         int roll = (int) (Math.random() * 100);
 
-        if (nivel <= 4) {
+        if (nivel <= 2) {
             // Nivel 1-4: 100% Murciélagos
             return TipoNPC.BAT;
         } else if (nivel <= 9) {
@@ -104,15 +104,15 @@ public class GestorRecursos {
             else
                 return TipoNPC.ORCO;
         } else {
-            // Nivel 10+: 40% Murciélagos, 40% Slimes, 20% Orcos (Mix completo)
-            // Nota: Slimes añadidos aquí según lógica de "amenaza masiva"
-            if (roll < 40)
+            // Nivel 10+: Distribución balanceada de todos los enemigos
+            if (roll < 25)
                 return TipoNPC.BAT;
-            else if (roll < 80)
+            else if (roll < 50)
                 return TipoNPC.SLIME;
-            else
+            else if (roll < 75)
                 return TipoNPC.ORCO;
-            // Ghouls pueden añadirse más tarde o como evento especial
+            else
+                return TipoNPC.GHOUL;
         }
     }
 
@@ -155,46 +155,93 @@ public class GestorRecursos {
 
     public void setObjetct() {
         int t = Configuracion.TAMANO_TILE;
+        int cantidadCofres = 10;
+        int intentosMaximos = 100;
 
-        mundo.objs[0] = new CofreNormal(t);
-        mundo.objs[0].worldX = 30 * t;
-        mundo.objs[0].worldY = 29 * t;
+        for (int i = 0; i < cantidadCofres; i++) {
+            if (i >= mundo.objs.length)
+                break;
 
-        mundo.objs[1] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.INVENCIBILIDAD);
-        mundo.objs[1].worldX = 15 * t;
-        mundo.objs[1].worldY = 15 * t;
+            boolean posicionado = false;
+            int intentos = 0;
 
-        mundo.objs[2] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.VELOCIDAD);
-        mundo.objs[2].worldX = 45 * t;
-        mundo.objs[2].worldY = 45 * t;
+            while (!posicionado && intentos < intentosMaximos) {
+                // Generar posición aleatoria respetando márgenes
+                int margen = 2; // Margen de seguridad desde los bordes
+                int col = margen + (int) (Math.random() * (Configuracion.MUNDO_COLUMNAS - 2 * margen));
+                int fila = margen + (int) (Math.random() * (Configuracion.MUNDO_FILAS - 2 * margen));
 
-        mundo.objs[3] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.ATAQUE);
-        mundo.objs[3].worldX = 60 * t;
-        mundo.objs[3].worldY = 30 * t;
+                if (esPosicionValidaParaObjeto(col, fila)) {
+                    int worldX = col * t;
+                    int worldY = fila * t;
 
-        mundo.objs[4] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.CURACION);
-        mundo.objs[4].worldX = 25 * t;
-        mundo.objs[4].worldY = 50 * t;
+                    // Decidir tipo de cofre (50% Normal, 50% PowerUp)
+                    if (Math.random() < 0.5) {
+                        mundo.objs[i] = new CofreNormal(t);
+                    } else {
+                        // Seleccionar PowerUp aleatorio
+                        CofrePowerUp.TipoPowerUp[] tipos = CofrePowerUp.TipoPowerUp.values();
+                        CofrePowerUp.TipoPowerUp tipoSeleccionado = tipos[(int) (Math.random() * tipos.length)];
+                        mundo.objs[i] = new CofrePowerUp(t, tipoSeleccionado);
+                    }
 
-        mundo.objs[5] = new CofreNormal(t);
-        mundo.objs[5].worldX = 70 * t;
-        mundo.objs[5].worldY = 20 * t;
+                    mundo.objs[i].worldX = worldX;
+                    mundo.objs[i].worldY = worldY;
+                    posicionado = true;
+                    // System.out.println("Cofre " + i + " generado en: " + col + ", " + fila);
+                }
+                intentos++;
+            }
+            if (!posicionado) {
+                System.out
+                        .println("No se pudo colocar el cofre " + i + " después de " + intentosMaximos + " intentos.");
+            }
+        }
+    }
 
-        mundo.objs[6] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.CURACION);
-        mundo.objs[6].worldX = 80 * t;
-        mundo.objs[6].worldY = 70 * t;
+    private boolean esPosicionValidaParaObjeto(int col, int fila) {
+        // 1. Verificar límites del mapa (aunque ya se filtró en la generación, doble
+        // check)
+        if (col < 0 || col >= Configuracion.MUNDO_COLUMNAS ||
+                fila < 0 || fila >= Configuracion.MUNDO_FILAS) {
+            return false;
+        }
 
-        mundo.objs[7] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.VELOCIDAD);
-        mundo.objs[7].worldX = 10 * t;
-        mundo.objs[7].worldY = 80 * t;
+        // 2. Verificar si la posición actual es sólida
+        int tileNum = mundo.tileManager.mapaPorNumeroTile[col][fila];
+        if (mundo.tileManager.tiles[tileNum] != null && mundo.tileManager.tiles[tileNum].colision) {
+            return false;
+        }
 
-        mundo.objs[8] = new CofreNormal(t);
-        mundo.objs[8].worldX = 55 * t;
-        mundo.objs[8].worldY = 65 * t;
+        // 3. Verificar si está rodeado de sólidos (inaccesible)
+        boolean norteSolido = esSolido(col, fila - 1);
+        boolean surSolido = esSolido(col, fila + 1);
+        boolean oesteSolido = esSolido(col - 1, fila);
+        boolean esteSolido = esSolido(col + 1, fila);
 
-        mundo.objs[9] = new CofrePowerUp(t, CofrePowerUp.TipoPowerUp.INVENCIBILIDAD);
-        mundo.objs[9].worldX = 85 * t;
-        mundo.objs[9].worldY = 40 * t;
+        if (norteSolido && surSolido && oesteSolido && esteSolido) {
+            return false;
+        }
+
+        // 4. (Opcional) Verificar si ya hay otro objeto en esa posición para evitar
+        // superposición
+        // Esto requeriría iterar sobre mundo.objs existente si se llama
+        // incrementalmente,
+        // pero como es al inicio, podemos asumir que si i > 0, chequeamos los
+        // anteriores.
+        // Por simplicidad y dado el tamaño del mapa, la probabilidad es baja, pero
+        // idealmente se chequearía.
+
+        return true;
+    }
+
+    private boolean esSolido(int col, int fila) {
+        if (col < 0 || col >= Configuracion.MUNDO_COLUMNAS ||
+                fila < 0 || fila >= Configuracion.MUNDO_FILAS) {
+            return true; // Los bordes del mundo cuentan como sólido
+        }
+        int tileNum = mundo.tileManager.mapaPorNumeroTile[col][fila];
+        return (mundo.tileManager.tiles[tileNum] != null && mundo.tileManager.tiles[tileNum].colision);
     }
 
     public void setNPCs() {

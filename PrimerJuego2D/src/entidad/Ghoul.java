@@ -17,6 +17,9 @@ public class Ghoul extends NPC {
     private static BufferedImage s_der1, s_der2, s_der3, s_der4;
     private static BufferedImage s_ataqueIzq1, s_ataqueIzq2, s_ataqueIzq3;
     private static BufferedImage s_ataqueDer1, s_ataqueDer2, s_ataqueDer3;
+
+    private static BufferedImage s_muerte1, s_muerte2, s_muerte3;
+
     private static boolean spritesLoaded = false;
 
     private BufferedImage izq1, izq2, izq3, izq4;
@@ -46,7 +49,7 @@ public class Ghoul extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 80; // Tanque pesado late-game
+        vidaMaxima = 10; // Tanque pesado late-game
         vidaActual = vidaMaxima;
         ataque = 8; // Daño alto
         defensa = 2;
@@ -86,6 +89,14 @@ public class Ghoul extends NPC {
             s_ataqueDer3 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ataqueDer3.png")),
                     tile, tile);
 
+            // CORRECCIÓN: Nombres de archivos alineados con convención (muerte01, etc)
+            s_muerte1 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "muerte01.png")), tile,
+                    tile);
+            s_muerte2 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "muerte02.png")), tile,
+                    tile);
+            s_muerte3 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "muerte03.png")), tile,
+                    tile);
+
             s_ataqueIzq1 = tool.voltearImagenHorizontal(s_ataqueDer1);
             s_ataqueIzq2 = tool.voltearImagenHorizontal(s_ataqueDer2);
             s_ataqueIzq3 = tool.voltearImagenHorizontal(s_ataqueDer3);
@@ -121,9 +132,9 @@ public class Ghoul extends NPC {
         arriba2 = s_der2;
         abajo1 = s_der1;
         abajo2 = s_der2;
-        muerte1 = s_der1;
-        muerte2 = s_der2;
-        muerte3 = s_der3;
+        muerte1 = s_muerte1;
+        muerte2 = s_muerte2;
+        muerte3 = s_muerte3;
     }
 
     @Override
@@ -143,13 +154,10 @@ public class Ghoul extends NPC {
 
         int distanciaX = mundo.jugador.worldx - worldx;
         int distanciaY = mundo.jugador.worldy - worldy;
-        int distSq = distanciaX * distanciaX + distanciaY * distanciaY;
+        double distancia = Math.sqrt(distanciaX * distanciaX + distanciaY * distanciaY);
 
-        int radioDetSq = radioDeteccion * radioDeteccion;
-        int radioAtqSq = radioAtaque * radioAtaque;
-
-        if (distSq < radioDetSq) {
-            if (distSq <= radioAtqSq && cooldownAtaqueContador == 0) {
+        if (distancia < radioDeteccion) {
+            if (distancia <= radioAtaque && cooldownAtaqueContador == 0) {
                 iniciarAtaque();
             } else {
                 if (Math.abs(distanciaX) > Math.abs(distanciaY)) {

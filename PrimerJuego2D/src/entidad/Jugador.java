@@ -503,8 +503,8 @@ public class Jugador extends Entidad {
                 mundo.objs[index] = null;
             } else if (mundo.objs[index] instanceof CofreNormal) {
                 mundo.estadisticas.registrarCofreRecogido();
-                mundo.agregarNotificacion("📦 Cofre encontrado! +50 EXP", Color.ORANGE, 3);
-                mundo.estadisticas.ganarExperiencia(50);
+                mundo.agregarNotificacion("📦 Cofre encontrado! +25 EXP", Color.ORANGE, 3);
+                mundo.estadisticas.ganarExperiencia(25);
                 mundo.objs[index] = null;
             }
         }

@@ -2,7 +2,7 @@
 # No editar manualmente
 recordTiempoSobrevivido=48
 enemigosTotalesEliminados=114
-cofresTotalesRecogidos=4
-partidasJugadas=4
+cofresTotalesRecogidos=5
+partidasJugadas=5
 nivelMaximoAlcanzado=5
-danioTotalRecibidoAcumulado=775
+danioTotalRecibidoAcumulado=1007
