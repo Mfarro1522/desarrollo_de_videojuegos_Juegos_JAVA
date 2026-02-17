@@ -381,6 +381,32 @@ public class Jugador extends Entidad {
                 }
             }
         }
+
+        // Melee contra Boss DemonBat (si está activo)
+        if (mundo.bossActivo != null && mundo.bossActivo.activo && mundo.bossActivo.estaVivo) {
+            tempAreaNPC.setBounds(
+                    mundo.bossActivo.worldx + mundo.bossActivo.AreaSolida.x,
+                    mundo.bossActivo.worldy + mundo.bossActivo.AreaSolida.y,
+                    mundo.bossActivo.AreaSolida.width,
+                    mundo.bossActivo.AreaSolida.height);
+            if (tempAreaJugador.intersects(tempAreaNPC)) {
+                mundo.bossActivo.recibirDanio(dano);
+            }
+        }
+
+        // Melee contra KingSlimes (si están activos)
+        for (int k = 0; k < mundo.kingSlimes.length; k++) {
+            if (mundo.kingSlimes[k] != null && mundo.kingSlimes[k].activo && mundo.kingSlimes[k].estaVivo) {
+                tempAreaNPC.setBounds(
+                        mundo.kingSlimes[k].worldx + mundo.kingSlimes[k].AreaSolida.x,
+                        mundo.kingSlimes[k].worldy + mundo.kingSlimes[k].AreaSolida.y,
+                        mundo.kingSlimes[k].AreaSolida.width,
+                        mundo.kingSlimes[k].AreaSolida.height);
+                if (tempAreaJugador.intersects(tempAreaNPC)) {
+                    mundo.kingSlimes[k].recibirDanio(dano);
+                }
+            }
+        }
     }
 
     // ===== DAÑO =====

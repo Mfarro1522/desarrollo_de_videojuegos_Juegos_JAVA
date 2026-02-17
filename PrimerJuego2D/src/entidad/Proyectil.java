@@ -28,6 +28,9 @@ public class Proyectil {
     public enum TipoProyectil { BASICO, LATIGO, VARITA }
     public TipoProyectil tipo = TipoProyectil.BASICO;
 
+    /** true = disparado por jugador, false = disparado por enemigo/boss */
+    public boolean esDelJugador = true;
+
     public Proyectil(MundoJuego mundo, int x, int y, String direccion, int dano) {
         this.mundo = mundo;
         this.worldX = x;
@@ -53,32 +56,47 @@ public class Proyectil {
             return;
         }
 
-        // Colisión con NPCs usando Spatial Hash Grid
-        Rectangle proyectilArea = new Rectangle(worldX, worldY, tamano, tamano);
+        // Colisión con NPCs usando Spatial Hash Grid (solo proyectiles del jugador)
+        if (esDelJugador) {
+            Rectangle proyectilArea = new Rectangle(worldX, worldY, tamano, tamano);
 
-        mundo.grillaEspacial.consultar(worldX, worldY);
-        int[] cercanos = mundo.grillaEspacial.getResultado();
-        int count = mundo.grillaEspacial.getResultadoCount();
+            mundo.grillaEspacial.consultar(worldX, worldY);
+            int[] cercanos = mundo.grillaEspacial.getResultado();
+            int count = mundo.grillaEspacial.getResultadoCount();
 
-        for (int j = 0; j < count; j++) {
-            int i = cercanos[j];
-            if (mundo.npcs[i] != null && mundo.npcs[i].activo && mundo.npcs[i].estaVivo) {
-                npcArea.setBounds(
-                        mundo.npcs[i].worldx + mundo.npcs[i].AreaSolida.x,
-                        mundo.npcs[i].worldy + mundo.npcs[i].AreaSolida.y,
-                        mundo.npcs[i].AreaSolida.width,
-                        mundo.npcs[i].AreaSolida.height);
+            for (int j = 0; j < count; j++) {
+                int i = cercanos[j];
+                if (mundo.npcs[i] != null && mundo.npcs[i].activo && mundo.npcs[i].estaVivo) {
+                    npcArea.setBounds(
+                            mundo.npcs[i].worldx + mundo.npcs[i].AreaSolida.x,
+                            mundo.npcs[i].worldy + mundo.npcs[i].AreaSolida.y,
+                            mundo.npcs[i].AreaSolida.width,
+                            mundo.npcs[i].AreaSolida.height);
 
-                if (proyectilArea.intersects(npcArea)) {
-                    mundo.npcs[i].recibirDanio(dano);
-                    activo = false;
+                    if (proyectilArea.intersects(npcArea)) {
+                        mundo.npcs[i].recibirDanio(dano);
+                        activo = false;
 
-                    if (!mundo.npcs[i].estaVivo) {
-                        mundo.estadisticas.registrarEnemigoEliminado();
-                        mundo.estadisticas.ganarExperiencia(mundo.npcs[i].experienciaAOtorgar);
+                        if (!mundo.npcs[i].estaVivo) {
+                            mundo.estadisticas.registrarEnemigoEliminado();
+                            mundo.estadisticas.ganarExperiencia(mundo.npcs[i].experienciaAOtorgar);
+                        }
+                        break;
                     }
-                    break;
                 }
+            }
+        } else {
+            // Proyectil de enemigo/boss → colisión con jugador
+            Rectangle proyectilArea = new Rectangle(worldX, worldY, tamano, tamano);
+            npcArea.setBounds(
+                    mundo.jugador.worldx + mundo.jugador.AreaSolida.x,
+                    mundo.jugador.worldy + mundo.jugador.AreaSolida.y,
+                    mundo.jugador.AreaSolida.width,
+                    mundo.jugador.AreaSolida.height);
+
+            if (proyectilArea.intersects(npcArea)) {
+                mundo.jugador.recibirDanio(dano);
+                activo = false;
             }
         }
     }

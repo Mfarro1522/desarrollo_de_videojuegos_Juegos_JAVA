@@ -87,7 +87,8 @@ public class InterfazUsuario {
         } else if (state == Configuracion.ESTADO_CREDITOS) {
             dibujarFondoMenu(g2, 0.4f);
             pantallaCreditos.dibujar(g2);
-        } else if (state == Configuracion.ESTADO_JUGANDO) {
+        } else if (state == Configuracion.ESTADO_JUGANDO
+                || state == Configuracion.ESTADO_BOSS_FIGHT) {
             hud.dibujar(g2);
         } else if (state == Configuracion.ESTADO_PAUSA) {
             hud.dibujar(g2);

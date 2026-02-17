@@ -90,29 +90,36 @@ public class GestorRecursos {
 
     // ===== SELECCIÓN SEGÚN NIVEL =====
 
+    /**
+     * Progresión de enemigos:
+     *  Nivel 1-2 → solo Bats
+     *  Nivel 3-4 → Bats + Slimes
+     *  Nivel 5-6 → Slimes + Orcos
+     *  Nivel 7-8 → Orcos + Ghouls
+     *  Nivel 9+  → los 4 tipos
+     */
     private TipoNPC elegirTipoEnemigo() {
         int nivel = mundo.estadisticas.nivel;
         int roll = (int) (Math.random() * 100);
 
         if (nivel <= 2) {
-            // Nivel 1-4: 100% Murciélagos
+            // Solo murciélagos
             return TipoNPC.BAT;
-        } else if (nivel <= 9) {
-            // Nivel 5-9: 85% Murciélagos, 15% Orcos (Tanques introductorios)
-            if (roll < 85)
-                return TipoNPC.BAT;
-            else
-                return TipoNPC.ORCO;
+        } else if (nivel <= 4) {
+            // 65% Bats, 35% Slimes
+            return (roll < 65) ? TipoNPC.BAT : TipoNPC.SLIME;
+        } else if (nivel <= 6) {
+            // 30% Slimes, 70% Orcos
+            return (roll < 30) ? TipoNPC.SLIME : TipoNPC.ORCO;
+        } else if (nivel <= 8) {
+            // 30% Orcos, 70% Ghouls
+            return (roll < 30) ? TipoNPC.ORCO : TipoNPC.GHOUL;
         } else {
-            // Nivel 10+: Distribución balanceada de todos los enemigos
-            if (roll < 25)
-                return TipoNPC.BAT;
-            else if (roll < 50)
-                return TipoNPC.SLIME;
-            else if (roll < 75)
-                return TipoNPC.ORCO;
-            else
-                return TipoNPC.GHOUL;
+            // Nivel 9+: todos (25% cada uno)
+            if (roll < 25) return TipoNPC.BAT;
+            else if (roll < 50) return TipoNPC.SLIME;
+            else if (roll < 75) return TipoNPC.ORCO;
+            else return TipoNPC.GHOUL;
         }
     }
 
@@ -175,8 +182,8 @@ public class GestorRecursos {
                     int worldX = col * t;
                     int worldY = fila * t;
 
-                    // Decidir tipo de cofre (50% Normal, 50% PowerUp)
-                    if (Math.random() < 0.5) {
+                    // Decidir tipo de cofre (20% Normal, 80% PowerUp)
+                    if (Math.random() < 0.2) {
                         mundo.objs[i] = new CofreNormal(t);
                     } else {
                         // Seleccionar PowerUp aleatorio
@@ -257,6 +264,11 @@ public class GestorRecursos {
     // ===== SPAWNING EN ANILLO (EL CERCO) =====
 
     public void spawnearEnAnillo() {
+        // No spawnear durante boss fight
+        if (mundo.gameState == Configuracion.ESTADO_BOSS_FIGHT) {
+            return;
+        }
+
         // 1. Verificar límite de población
         actualizarLimitesDeAparicion();
 
@@ -322,6 +334,33 @@ public class GestorRecursos {
             // Nivel 10 en adelante: Se suelta el límite y entran cientos.
             // Usamos el Math.min para proteger la memoria estática de tus arrays.
             maxNPCsActivos = Math.min(POOL_TOTAL - 10, 250 + ((nivel - 10) * 20));
+        }
+    }
+
+    // ===== BOSS SPAWN =====
+
+    /**
+     * Verifica si se debe spawnear el boss DemonBat.
+     * Se activa al alcanzar nivel 4 durante el estado JUGANDO.
+     */
+    public void verificarSpawnBoss() {
+        if (mundo.estadisticas.nivel >= 4
+                && mundo.gameState == Configuracion.ESTADO_JUGANDO
+                && mundo.bossActivo == null) {
+            mundo.iniciarBossFight();
+        }
+    }
+
+    /**
+     * Verifica si se debe spawnear los 3 KingSlimes.
+     * Se activa al alcanzar nivel 7 durante el estado JUGANDO.
+     */
+    public void verificarSpawnKingSlime() {
+        if (mundo.estadisticas.nivel >= 7
+                && mundo.gameState == Configuracion.ESTADO_JUGANDO
+                && mundo.kingSlimesVivos == 0
+                && mundo.kingSlimes[0] == null) {
+            mundo.iniciarKingSlimeFight();
         }
     }
 }

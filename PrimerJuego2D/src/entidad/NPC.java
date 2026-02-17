@@ -38,6 +38,16 @@ public abstract class NPC extends Entidad {
     private int contadorDanio = 0;
     private int cooldownDanio = 30;
 
+    /** Permite a subclases (ej: DemonBat) decrementar el cooldown de daño por contacto. */
+    protected void actualizarContadorDanio() {
+        if (contadorDanio > 0) contadorDanio--;
+    }
+
+    /** Permite a subclases resetear el cooldown de daño por contacto. */
+    protected void resetearContadorDanio() {
+        contadorDanio = 0;
+    }
+
     public int experienciaAOtorgar = 10;
 
     // ===== Culling Lógico =====
@@ -155,24 +165,29 @@ public abstract class NPC extends Entidad {
     // ===== MOVIMIENTO FLUIDO (SOFT COLLISIONS) =====
     private void aplicarSeparacionSuave() {
         // 1. Vector de Seguimiento (Hacia el objetivo/jugador)
-        // Usamos la dirección establecida por la IA (perseguirJugador o similar)
+        // Usamos vector diagonal directo hacia el jugador para evitar
+        // que los NPCs se traben en esquinas de tiles sólidos.
+        // La dirección cardinal (string) solo se usa para sprites.
         double trackX = 0;
         double trackY = 0;
 
-        // Convertimos la dirección string a vector
-        switch (direccion) {
-            case "arriba":
-                trackY = -1;
-                break;
-            case "abajo":
-                trackY = 1;
-                break;
-            case "izquierda":
-                trackX = -1;
-                break;
-            case "derecha":
-                trackX = 1;
-                break;
+        if (estado == EstadoEntidad.MOVIENDO) {
+            // Vector diagonal directo → permite wall-sliding natural
+            double dx = mundo.jugador.worldx - worldx;
+            double dy = mundo.jugador.worldy - worldy;
+            double dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 0) {
+                trackX = dx / dist;
+                trackY = dy / dist;
+            }
+        } else {
+            // IDLE / Merodeo: usar dirección cardinal
+            switch (direccion) {
+                case "arriba":    trackY = -1; break;
+                case "abajo":     trackY =  1; break;
+                case "izquierda": trackX = -1; break;
+                case "derecha":   trackX =  1; break;
+            }
         }
 
         // 2. Vector de Repulsión (Alejarse de vecinos)

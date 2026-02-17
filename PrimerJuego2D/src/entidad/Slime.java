@@ -29,14 +29,14 @@ public class Slime extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 30; // Intermedio
+        vidaMaxima = 30;
         vidaActual = vidaMaxima;
         ataque = 3;
-        defensa = 0;
-        vel = 1;
+        defensa = 1;
+        vel = 1;       // Lento pero resistente
         direccion = "abajo";
         radioDeteccion = 6 * Configuracion.TAMANO_TILE;
-        experienciaAOtorgar = 10;
+        experienciaAOtorgar = 15;
     }
 
     private synchronized void cargarSpritesEstaticos() {

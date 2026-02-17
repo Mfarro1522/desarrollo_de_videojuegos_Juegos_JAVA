@@ -44,4 +44,8 @@ public final class Configuracion {
     public static final int ESTADO_CREDITOS = 7;
     public static final int ESTADO_AYUDA = 8;
     public static final int ESTADO_LOGROS = 9;
+    public static final int ESTADO_BOSS_FIGHT = 10;
+
+    // ===== BOSS =====
+    public static final int MAX_PROYECTILES_ESPECIALES = 50;
 }

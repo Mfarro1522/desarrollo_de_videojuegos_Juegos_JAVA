@@ -15,6 +15,7 @@ import tiles.TileManager;
 import utilidades.Herramientas;
 import utilidades.Notificacion;
 
+
 /**
  * Contiene TODA la data y lógica del mundo de juego.
  *
@@ -35,6 +36,7 @@ public class MundoJuego {
 
     // ===== ESTADO DEL JUEGO =====
     public int gameState;
+    public int estadoAntesPausa = Configuracion.ESTADO_JUGANDO;
 
     // ===== ENTIDADES =====
     public Jugador jugador;
@@ -42,6 +44,14 @@ public class MundoJuego {
     public int contadorNPCs = 0;
     public SuperObjeto[] objs = new SuperObjeto[Configuracion.MAX_OBJETOS];
     public Proyectil[] proyectiles = new Proyectil[Configuracion.MAX_PROYECTILES];
+
+    // ===== BOSS =====
+    public DemonBat bossActivo = null;
+    public KingSlime[] kingSlimes = new KingSlime[3]; // 3 KingSlimes simultáneos
+    public int kingSlimesVivos = 0;
+    public ProyectilEspecial[] proyectilesEspeciales = new ProyectilEspecial[Configuracion.MAX_PROYECTILES_ESPECIALES];
+    private boolean bossYaSpawneado = false; // Evita re-spawn del DemonBat
+    private boolean kingSlimeYaSpawneado = false; // Evita re-spawn de KingSlimes
 
     // ===== SUBSISTEMAS =====
     public GrillaEspacial grillaEspacial;
@@ -103,6 +113,9 @@ public class MundoJuego {
         // Pre-instanciar Object Pool de NPCs
         gestorRecursos.inicializarPool();
 
+        // Pre-instanciar pool de proyectiles especiales del boss
+        inicializarProyectilesEspeciales();
+
         // Iniciar en menú principal
         gameState = Configuracion.ESTADO_MENU;
         reproducirMusicaFondo(5);
@@ -114,7 +127,8 @@ public class MundoJuego {
      * Actualiza toda la lógica del juego (solo en playState).
      */
     public void update() {
-        if (gameState != Configuracion.ESTADO_JUGANDO)
+        if (gameState != Configuracion.ESTADO_JUGANDO
+                && gameState != Configuracion.ESTADO_BOSS_FIGHT)
             return;
 
         jugador.update();
@@ -144,8 +158,50 @@ public class MundoJuego {
         }
 
         // ===== Generación de Enemigos (Anillo Dinámico) =====
-        // Intentamos spawnear en cada frame si hay cupo
-        gestorRecursos.spawnearEnAnillo();
+        // Solo spawnear si NO hay boss fight
+        if (gameState != Configuracion.ESTADO_BOSS_FIGHT) {
+            gestorRecursos.spawnearEnAnillo();
+        }
+
+        // ===== BOSS =====
+        // Verificar si hay que spawnear boss (nivel 4 = DemonBat, nivel 7 = KingSlime)
+        if (!bossYaSpawneado) {
+            gestorRecursos.verificarSpawnBoss();
+        }
+        if (!kingSlimeYaSpawneado) {
+            gestorRecursos.verificarSpawnKingSlime();
+        }
+
+        // Actualizar boss DemonBat
+        if (bossActivo != null && bossActivo.activo) {
+            bossActivo.update();
+        }
+
+        // Actualizar KingSlimes
+        for (int i = 0; i < kingSlimes.length; i++) {
+            if (kingSlimes[i] != null && kingSlimes[i].activo) {
+                kingSlimes[i].update();
+            }
+        }
+
+        // Actualizar proyectiles especiales del boss
+        for (int i = 0; i < proyectilesEspeciales.length; i++) {
+            if (proyectilesEspeciales[i] != null && proyectilesEspeciales[i].activo) {
+                proyectilesEspeciales[i].update();
+            }
+        }
+
+        // Colisión de proyectiles del JUGADOR con el boss DemonBat
+        if (bossActivo != null && bossActivo.activo && bossActivo.estaVivo) {
+            verificarProyectilesContraBoss();
+        }
+
+        // Colisión de proyectiles del JUGADOR con KingSlimes
+        for (int k = 0; k < kingSlimes.length; k++) {
+            if (kingSlimes[k] != null && kingSlimes[k].activo && kingSlimes[k].estaVivo) {
+                verificarProyectilesContraKingSlime(k);
+            }
+        }
 
         // Proyectiles
         for (int i = 0; i < proyectiles.length; i++) {
@@ -209,6 +265,20 @@ public class MundoJuego {
         jugadorMuerto = false;
         contadorGameOver = 0;
 
+        // Reset boss
+        bossActivo = null;
+        bossYaSpawneado = false;
+        for (int i = 0; i < kingSlimes.length; i++) {
+            kingSlimes[i] = null;
+        }
+        kingSlimesVivos = 0;
+        kingSlimeYaSpawneado = false;
+        for (int i = 0; i < proyectilesEspeciales.length; i++) {
+            if (proyectilesEspeciales[i] != null) {
+                proyectilesEspeciales[i].desactivar();
+            }
+        }
+
         // Colocar objetos y NPCs
         gestorRecursos.setObjetct();
         gestorRecursos.setNPCs();
@@ -227,6 +297,165 @@ public class MundoJuego {
         gameState = Configuracion.ESTADO_MENU;
         stopMusic();
         reproducirMusicaFondo(5);
+    }
+
+    // ===== BOSS FIGHT =====
+
+    private void inicializarProyectilesEspeciales() {
+        for (int i = 0; i < proyectilesEspeciales.length; i++) {
+            proyectilesEspeciales[i] = new ProyectilEspecial(this);
+        }
+        System.out.println("[Pool] ProyectilesEspeciales: " + proyectilesEspeciales.length + " pre-instanciados.");
+    }
+
+    public ProyectilEspecial obtenerProyectilEspecialLibre() {
+        for (ProyectilEspecial pe : proyectilesEspeciales) {
+            if (pe != null && !pe.activo) {
+                return pe;
+            }
+        }
+        return null; // Pool lleno
+    }
+
+    public void iniciarBossFight() {
+        gameState = Configuracion.ESTADO_BOSS_FIGHT;
+        bossYaSpawneado = true;
+
+        // 1. Desactivar TODOS los NPCs normales
+        for (int i = 0; i < npcs.length; i++) {
+            if (npcs[i] != null && npcs[i].activo) {
+                npcs[i].desactivar();
+            }
+        }
+
+        // 2. Crear boss si no existe
+        if (bossActivo == null) {
+            bossActivo = new DemonBat(this);
+        }
+
+        // 3. Posicionar boss frente al jugador
+        int offsetX = 400;
+        int spawnX = jugador.worldx + offsetX;
+        int spawnY = jugador.worldy;
+        bossActivo.activar(spawnX, spawnY);
+
+        // 4. Notificación
+        agregarNotificacion("¡BOSS: DemonBat ha aparecido!", Color.RED, 4);
+        System.out.println("[Boss] DemonBat spawneado en (" + spawnX + ", " + spawnY + ")");
+    }
+
+    public void terminarBossFight() {
+        gameState = Configuracion.ESTADO_JUGANDO;
+
+        // Desactivar proyectiles especiales restantes
+        for (int i = 0; i < proyectilesEspeciales.length; i++) {
+            if (proyectilesEspeciales[i] != null && proyectilesEspeciales[i].activo) {
+                proyectilesEspeciales[i].desactivar();
+            }
+        }
+
+        // Recompensar al jugador
+        estadisticas.registrarEnemigoEliminado();
+        estadisticas.ganarExperiencia(bossActivo.experienciaAOtorgar);
+
+        agregarNotificacion("¡DemonBat derrotado! +" + bossActivo.experienciaAOtorgar + " XP", 
+                new Color(255, 215, 0), 5);
+        System.out.println("[Boss] DemonBat derrotado. Volviendo a JUGANDO.");
+    }
+
+    // ===== KING SLIME BOSS FIGHT =====
+
+    public void iniciarKingSlimeFight() {
+        gameState = Configuracion.ESTADO_BOSS_FIGHT;
+        kingSlimeYaSpawneado = true;
+
+        // 1. Desactivar TODOS los NPCs normales
+        for (int i = 0; i < npcs.length; i++) {
+            if (npcs[i] != null && npcs[i].activo) {
+                npcs[i].desactivar();
+            }
+        }
+
+        // 2. Crear 3 KingSlimes en formación triangular alrededor del jugador
+        int dist = 300; // Distancia de spawn
+        double[][] offsets = {
+            { dist,  0 },           // Derecha
+            { -dist * 0.5,  dist * 0.87 },  // Abajo-izquierda
+            { -dist * 0.5, -dist * 0.87 }   // Arriba-izquierda
+        };
+
+        kingSlimesVivos = 3;
+        for (int i = 0; i < 3; i++) {
+            kingSlimes[i] = new KingSlime(this, i);
+            int spawnX = jugador.worldx + (int) offsets[i][0];
+            int spawnY = jugador.worldy + (int) offsets[i][1];
+            kingSlimes[i].activar(spawnX, spawnY);
+        }
+
+        agregarNotificacion("¡BOSS: 3 KingSlimes han aparecido!", new Color(0, 200, 0), 4);
+        System.out.println("[Boss] 3 KingSlimes spawneados.");
+    }
+
+    public void notificarKingSlimeMuerto(int indice) {
+        kingSlimesVivos--;
+        estadisticas.registrarEnemigoEliminado();
+        estadisticas.ganarExperiencia(kingSlimes[indice].experienciaAOtorgar);
+
+        agregarNotificacion("¡KingSlime #" + (indice + 1) + " derrotado! +"
+                + kingSlimes[indice].experienciaAOtorgar + " XP",
+                new Color(255, 215, 0), 3);
+
+        System.out.println("[Boss] KingSlime #" + indice + " muerto. Quedan: " + kingSlimesVivos);
+
+        if (kingSlimesVivos <= 0) {
+            terminarKingSlimeFight();
+        }
+    }
+
+    private void terminarKingSlimeFight() {
+        gameState = Configuracion.ESTADO_JUGANDO;
+        agregarNotificacion("¡Todos los KingSlimes derrotados!", new Color(255, 215, 0), 5);
+        System.out.println("[Boss] KingSlime fight terminada. Volviendo a JUGANDO.");
+    }
+
+    private void verificarProyectilesContraKingSlime(int k) {
+        KingSlime ks = kingSlimes[k];
+        java.awt.Rectangle ksArea = new java.awt.Rectangle(
+                ks.worldx + ks.AreaSolida.x,
+                ks.worldy + ks.AreaSolida.y,
+                ks.AreaSolida.width,
+                ks.AreaSolida.height);
+
+        for (int i = 0; i < proyectiles.length; i++) {
+            if (proyectiles[i] != null && proyectiles[i].activo && proyectiles[i].esDelJugador) {
+                java.awt.Rectangle pArea = new java.awt.Rectangle(
+                        proyectiles[i].worldX, proyectiles[i].worldY, 16, 16);
+                if (pArea.intersects(ksArea)) {
+                    ks.recibirDanio(jugador.ataque);
+                    proyectiles[i].activo = false;
+                }
+            }
+        }
+    }
+
+    private void verificarProyectilesContraBoss() {
+        java.awt.Rectangle bossArea = new java.awt.Rectangle(
+                bossActivo.worldx + bossActivo.AreaSolida.x,
+                bossActivo.worldy + bossActivo.AreaSolida.y,
+                bossActivo.AreaSolida.width,
+                bossActivo.AreaSolida.height);
+
+        for (int i = 0; i < proyectiles.length; i++) {
+            // Solo proyectiles DEL JUGADOR pueden dañar al boss
+            if (proyectiles[i] != null && proyectiles[i].activo && proyectiles[i].esDelJugador) {
+                java.awt.Rectangle pArea = new java.awt.Rectangle(
+                        proyectiles[i].worldX, proyectiles[i].worldY, 16, 16);
+                if (pArea.intersects(bossArea)) {
+                    bossActivo.recibirDanio(jugador.ataque);
+                    proyectiles[i].activo = false;
+                }
+            }
+        }
     }
 
     // ===== AUDIO =====

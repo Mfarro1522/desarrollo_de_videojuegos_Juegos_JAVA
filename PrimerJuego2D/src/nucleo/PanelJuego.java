@@ -16,10 +16,10 @@ import mundo.MundoJuego;
  * Panel principal del juego (JPanel + Game Loop).
  *
  * Responsabilidades MÍNIMAS:
- *  - Configurar el JPanel (tamaño, listeners)
- *  - Ejecutar el game loop a 60 FPS
- *  - Delegar update → MundoJuego
- *  - Delegar render → TileManager + entidades + InterfazUsuario
+ * - Configurar el JPanel (tamaño, listeners)
+ * - Ejecutar el game loop a 60 FPS
+ * - Delegar update → MundoJuego
+ * - Delegar render → TileManager + entidades + InterfazUsuario
  */
 @SuppressWarnings("serial")
 public class PanelJuego extends JPanel implements Runnable {
@@ -100,7 +100,8 @@ public class PanelJuego extends JPanel implements Runnable {
         // Solo dibujar mundo en estados de juego activo
         if (mundo.gameState == Configuracion.ESTADO_JUGANDO
                 || mundo.gameState == Configuracion.ESTADO_PAUSA
-                || mundo.gameState == Configuracion.ESTADO_GAME_OVER) {
+                || mundo.gameState == Configuracion.ESTADO_GAME_OVER
+                || mundo.gameState == Configuracion.ESTADO_BOSS_FIGHT) {
 
             // Tiles
             mundo.tileManager.draw(g2);
@@ -140,6 +141,40 @@ public class PanelJuego extends JPanel implements Runnable {
 
             // Jugador (siempre visible)
             mundo.jugador.draw(g2);
+
+            // Boss DemonBat (si existe y está activo)
+            if (mundo.bossActivo != null && mundo.bossActivo.activo) {
+                int bx = mundo.bossActivo.worldx - mundo.jugador.worldx;
+                int by = mundo.bossActivo.worldy - mundo.jugador.worldy;
+                if (bx > -margenCullX * 2 && bx < margenCullX * 2
+                        && by > -margenCullY * 2 && by < margenCullY * 2) {
+                    mundo.bossActivo.draw(g2);
+                }
+            }
+
+            // Boss KingSlimes (3 instancias)
+            for (int i = 0; i < mundo.kingSlimes.length; i++) {
+                if (mundo.kingSlimes[i] != null && mundo.kingSlimes[i].activo) {
+                    int kx = mundo.kingSlimes[i].worldx - mundo.jugador.worldx;
+                    int ky = mundo.kingSlimes[i].worldy - mundo.jugador.worldy;
+                    if (kx > -margenCullX && kx < margenCullX
+                            && ky > -margenCullY && ky < margenCullY) {
+                        mundo.kingSlimes[i].draw(g2);
+                    }
+                }
+            }
+
+            // Proyectiles especiales del boss
+            for (int i = 0; i < mundo.proyectilesEspeciales.length; i++) {
+                if (mundo.proyectilesEspeciales[i] != null && mundo.proyectilesEspeciales[i].activo) {
+                    int dx = mundo.proyectilesEspeciales[i].worldX - mundo.jugador.worldx;
+                    int dy = mundo.proyectilesEspeciales[i].worldY - mundo.jugador.worldy;
+                    if (dx > -margenCullX && dx < margenCullX
+                            && dy > -margenCullY && dy < margenCullY) {
+                        mundo.proyectilesEspeciales[i].draw(g2);
+                    }
+                }
+            }
         }
 
         // UI siempre al final

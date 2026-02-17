@@ -49,15 +49,15 @@ public class Ghoul extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 10; // Tanque pesado late-game
+        vidaMaxima = 35;
         vidaActual = vidaMaxima;
-        ataque = 8; // Daño alto
-        defensa = 2;
-        vel = 2;
+        ataque = 7;
+        defensa = 1;
+        vel = 3;       // Rápido y peligroso (late-game)
         direccion = "derecha";
         radioDeteccion = 7 * Configuracion.TAMANO_TILE;
         radioAtaque = radioAtaqueGhoul;
-        experienciaAOtorgar = 30;
+        experienciaAOtorgar = 35;
     }
 
     private synchronized void cargarSpritesEstaticos() {
@@ -89,7 +89,7 @@ public class Ghoul extends NPC {
             s_ataqueDer3 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "ataqueDer3.png")),
                     tile, tile);
 
-            // CORRECCIÓN: Nombres de archivos alineados con convención (muerte01, etc)
+            // muertes
             s_muerte1 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "muerte01.png")), tile,
                     tile);
             s_muerte2 = tool.escalarImagen(ImageIO.read(Ghoul.class.getResourceAsStream(ruta + "muerte02.png")), tile,

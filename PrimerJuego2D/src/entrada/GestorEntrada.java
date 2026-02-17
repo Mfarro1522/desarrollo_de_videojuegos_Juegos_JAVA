@@ -65,10 +65,13 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
             manejarInputVolver(keycode);
         } else if (mundo.gameState == Configuracion.ESTADO_CREDITOS) {
             manejarInputVolver(keycode);
-        } else if (mundo.gameState == Configuracion.ESTADO_JUGANDO) {
+        } else if (mundo.gameState == Configuracion.ESTADO_JUGANDO
+                || mundo.gameState == Configuracion.ESTADO_BOSS_FIGHT) {
             manejarInputJuego(keycode);
         } else if (mundo.gameState == Configuracion.ESTADO_PAUSA) {
-            if (keycode == KeyEvent.VK_P) mundo.gameState = Configuracion.ESTADO_JUGANDO;
+            if (keycode == KeyEvent.VK_P) {
+                mundo.gameState = mundo.estadoAntesPausa;
+            }
         } else if (mundo.gameState == Configuracion.ESTADO_GAME_OVER) {
             if (keycode == KeyEvent.VK_R) mundo.reiniciarJuego();
         }
@@ -132,7 +135,10 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
         if (keycode == KeyEvent.VK_S || keycode == KeyEvent.VK_DOWN)  abajoPres = true;
         if (keycode == KeyEvent.VK_A || keycode == KeyEvent.VK_LEFT)  izqPres = true;
         if (keycode == KeyEvent.VK_D || keycode == KeyEvent.VK_RIGHT) drchPres = true;
-        if (keycode == KeyEvent.VK_P) mundo.gameState = Configuracion.ESTADO_PAUSA;
+        if (keycode == KeyEvent.VK_P) {
+            mundo.estadoAntesPausa = mundo.gameState;
+            mundo.gameState = Configuracion.ESTADO_PAUSA;
+        }
     }
 
     // =====================================================================
