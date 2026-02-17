@@ -32,6 +32,10 @@ public class InterfazUsuario {
     public PantallaCreditos pantallaCreditos;
     public PantallaGameOver pantallaGameOver;
     public PantallaPausa pantallaPausa;
+    public PantallaAmuletos pantallaAmuletos;
+
+    // Control de inicialización del panel de amuletos
+    private boolean amuletoPanelPreparado = false;
 
     // Colores compartidos
     static final Color COLOR_FONDO = new Color(15, 15, 25);
@@ -63,6 +67,7 @@ public class InterfazUsuario {
         pantallaCreditos = new PantallaCreditos(mundo);
         pantallaGameOver = new PantallaGameOver(mundo);
         pantallaPausa = new PantallaPausa(mundo);
+        pantallaAmuletos = new PantallaAmuletos(mundo);
     }
 
     /**
@@ -72,6 +77,11 @@ public class InterfazUsuario {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int state = mundo.gameState;
+
+        // Resetear flag del panel de amuletos cuando sale del estado
+        if (state != Configuracion.ESTADO_SELECCION_AMULETO) {
+            amuletoPanelPreparado = false;
+        }
 
         if (state == Configuracion.ESTADO_MENU) {
             menuPrincipal.dibujar(g2);
@@ -93,6 +103,16 @@ public class InterfazUsuario {
         } else if (state == Configuracion.ESTADO_PAUSA) {
             hud.dibujar(g2);
             pantallaPausa.dibujar(g2);
+        } else if (state == Configuracion.ESTADO_SELECCION_AMULETO) {
+            // Dibujar HUD detrás del panel
+            hud.dibujar(g2);
+            // Inicializar panel si es la primera vez
+            if (!amuletoPanelPreparado) {
+                pantallaAmuletos.preparar(mundo.jugador.gestorAmuletos.modoPanel);
+                amuletoPanelPreparado = true;
+            }
+            pantallaAmuletos.actualizar();
+            pantallaAmuletos.dibujar(g2);
         } else if (state == Configuracion.ESTADO_GAME_OVER) {
             pantallaGameOver.dibujar(g2);
         }

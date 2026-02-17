@@ -37,6 +37,7 @@ public class Slime extends NPC {
         direccion = "abajo";
         radioDeteccion = 6 * Configuracion.TAMANO_TILE;
         experienciaAOtorgar = 15;
+
     }
 
     private synchronized void cargarSpritesEstaticos() {

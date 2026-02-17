@@ -68,6 +68,15 @@ public class MundoJuego {
     // ===== FONDO MENÚ =====
     public BufferedImage imagenFondoMenu;
 
+    // ===== SISTEMA DE AMULETOS =====
+    public EspadaOrbital espadaOrbital = null;
+    public MarcaSuelo marcasSuelo = null;
+
+    // ===== SPAWN DE COFRES =====
+    private int eliminadosDesdeCofre = 0;
+    private int umbralSiguienteCofre = 25 + (int)(Math.random() * 10);
+    public int estadoAntesAmuleto = Configuracion.ESTADO_JUGANDO;
+
     // ===== RESPAWN =====
 
     // ===== DELAY GAME OVER =====
@@ -127,6 +136,17 @@ public class MundoJuego {
      * Actualiza toda la lógica del juego (solo en playState).
      */
     public void update() {
+        if (gameState == Configuracion.ESTADO_SELECCION_AMULETO) {
+            // Solo actualizar notificaciones, nada más
+            for (int i = notificaciones.size() - 1; i >= 0; i--) {
+                notificaciones.get(i).actualizar();
+                if (!notificaciones.get(i).estaActiva()) {
+                    notificaciones.remove(i);
+                }
+            }
+            return;
+        }
+
         if (gameState != Configuracion.ESTADO_JUGANDO
                 && gameState != Configuracion.ESTADO_BOSS_FIGHT)
             return;
@@ -212,6 +232,16 @@ public class MundoJuego {
             }
         }
 
+        // Espada Orbital
+        if (espadaOrbital != null && espadaOrbital.estaActiva()) {
+            espadaOrbital.update();
+        }
+
+        // Marcas de suelo (Sideral)
+        if (marcasSuelo != null) {
+            marcasSuelo.update();
+        }
+
         // Muerte del jugador (delay para animación)
         if (!jugador.estaVivo && !jugadorMuerto) {
             estadisticas.finalizarJuego();
@@ -236,6 +266,13 @@ public class MundoJuego {
         jugador = new Jugador(this, entrada);
         jugador.configurarPersonaje(tipoPersonaje);
         jugador.powerUps = new PowerUpManager();
+        jugador.gestorAmuletos = new GestorAmuletos();
+
+        // Limpiar amuletos
+        espadaOrbital = null;
+        marcasSuelo = null;
+        eliminadosDesdeCofre = 0;
+        umbralSiguienteCofre = 25 + (int)(Math.random() * 10);
 
         // Limpiar objetos
         for (int i = 0; i < objs.length; i++)
@@ -355,8 +392,7 @@ public class MundoJuego {
         }
 
         // Recompensar al jugador
-        estadisticas.registrarEnemigoEliminado();
-        estadisticas.ganarExperiencia(bossActivo.experienciaAOtorgar);
+        notificarEnemigoEliminado(bossActivo.experienciaAOtorgar);
 
         agregarNotificacion("¡DemonBat derrotado! +" + bossActivo.experienciaAOtorgar + " XP", 
                 new Color(255, 215, 0), 5);
@@ -398,8 +434,7 @@ public class MundoJuego {
 
     public void notificarKingSlimeMuerto(int indice) {
         kingSlimesVivos--;
-        estadisticas.registrarEnemigoEliminado();
-        estadisticas.ganarExperiencia(kingSlimes[indice].experienciaAOtorgar);
+        notificarEnemigoEliminado(kingSlimes[indice].experienciaAOtorgar);
 
         agregarNotificacion("¡KingSlime #" + (indice + 1) + " derrotado! +"
                 + kingSlimes[indice].experienciaAOtorgar + " XP",
@@ -481,5 +516,99 @@ public class MundoJuego {
         notificaciones.add(new Notificacion(mensaje, color, duracionSegundos));
         if (notificaciones.size() > 10)
             notificaciones.remove(0);
+    }
+
+    // ===== SISTEMA DE COFRES/AMULETOS =====
+
+    /**
+     * Centraliza la notificación de enemigo eliminado.
+     * Incrementa stats + contador de cofres.
+     */
+    public void notificarEnemigoEliminado(int experiencia) {
+        estadisticas.registrarEnemigoEliminado();
+        estadisticas.ganarExperiencia(experiencia);
+
+        // Sinergia Vampirismo (Libro + Gema): 5% chance de +1HP
+        if (jugador != null && jugador.gestorAmuletos.rollVampirismo()) {
+            jugador.vidaActual = Math.min(jugador.vidaActual + 1, jugador.vidaMaxima);
+        }
+
+        // Contador para spawn de cofre
+        eliminadosDesdeCofre++;
+        if (eliminadosDesdeCofre >= umbralSiguienteCofre) {
+            spawnearCofreEnMapa();
+            eliminadosDesdeCofre = 0;
+            umbralSiguienteCofre = 40 + (int)(Math.random() * 20);
+        }
+    }
+
+    /**
+     * Coloca un cofre en una posición válida cerca del jugador.
+     */
+    private void spawnearCofreEnMapa() {
+        int t = Configuracion.TAMANO_TILE;
+        int margen = 5 * t; // 5 tiles fuera del jugador
+
+        for (int intento = 0; intento < 30; intento++) {
+            int offsetX = margen + (int)(Math.random() * 5 * t);
+            int offsetY = margen + (int)(Math.random() * 5 * t);
+            if (Math.random() < 0.5) offsetX = -offsetX;
+            if (Math.random() < 0.5) offsetY = -offsetY;
+
+            int cx = jugador.worldx + offsetX;
+            int cy = jugador.worldy + offsetY;
+
+            int col = cx / t;
+            int fila = cy / t;
+
+            if (col < 2 || col >= Configuracion.MUNDO_COLUMNAS - 2 ||
+                fila < 2 || fila >= Configuracion.MUNDO_FILAS - 2) continue;
+
+            int tileNum = tileManager.mapaPorNumeroTile[col][fila];
+            if (tileManager.tiles[tileNum] != null && tileManager.tiles[tileNum].colision) continue;
+
+            // Buscar slot libre
+            for (int i = 0; i < objs.length; i++) {
+                if (objs[i] == null) {
+                    objs[i] = new items.CofreNormal(t);
+                    objs[i].worldX = col * t;
+                    objs[i].worldY = fila * t;
+                    agregarNotificacion("Un cofre ha aparecido cerca...", new Color(255, 200, 50), 3);
+                    return;
+                }
+            }
+            return; // Sin slots libres
+        }
+    }
+
+    /**
+     * Abre un cofre: genera opciones de amuletos y cambia al estado de selección.
+     */
+    public void abrirCofre() {
+        if (jugador == null) return;
+
+        GestorAmuletos ga = jugador.gestorAmuletos;
+
+        // Si tiene anillo, solo dar XP
+        if (ga.anilloEquipado) {
+            estadisticas.registrarCofreRecogido();
+            estadisticas.ganarExperiencia(25);
+            agregarNotificacion("Cofre: +25 EXP (Anillo activo)", Color.ORANGE, 3);
+            return;
+        }
+
+        // Generar opciones
+        int modo = ga.generarOpcionesCofre(jugador.tipoPersonaje);
+
+        // Guardar estado actual y pausar el juego
+        estadoAntesAmuleto = gameState;
+        gameState = Configuracion.ESTADO_SELECCION_AMULETO;
+    }
+
+    /**
+     * Cierra el panel de amuletos y vuelve al juego.
+     */
+    public void cerrarPanelAmuletos() {
+        gameState = estadoAntesAmuleto;
     }
 }

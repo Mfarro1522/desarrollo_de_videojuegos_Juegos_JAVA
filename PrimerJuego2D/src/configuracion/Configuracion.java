@@ -45,6 +45,7 @@ public final class Configuracion {
     public static final int ESTADO_AYUDA = 8;
     public static final int ESTADO_LOGROS = 9;
     public static final int ESTADO_BOSS_FIGHT = 10;
+    public static final int ESTADO_SELECCION_AMULETO = 11;
 
     // ===== BOSS =====
     public static final int MAX_PROYECTILES_ESPECIALES = 50;

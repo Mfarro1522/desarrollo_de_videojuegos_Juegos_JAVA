@@ -51,6 +51,9 @@ public class PanelJuego extends JPanel implements Runnable {
 
         // Conectar menú principal al gestor de entrada (para detección de hover/click)
         entrada.setMenuPrincipal(interfaz.menuPrincipal);
+
+        // Conectar pantalla de amuletos al gestor de entrada
+        entrada.setPantallaAmuletos(interfaz.pantallaAmuletos);
     }
 
     /**
@@ -101,10 +104,16 @@ public class PanelJuego extends JPanel implements Runnable {
         if (mundo.gameState == Configuracion.ESTADO_JUGANDO
                 || mundo.gameState == Configuracion.ESTADO_PAUSA
                 || mundo.gameState == Configuracion.ESTADO_GAME_OVER
-                || mundo.gameState == Configuracion.ESTADO_BOSS_FIGHT) {
+                || mundo.gameState == Configuracion.ESTADO_BOSS_FIGHT
+                || mundo.gameState == Configuracion.ESTADO_SELECCION_AMULETO) {
 
             // Tiles
             mundo.tileManager.draw(g2);
+
+            // Marcas de suelo (debajo de entidades)
+            if (mundo.marcasSuelo != null) {
+                mundo.marcasSuelo.draw(g2);
+            }
 
             // Objetos
             for (int i = 0; i < mundo.objs.length; i++) {
@@ -141,6 +150,11 @@ public class PanelJuego extends JPanel implements Runnable {
 
             // Jugador (siempre visible)
             mundo.jugador.draw(g2);
+
+            // Espada Orbital (sobre el jugador)
+            if (mundo.espadaOrbital != null && mundo.espadaOrbital.estaActiva()) {
+                mundo.espadaOrbital.draw(g2);
+            }
 
             // Boss DemonBat (si existe y está activo)
             if (mundo.bossActivo != null && mundo.bossActivo.activo) {

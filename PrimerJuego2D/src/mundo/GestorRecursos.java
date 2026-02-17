@@ -162,7 +162,7 @@ public class GestorRecursos {
 
     public void setObjetct() {
         int t = Configuracion.TAMANO_TILE;
-        int cantidadCofres = 10;
+        int cantidadCofres = 3; // Cofres más raros (solo normales)
         int intentosMaximos = 100;
 
         for (int i = 0; i < cantidadCofres; i++) {
@@ -182,20 +182,12 @@ public class GestorRecursos {
                     int worldX = col * t;
                     int worldY = fila * t;
 
-                    // Decidir tipo de cofre (20% Normal, 80% PowerUp)
-                    if (Math.random() < 0.2) {
-                        mundo.objs[i] = new CofreNormal(t);
-                    } else {
-                        // Seleccionar PowerUp aleatorio
-                        CofrePowerUp.TipoPowerUp[] tipos = CofrePowerUp.TipoPowerUp.values();
-                        CofrePowerUp.TipoPowerUp tipoSeleccionado = tipos[(int) (Math.random() * tipos.length)];
-                        mundo.objs[i] = new CofrePowerUp(t, tipoSeleccionado);
-                    }
+                    // Solo cofres normales (abren panel de amuletos)
+                    mundo.objs[i] = new CofreNormal(t);
 
                     mundo.objs[i].worldX = worldX;
                     mundo.objs[i].worldY = worldY;
                     posicionado = true;
-                    // System.out.println("Cofre " + i + " generado en: " + col + ", " + fila);
                 }
                 intentos++;
             }
@@ -344,7 +336,7 @@ public class GestorRecursos {
      * Se activa al alcanzar nivel 4 durante el estado JUGANDO.
      */
     public void verificarSpawnBoss() {
-        if (mundo.estadisticas.nivel >= 4
+        if (mundo.estadisticas.nivel >= 10
                 && mundo.gameState == Configuracion.ESTADO_JUGANDO
                 && mundo.bossActivo == null) {
             mundo.iniciarBossFight();
@@ -353,10 +345,10 @@ public class GestorRecursos {
 
     /**
      * Verifica si se debe spawnear los 3 KingSlimes.
-     * Se activa al alcanzar nivel 7 durante el estado JUGANDO.
+     * Se activa al alcanzar nivel 5 durante el estado JUGANDO.
      */
     public void verificarSpawnKingSlime() {
-        if (mundo.estadisticas.nivel >= 7
+        if (mundo.estadisticas.nivel >= 5
                 && mundo.gameState == Configuracion.ESTADO_JUGANDO
                 && mundo.kingSlimesVivos == 0
                 && mundo.kingSlimes[0] == null) {

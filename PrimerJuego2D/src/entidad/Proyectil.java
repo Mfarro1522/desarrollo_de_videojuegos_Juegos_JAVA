@@ -78,8 +78,7 @@ public class Proyectil {
                         activo = false;
 
                         if (!mundo.npcs[i].estaVivo) {
-                            mundo.estadisticas.registrarEnemigoEliminado();
-                            mundo.estadisticas.ganarExperiencia(mundo.npcs[i].experienciaAOtorgar);
+                            mundo.notificarEnemigoEliminado(mundo.npcs[i].experienciaAOtorgar);
                         }
                         break;
                     }

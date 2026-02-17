@@ -4,8 +4,13 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+
 import configuracion.Configuracion;
+import entidad.Amuleto;
 import entidad.DemonBat;
+import entidad.GestorAmuletos;
 import entidad.KingSlime;
 import mundo.MundoJuego;
 import utilidades.Notificacion;
@@ -91,6 +96,9 @@ public class HUD {
 
         // ===== Notificaciones =====
         dibujarNotificaciones(g2);
+
+        // ===== Amuletos equipados =====
+        dibujarAmuletos(g2);
 
         // ===== Barra de vida del Boss DemonBat =====
         if (mundo.bossActivo != null && mundo.bossActivo.activo && mundo.bossActivo.estaVivo) {
@@ -222,6 +230,51 @@ public class HUD {
             // Borde
             g2.setColor(Color.WHITE);
             g2.drawRect(xBar, yBar, anchoBarraKS, altoBarraKS);
+        }
+    }
+
+    /**
+     * Dibuja los iconos de amuletos equipados en la esquina superior derecha.
+     */
+    private void dibujarAmuletos(Graphics2D g2) {
+        if (mundo.jugador == null) return;
+        GestorAmuletos ga = mundo.jugador.gestorAmuletos;
+        ArrayList<int[]> items = ga.getItemsEquipadosParaHUD();
+        if (items.isEmpty()) return;
+
+        int xBase = Configuracion.ANCHO_PANTALLA - 50;
+        int yBase = 20;
+        int size = 32;
+        int spacing = 40;
+
+        // Fondo del panel de amuletos
+        int panelAlto = items.size() * spacing + 8;
+        g2.setColor(new Color(0, 0, 0, 130));
+        g2.fillRoundRect(xBase - 6, yBase - 6, size + 12, panelAlto, 8, 8);
+        g2.setColor(new Color(120, 80, 200, 100));
+        g2.drawRoundRect(xBase - 6, yBase - 6, size + 12, panelAlto, 8, 8);
+
+        g2.setFont(new Font("Arial", Font.BOLD, 10));
+
+        for (int i = 0; i < items.size(); i++) {
+            int ordinal = items.get(i)[0];
+            int nivel = items.get(i)[1];
+            Amuleto tipo = Amuleto.values()[ordinal];
+
+            BufferedImage icono = ga.getIcono(tipo, nivel, size);
+            int y = yBase + i * spacing;
+
+            if (icono != null) {
+                g2.drawImage(icono, xBase, y, null);
+            }
+
+            // Indicador de nivel
+            if (tipo.nivelMaximo > 1) {
+                g2.setColor(new Color(0, 0, 0, 180));
+                g2.fillRoundRect(xBase + size - 10, y + size - 12, 14, 14, 4, 4);
+                g2.setColor(Color.WHITE);
+                g2.drawString("" + nivel, xBase + size - 7, y + size - 1);
+            }
         }
     }
 }

@@ -36,12 +36,19 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
     // Referencia lazy al menú principal (se asigna desde PanelJuego)
     private interfaz.MenuPrincipal menuPrincipal;
 
+    // Referencia al panel de amuletos (se asigna desde PanelJuego)
+    private interfaz.PantallaAmuletos pantallaAmuletos;
+
     public GestorEntrada(MundoJuego mundo) {
         this.mundo = mundo;
     }
 
     public void setMenuPrincipal(interfaz.MenuPrincipal menu) {
         this.menuPrincipal = menu;
+    }
+
+    public void setPantallaAmuletos(interfaz.PantallaAmuletos pantalla) {
+        this.pantallaAmuletos = pantalla;
     }
 
     // =====================================================================
@@ -68,6 +75,8 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
         } else if (mundo.gameState == Configuracion.ESTADO_JUGANDO
                 || mundo.gameState == Configuracion.ESTADO_BOSS_FIGHT) {
             manejarInputJuego(keycode);
+        } else if (mundo.gameState == Configuracion.ESTADO_SELECCION_AMULETO) {
+            manejarInputAmuleto(keycode);
         } else if (mundo.gameState == Configuracion.ESTADO_PAUSA) {
             if (keycode == KeyEvent.VK_P) {
                 mundo.gameState = mundo.estadoAntesPausa;
@@ -138,6 +147,21 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
         if (keycode == KeyEvent.VK_P) {
             mundo.estadoAntesPausa = mundo.gameState;
             mundo.gameState = Configuracion.ESTADO_PAUSA;
+        }
+    }
+
+    private void manejarInputAmuleto(int keycode) {
+        if (pantallaAmuletos == null) return;
+        if (keycode == KeyEvent.VK_LEFT || keycode == KeyEvent.VK_A) {
+            pantallaAmuletos.moverSeleccion(-1);
+        }
+        if (keycode == KeyEvent.VK_RIGHT || keycode == KeyEvent.VK_D) {
+            pantallaAmuletos.moverSeleccion(1);
+        }
+        if (keycode == KeyEvent.VK_ENTER) {
+            if (pantallaAmuletos.confirmar()) {
+                mundo.cerrarPanelAmuletos();
+            }
         }
     }
 

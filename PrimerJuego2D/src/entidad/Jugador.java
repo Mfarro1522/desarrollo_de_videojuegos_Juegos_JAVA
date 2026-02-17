@@ -9,7 +9,6 @@ import javax.imageio.ImageIO;
 
 import configuracion.Configuracion;
 import entrada.GestorEntrada;
-import items.CofrePowerUp;
 import items.CofreNormal;
 import mundo.MundoJuego;
 import utilidades.Herramientas;
@@ -19,7 +18,7 @@ import utilidades.Herramientas;
  */
 public class Jugador extends Entidad {
 
-    MundoJuego mundo;
+    public MundoJuego mundo;
     GestorEntrada entrada;
 
     public final int screenX;
@@ -33,6 +32,7 @@ public class Jugador extends Entidad {
     private Herramientas miTool = new Herramientas();
 
     public PowerUpManager powerUps = new PowerUpManager();
+    public GestorAmuletos gestorAmuletos = new GestorAmuletos();
 
     private int contadorAtaque = 0;
     private int intervaloAtaque = 30;
@@ -94,7 +94,7 @@ public class Jugador extends Entidad {
             default:
                 rutaCarpeta = "/jugador/Doom/";
                 vidaMaxima = 30;
-                ataque = 10; // BASE ATAQUE (Bajado de 17 para escalar)
+                ataque = 10; 
                 defensa = 5;
                 velocidadBase = 5;
                 esMelee = true;
@@ -297,6 +297,12 @@ public class Jugador extends Entidad {
             if (contadorPixeles >= Configuracion.TAMANO_TILE) {
                 hayMovimiento = false;
                 contadorPixeles = 0;
+
+                // Marca de suelo Sideral (Libro Mágico)
+                if (gestorAmuletos.tieneAmuleto(Amuleto.LIBRO) && tipoPersonaje.equals("Sideral")
+                        && mundo.marcasSuelo != null) {
+                    mundo.marcasSuelo.agregarMarca(worldx, worldy);
+                }
             }
 
             contadorSpites++;
@@ -322,7 +328,8 @@ public class Jugador extends Entidad {
         }
 
         powerUps.actualizar();
-        vel = (int) (velocidadBase * powerUps.multiplicadorVelocidad);
+        gestorAmuletos.actualizar(this);
+        vel = (int) (velocidadBase * gestorAmuletos.getMultiplicadorVelocidad());
 
         contadorAtaque++;
         if (contadorAtaque >= intervaloAtaque) {
@@ -341,12 +348,48 @@ public class Jugador extends Entidad {
     }
 
     private void dispararProyectil() {
+        int dano = (int) (ataque * powerUps.multiplicadorAtaque);
+        int proyectilX = worldx + Configuracion.TAMANO_TILE / 2 - 8;
+        int proyectilY = worldy + Configuracion.TAMANO_TILE / 2 - 8;
+
+        // Mago con Libro: múltiples proyectiles
+        int numProyectiles = 1;
+        if (tipoPersonaje.equals("Mago") && gestorAmuletos.tieneAmuleto(Amuleto.LIBRO)) {
+            numProyectiles = gestorAmuletos.getProyectilesMago();
+        }
+
+        if (numProyectiles == 1) {
+            crearProyectil(proyectilX, proyectilY, direccion, dano);
+        } else if (numProyectiles == 2) {
+            // 2 proyectiles paralelos (separación 10px)
+            int offset = 10;
+            if (direccion.equals("arriba") || direccion.equals("abajo")) {
+                crearProyectil(proyectilX - offset, proyectilY, direccion, dano);
+                crearProyectil(proyectilX + offset, proyectilY, direccion, dano);
+            } else {
+                crearProyectil(proyectilX, proyectilY - offset, direccion, dano);
+                crearProyectil(proyectilX, proyectilY + offset, direccion, dano);
+            }
+        } else {
+            // 3 proyectiles en abanico (nivel 2 libro)
+            crearProyectil(proyectilX, proyectilY, direccion, dano);
+            String dir1 = direccion, dir2 = direccion;
+            // Proyectiles laterales como offset diagonal
+            int offsetLateral = 12;
+            if (direccion.equals("arriba") || direccion.equals("abajo")) {
+                crearProyectil(proyectilX - offsetLateral, proyectilY, direccion, dano);
+                crearProyectil(proyectilX + offsetLateral, proyectilY, direccion, dano);
+            } else {
+                crearProyectil(proyectilX, proyectilY - offsetLateral, direccion, dano);
+                crearProyectil(proyectilX, proyectilY + offsetLateral, direccion, dano);
+            }
+        }
+    }
+
+    private void crearProyectil(int x, int y, String dir, int dano) {
         for (int i = 0; i < mundo.proyectiles.length; i++) {
             if (mundo.proyectiles[i] == null) {
-                int dano = (int) (ataque * powerUps.multiplicadorAtaque);
-                int proyectilX = worldx + Configuracion.TAMANO_TILE / 2 - 8;
-                int proyectilY = worldy + Configuracion.TAMANO_TILE / 2 - 8;
-                mundo.proyectiles[i] = new Proyectil(mundo, proyectilX, proyectilY, direccion, dano);
+                mundo.proyectiles[i] = new Proyectil(mundo, x, y, dir, dano);
                 break;
             }
         }
@@ -375,8 +418,7 @@ public class Jugador extends Entidad {
                 if (tempAreaJugador.intersects(tempAreaNPC)) {
                     mundo.npcs[i].recibirDanio(dano);
                     if (!mundo.npcs[i].estaVivo) {
-                        mundo.estadisticas.registrarEnemigoEliminado();
-                        mundo.estadisticas.ganarExperiencia(mundo.npcs[i].experienciaAOtorgar);
+                        mundo.notificarEnemigoEliminado(mundo.npcs[i].experienciaAOtorgar);
                     }
                 }
             }
@@ -415,8 +457,27 @@ public class Jugador extends Entidad {
     public void recibirDanio(int cantidad) {
         if (powerUps.invencibilidadActiva)
             return;
-        mundo.estadisticas.registrarAtaqueRecibido(cantidad);
-        super.recibirDanio(cantidad);
+        if (contadorInvulnerabilidad > 0)
+            return;
+
+        int danioReal = Math.max(1, cantidad - defensa);
+
+        // Sinergia Fortaleza (Armadura + Gema): -15% da\u00f1o recibido
+        if (gestorAmuletos.tieneSinergia("armadura_gema")) {
+            danioReal = Math.max(1, (int)(danioReal * 0.85));
+        }
+
+        mundo.estadisticas.registrarAtaqueRecibido(danioReal);
+        vidaActual -= danioReal;
+        contadorInvulnerabilidad = duracionInvulnerabilidad;
+
+        if (vidaActual <= 0) {
+            vidaActual = 0;
+            estaVivo = false;
+            estado = EstadoEntidad.MURIENDO;
+        } else {
+            estado = EstadoEntidad.HERIDO;
+        }
     }
 
     // ===== DRAW =====
@@ -503,35 +564,9 @@ public class Jugador extends Entidad {
 
     public void recogerObjeto(int index) {
         if (index != 999) {
-            if (mundo.objs[index] instanceof CofrePowerUp) {
-                CofrePowerUp cofre = (CofrePowerUp) mundo.objs[index];
-
-                switch (cofre.tipoPowerUp) {
-                    case INVENCIBILIDAD:
-                        powerUps.activarInvencibilidad(10);
-                        mundo.agregarNotificacion("🛡 Invencibilidad activada!", Color.CYAN, 3);
-                        break;
-                    case VELOCIDAD:
-                        powerUps.aumentarVelocidad(50, 15);
-                        mundo.agregarNotificacion("⚡ Velocidad aumentada!", Color.YELLOW, 3);
-                        break;
-                    case ATAQUE:
-                        powerUps.aumentarAtaque(30, 20);
-                        mundo.agregarNotificacion("💪 Ataque aumentado!", Color.RED, 3);
-                        break;
-                    case CURACION:
-                        vidaActual = Math.min(vidaActual + 30, vidaMaxima);
-                        mundo.agregarNotificacion("❤ +30 de vida!", Color.GREEN, 3);
-                        break;
-                }
-
-                mundo.estadisticas.registrarCofreRecogido();
+            if (mundo.objs[index] instanceof CofreNormal) {
                 mundo.objs[index] = null;
-            } else if (mundo.objs[index] instanceof CofreNormal) {
-                mundo.estadisticas.registrarCofreRecogido();
-                mundo.agregarNotificacion("📦 Cofre encontrado! +25 EXP", Color.ORANGE, 3);
-                mundo.estadisticas.ganarExperiencia(25);
-                mundo.objs[index] = null;
+                mundo.abrirCofre();
             }
         }
     }
