@@ -88,16 +88,16 @@ public class KingSlime extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 400;
+        vidaMaxima = 300;
         vidaActual = vidaMaxima;
         ataque = 10;
-        defensa = 6;
-        vel = 3;
+        defensa = 3;
+        vel = 5;
         velBase = vel;
         ataqueBase = ataque;
         direccion = "abajo";
         radioDeteccion = 25 * Configuracion.TAMANO_TILE;
-        experienciaAOtorgar = 200;
+        experienciaAOtorgar = 300;
     }
 
     // ===== SPRITES =====

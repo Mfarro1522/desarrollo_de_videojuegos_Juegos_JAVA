@@ -10,6 +10,7 @@ import audio.GestorAudio;
 import colision.DetectorColisiones;
 import entidad.*;
 import estadisticas.Estadisticas;
+import items.GestorAmuletos;
 import items.SuperObjeto;
 import tiles.TileManager;
 import utilidades.Herramientas;

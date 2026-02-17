@@ -8,10 +8,10 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import configuracion.Configuracion;
-import entidad.Amuleto;
 import entidad.DemonBat;
-import entidad.GestorAmuletos;
 import entidad.KingSlime;
+import items.Amuleto;
+import items.GestorAmuletos;
 import mundo.MundoJuego;
 import utilidades.Notificacion;
 

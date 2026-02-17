@@ -1,4 +1,4 @@
-package entidad;
+package items;
 
 /**
  * Enum que define todos los tipos de amuletos/items del juego.

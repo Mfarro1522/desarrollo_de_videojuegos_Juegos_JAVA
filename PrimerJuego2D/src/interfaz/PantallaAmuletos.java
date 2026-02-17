@@ -6,8 +6,8 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import configuracion.Configuracion;
-import entidad.Amuleto;
-import entidad.GestorAmuletos;
+import items.Amuleto;
+import items.GestorAmuletos;
 import mundo.MundoJuego;
 
 /**

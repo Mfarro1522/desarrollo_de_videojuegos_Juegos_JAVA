@@ -96,14 +96,14 @@ public class DemonBat extends NPC {
     }
 
     private void inicializarEstadisticas() {
-        vidaMaxima = 300;
+        vidaMaxima = 3000;
         vidaActual = vidaMaxima;
-        ataque = 8;
-        defensa = 3;
-        vel = 2;
+        ataque = 15;
+        defensa = 5;
+        vel = 3;
         direccion = "izquierda";
         radioDeteccion = 30 * Configuracion.TAMANO_TILE; // Siempre persigue
-        experienciaAOtorgar = 200;
+        experienciaAOtorgar = 1000;
     }
 
     // ===== CARGA DE SPRITES =====

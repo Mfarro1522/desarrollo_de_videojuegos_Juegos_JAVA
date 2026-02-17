@@ -1,4 +1,4 @@
-package entidad;
+package items;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -9,6 +9,9 @@ import java.util.HashSet;
 import java.util.Properties;
 
 import configuracion.Configuracion;
+import entidad.EspadaOrbital;
+import entidad.Jugador;
+import entidad.MarcaSuelo;
 import mundo.MundoJuego;
 import utilidades.Herramientas;
 

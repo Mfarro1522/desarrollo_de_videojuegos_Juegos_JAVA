@@ -9,7 +9,9 @@ import javax.imageio.ImageIO;
 
 import configuracion.Configuracion;
 import entrada.GestorEntrada;
+import items.Amuleto;
 import items.CofreNormal;
+import items.GestorAmuletos;
 import mundo.MundoJuego;
 import utilidades.Herramientas;
 
@@ -72,7 +74,7 @@ public class Jugador extends Entidad {
         switch (tipo) {
             case "Sideral":
                 rutaCarpeta = "/jugador/Sideral/";
-                vidaMaxima = 25;
+                vidaMaxima = 19;
                 ataque = 12;
                 defensa = 3;
                 velocidadBase = 3;
@@ -85,7 +87,7 @@ public class Jugador extends Entidad {
                 vidaMaxima = 20;
                 ataque = 10;
                 defensa = 2;
-                velocidadBase = 7;
+                velocidadBase = 4;
                 esMelee = false;
                 tieneSpritesAtaque = true;
                 tieneSpritesmuerte = true;
@@ -94,7 +96,7 @@ public class Jugador extends Entidad {
             default:
                 rutaCarpeta = "/jugador/Doom/";
                 vidaMaxima = 30;
-                ataque = 10; 
+                ataque = 8; 
                 defensa = 5;
                 velocidadBase = 5;
                 esMelee = true;
