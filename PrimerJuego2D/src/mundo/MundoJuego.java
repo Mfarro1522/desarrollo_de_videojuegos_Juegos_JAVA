@@ -59,8 +59,7 @@ public class MundoJuego {
     public DetectorColisiones dColisiones;
     public GestorRecursos gestorRecursos;
     public Estadisticas estadisticas;
-    public GestorAudio musica;
-    public GestorAudio efectoSonido;
+    public GestorAudio gestorAudio;
 
     // ===== NOTIFICACIONES =====
     public ArrayList<Notificacion> notificaciones = new ArrayList<>();
@@ -87,8 +86,7 @@ public class MundoJuego {
     // ===== CONSTRUCTOR =====
 
     public MundoJuego() {
-        musica = new GestorAudio();
-        efectoSonido = new GestorAudio();
+        gestorAudio = new GestorAudio();
         estadisticas = new Estadisticas();
 
         int tamanioCelda = Configuracion.TAMANO_TILE * 3;
@@ -500,18 +498,15 @@ public class MundoJuego {
     // ===== AUDIO =====
 
     public void reproducirMusicaFondo(int i) {
-        musica.setFile(i);
-        musica.play();
-        musica.loop();
+        gestorAudio.loop(i);
     }
 
     public void stopMusic() {
-        musica.stop();
+        gestorAudio.stop();
     }
 
     public void playSE(int i) {
-        efectoSonido.setFile(i);
-        efectoSonido.play();
+        gestorAudio.play(i);
     }
 
     // ===== NOTIFICACIONES =====
