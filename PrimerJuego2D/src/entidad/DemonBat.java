@@ -263,6 +263,14 @@ public class DemonBat extends NPC {
         contadorAnimAtk = 0;
     }
 
+    @Override
+    public void recibirDanio(int cantidad) {
+        super.recibirDanio(cantidad);
+        if (estaVivo) {
+            mundo.playSE(audio.GestorAudio.SE_BOSS_HIT);
+        }
+    }
+
     // ===== UPDATE PRINCIPAL (MÁQUINA DE ESTADOS) =====
 
     @Override

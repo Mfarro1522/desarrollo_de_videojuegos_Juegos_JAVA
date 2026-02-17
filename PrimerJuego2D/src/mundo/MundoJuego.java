@@ -376,7 +376,8 @@ public class MundoJuego {
         int spawnY = jugador.worldy;
         bossActivo.activar(spawnX, spawnY);
 
-        // 4. Notificación
+        // 4. Notificación + sonido
+        playSE(audio.GestorAudio.SE_BOSS_ROAR);
         agregarNotificacion("¡BOSS: DemonBat ha aparecido!", Color.RED, 4);
         System.out.println("[Boss] DemonBat spawneado en (" + spawnX + ", " + spawnY + ")");
     }
@@ -392,6 +393,7 @@ public class MundoJuego {
         }
 
         // Recompensar al jugador
+        playSE(audio.GestorAudio.SE_BOSS_DEATH);
         notificarEnemigoEliminado(bossActivo.experienciaAOtorgar);
 
         agregarNotificacion("¡DemonBat derrotado! +" + bossActivo.experienciaAOtorgar + " XP", 
@@ -428,6 +430,7 @@ public class MundoJuego {
             kingSlimes[i].activar(spawnX, spawnY);
         }
 
+        playSE(audio.GestorAudio.SE_BOSS_ROAR);
         agregarNotificacion("¡BOSS: 3 KingSlimes han aparecido!", new Color(0, 200, 0), 4);
         System.out.println("[Boss] 3 KingSlimes spawneados.");
     }
@@ -449,6 +452,7 @@ public class MundoJuego {
 
     private void terminarKingSlimeFight() {
         gameState = Configuracion.ESTADO_JUGANDO;
+        playSE(audio.GestorAudio.SE_BOSS_DEATH);
         agregarNotificacion("¡Todos los KingSlimes derrotados!", new Color(255, 215, 0), 5);
         System.out.println("[Boss] KingSlime fight terminada. Volviendo a JUGANDO.");
     }
@@ -593,6 +597,7 @@ public class MundoJuego {
         if (ga.anilloEquipado) {
             estadisticas.registrarCofreRecogido();
             estadisticas.ganarExperiencia(25);
+            playSE(audio.GestorAudio.SE_COIN);
             agregarNotificacion("Cofre: +25 EXP (Anillo activo)", Color.ORANGE, 3);
             return;
         }

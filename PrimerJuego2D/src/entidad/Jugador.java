@@ -147,6 +147,9 @@ public class Jugador extends Entidad {
         // 3. Aumentar Daño (+2)
         ataque += 2;
 
+        // Sonido de subir de nivel
+        mundo.playSE(audio.GestorAudio.SE_LEVEL_UP);
+
         // Feedback visual (opcional, por ahora solo stats)
         System.out.println("[Jugador] Nivel Subido! VidaMax: " + vidaMaxima + ", Ataque: " + ataque);
     }
@@ -343,6 +346,7 @@ public class Jugador extends Entidad {
     private void ejecutarAtaque() {
         contadorAnimAtaque = duracionAnimAtaque;
         estado = EstadoEntidad.ATACANDO;
+        mundo.playSE(audio.GestorAudio.SE_ATAQUE);
         if (!esMelee)
             dispararProyectil();
     }
@@ -475,8 +479,10 @@ public class Jugador extends Entidad {
             vidaActual = 0;
             estaVivo = false;
             estado = EstadoEntidad.MURIENDO;
+            mundo.playSE(audio.GestorAudio.SE_MUERTE_JUGADOR);
         } else {
             estado = EstadoEntidad.HERIDO;
+            mundo.playSE(audio.GestorAudio.SE_GOLPE_JUGADOR);
         }
     }
 
@@ -566,6 +572,7 @@ public class Jugador extends Entidad {
         if (index != 999) {
             if (mundo.objs[index] instanceof CofreNormal) {
                 mundo.objs[index] = null;
+                mundo.playSE(audio.GestorAudio.SE_COFRE_ABRIR);
                 mundo.abrirCofre();
             }
         }

@@ -242,6 +242,14 @@ public class KingSlime extends NPC {
         }
     }
 
+    @Override
+    public void recibirDanio(int cantidad) {
+        super.recibirDanio(cantidad);
+        if (estaVivo) {
+            mundo.playSE(audio.GestorAudio.SE_BOSS_HIT);
+        }
+    }
+
     // ===== FURIA =====
     private void entrarEnFuria() {
         enFuria = true;
@@ -249,6 +257,7 @@ public class KingSlime extends NPC {
         vel = velBase * 2;
         ataque = (int) (ataqueBase * 1.5);
         contadorParpadeoFuria = 0;
+        mundo.playSE(audio.GestorAudio.SE_FURY_ACTIVATE);
         System.out.println("[KingSlime #" + indiceBoss + "] ¡ENTRÓ EN FURIA!");
     }
 

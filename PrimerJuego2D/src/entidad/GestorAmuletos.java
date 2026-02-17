@@ -121,6 +121,7 @@ public class GestorAmuletos {
         if (tipo == Amuleto.DINAMITA) {
             // Reduce vida a la mitad (mínimo 1)
             jugador.vidaActual = Math.max(1, jugador.vidaActual / 2);
+            jugador.mundo.playSE(audio.GestorAudio.SE_EXPLOSION);
             return true;
         }
 
@@ -133,6 +134,7 @@ public class GestorAmuletos {
 
         itemsEquipados.put(tipo, siguiente);
         aplicarEfectoInmediato(tipo, siguiente, jugador);
+        jugador.mundo.playSE(audio.GestorAudio.SE_AMULETO_EQUIPAR);
         return true;
     }
 

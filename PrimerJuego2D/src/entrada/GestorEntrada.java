@@ -80,6 +80,7 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
         } else if (mundo.gameState == Configuracion.ESTADO_PAUSA) {
             if (keycode == KeyEvent.VK_P) {
                 mundo.gameState = mundo.estadoAntesPausa;
+                mundo.playSE(audio.GestorAudio.SE_DESPAUSA);
             }
         } else if (mundo.gameState == Configuracion.ESTADO_GAME_OVER) {
             if (keycode == KeyEvent.VK_R) mundo.reiniciarJuego();
@@ -147,6 +148,7 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
         if (keycode == KeyEvent.VK_P) {
             mundo.estadoAntesPausa = mundo.gameState;
             mundo.gameState = Configuracion.ESTADO_PAUSA;
+            mundo.playSE(audio.GestorAudio.SE_PAUSA);
         }
     }
 
@@ -160,6 +162,7 @@ public class GestorEntrada implements KeyListener, MouseListener, MouseMotionLis
         }
         if (keycode == KeyEvent.VK_ENTER) {
             if (pantallaAmuletos.confirmar()) {
+                mundo.playSE(audio.GestorAudio.SE_CONFIRM);
                 mundo.cerrarPanelAmuletos();
             }
         }
