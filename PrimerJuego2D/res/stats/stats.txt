@@ -1,8 +1,8 @@
 # Estadísticas acumuladas del juego
 # No editar manualmente
-recordTiempoSobrevivido=186
-enemigosTotalesEliminados=678
-cofresTotalesRecogidos=25
-partidasJugadas=15
-nivelMaximoAlcanzado=7
-danioTotalRecibidoAcumulado=5803
+recordTiempoSobrevivido=225
+enemigosTotalesEliminados=1068
+cofresTotalesRecogidos=36
+partidasJugadas=17
+nivelMaximoAlcanzado=10
+danioTotalRecibidoAcumulado=6192

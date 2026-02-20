@@ -96,7 +96,7 @@ public class Jugador extends Entidad {
             default:
                 rutaCarpeta = "/jugador/Doom/";
                 vidaMaxima = 30;
-                ataque = 8; 
+                ataque = 50;
                 defensa = 5;
                 velocidadBase = 5;
                 esMelee = true;
